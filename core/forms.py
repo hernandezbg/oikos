@@ -121,9 +121,9 @@ class MovimientoForm(forms.ModelForm):
 
 
 class FiltroMovimientosForm(forms.Form):
-    mes = forms.DateField(
+    mes = forms.CharField(
         required=False,
-        widget=forms.DateInput(
+        widget=forms.TextInput(
             attrs={'type': 'month', 'class': 'form-control'}
         ),
         label='Mes'

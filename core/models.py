@@ -130,6 +130,18 @@ class Movimiento(models.Model):
     fecha_creacion = models.DateTimeField(auto_now_add=True)
     fecha_aprobacion = models.DateTimeField(null=True, blank=True)
 
+    # Campos para anulación
+    anulado = models.BooleanField(default=False)
+    fecha_anulacion = models.DateTimeField(null=True, blank=True)
+    motivo_anulacion = models.TextField(blank=True)
+    anulado_por = models.ForeignKey(
+        Usuario,
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name='movimientos_anulados'
+    )
+
     class Meta:
         verbose_name = 'Movimiento'
         verbose_name_plural = 'Movimientos'

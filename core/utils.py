@@ -74,11 +74,12 @@ def calcular_saldo_mes(iglesia, año_mes):
     except SaldoMensual.DoesNotExist:
         saldo.saldo_inicial = 0
 
-    # Calcular totales del mes
+    # Calcular totales del mes (excluye movimientos anulados)
     movimientos_mes = Movimiento.objects.filter(
         iglesia=iglesia,
         fecha__year=int(año),
-        fecha__month=int(mes)
+        fecha__month=int(mes),
+        anulado=False
     )
 
     ingresos = movimientos_mes.filter(tipo='INGRESO').aggregate(
@@ -206,10 +207,11 @@ def generar_reporte_pdf(iglesia, año_mes):
     return buffer
 
 
-def get_dashboard_data(iglesia, meses=6):
+def get_dashboard_data(iglesia, meses=6, mes_distribucion=None):
     """
     Obtiene los datos para los gráficos del dashboard
     Retorna los últimos N meses de datos
+    mes_distribucion: mes para el gráfico de distribución (formato YYYY-MM), por defecto mes actual
     """
     from core.models import SaldoMensual, Movimiento
     from django.db.models import Sum
@@ -238,15 +240,16 @@ def get_dashboard_data(iglesia, meses=6):
         meses_labels.append(mes_label)
         saldos_data.append(float(saldo.saldo_final))
 
-    # Distribución de gastos por categoría (mes actual)
-    mes_actual = fecha_actual.strftime('%Y-%m')
-    año, mes = mes_actual.split('-')
+    # Distribución de gastos por categoría (mes seleccionado o mes actual)
+    mes_para_distribucion = mes_distribucion if mes_distribucion else fecha_actual.strftime('%Y-%m')
+    año, mes = mes_para_distribucion.split('-')
 
     egresos_por_categoria = Movimiento.objects.filter(
         iglesia=iglesia,
         tipo='EGRESO',
         fecha__year=int(año),
-        fecha__month=int(mes)
+        fecha__month=int(mes),
+        anulado=False
     ).values('categoria_egreso__nombre').annotate(
         total=Sum('monto')
     ).order_by('-total')

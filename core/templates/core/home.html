@@ -1,0 +1,437 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>OIKOS - Sistema de Gestión Financiera para Iglesias</title>
+    <meta name="description" content="Sistema gratuito de gestión financiera para iglesias. Administra tus finanzas de forma transparente y profesional.">
+
+    <!-- Bootstrap 5 CSS -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <!-- Bootstrap Icons -->
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.0/font/bootstrap-icons.css">
+    <!-- Google Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+
+    <link rel="stylesheet" href="{% static 'css/home.css' %}">
+</head>
+<body>
+    <!-- Navigation -->
+    <nav class="navbar navbar-expand-lg navbar-light bg-white fixed-top shadow-sm">
+        <div class="container">
+            <a class="navbar-brand fw-bold fs-3" href="#">
+                <i class="bi bi-house-heart-fill text-primary"></i> OIKOS
+            </a>
+            <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
+                <span class="navbar-toggler-icon"></span>
+            </button>
+            <div class="collapse navbar-collapse" id="navbarNav">
+                <ul class="navbar-nav ms-auto align-items-center">
+                    <li class="nav-item">
+                        <a class="nav-link" href="#caracteristicas">Características</a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="#mision">Misión</a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="#como-funciona">Cómo Funciona</a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="#donar">Donar</a>
+                    </li>
+                    <li class="nav-item ms-lg-3">
+                        <a class="btn btn-primary px-4" href="{% url 'login' %}">
+                            <i class="bi bi-box-arrow-in-right"></i> Ingresar
+                        </a>
+                    </li>
+                </ul>
+            </div>
+        </div>
+    </nav>
+
+    <!-- Hero Section -->
+    <section class="hero-section">
+        <div class="container">
+            <div class="row align-items-center min-vh-100 py-5">
+                <div class="col-lg-6 mb-5 mb-lg-0">
+                    <div class="hero-badge mb-4">
+                        <span class="badge bg-primary-subtle text-primary px-3 py-2">
+                            <i class="bi bi-gift"></i> 100% Gratuito
+                        </span>
+                    </div>
+                    <h1 class="display-3 fw-bold mb-4">
+                        Gestión Financiera <span class="text-primary">Transparente</span> para tu Iglesia
+                    </h1>
+                    <p class="lead text-muted mb-4">
+                        OIKOS es un sistema completo y gratuito que ayuda a las iglesias a administrar sus finanzas de manera profesional, transparente y confiable.
+                    </p>
+                    <div class="d-flex flex-wrap gap-3">
+                        <a href="{% url 'registro' %}" class="btn btn-primary btn-lg px-5">
+                            <i class="bi bi-rocket-takeoff"></i> Comenzar Gratis
+                        </a>
+                        <a href="#caracteristicas" class="btn btn-outline-primary btn-lg px-5">
+                            <i class="bi bi-info-circle"></i> Conocer Más
+                        </a>
+                    </div>
+                    <div class="mt-5">
+                        <div class="row g-4">
+                            <div class="col-4">
+                                <div class="stat-box">
+                                    <div class="stat-icon">
+                                        <i class="bi bi-check-circle-fill text-success"></i>
+                                    </div>
+                                    <h4 class="mb-0">100%</h4>
+                                    <p class="text-muted small mb-0">Gratuito</p>
+                                </div>
+                            </div>
+                            <div class="col-4">
+                                <div class="stat-box">
+                                    <div class="stat-icon">
+                                        <i class="bi bi-shield-check text-primary"></i>
+                                    </div>
+                                    <h4 class="mb-0">Seguro</h4>
+                                    <p class="text-muted small mb-0">y Confiable</p>
+                                </div>
+                            </div>
+                            <div class="col-4">
+                                <div class="stat-box">
+                                    <div class="stat-icon">
+                                        <i class="bi bi-phone text-info"></i>
+                                    </div>
+                                    <h4 class="mb-0">Móvil</h4>
+                                    <p class="text-muted small mb-0">Responsive</p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-lg-6">
+                    <div class="hero-image-container">
+                        <div class="floating-card card-1">
+                            <i class="bi bi-cash-stack fs-1 text-success"></i>
+                            <div class="mt-2">
+                                <small class="text-muted">Ingresos del Mes</small>
+                                <h5 class="mb-0">$2.450.000</h5>
+                            </div>
+                        </div>
+                        <div class="floating-card card-2">
+                            <i class="bi bi-graph-up-arrow fs-1 text-primary"></i>
+                            <div class="mt-2">
+                                <small class="text-muted">Saldo Actual</small>
+                                <h5 class="mb-0">$8.750.000</h5>
+                            </div>
+                        </div>
+                        <div class="floating-card card-3">
+                            <i class="bi bi-file-earmark-check fs-1 text-info"></i>
+                            <div class="mt-2">
+                                <small class="text-muted">Reportes</small>
+                                <h5 class="mb-0">Automáticos</h5>
+                            </div>
+                        </div>
+                        <div class="hero-mockup">
+                            <i class="bi bi-laptop display-1 text-primary"></i>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Features Section -->
+    <section id="caracteristicas" class="py-5 bg-light">
+        <div class="container py-5">
+            <div class="text-center mb-5">
+                <span class="badge bg-primary-subtle text-primary px-3 py-2 mb-3">
+                    Características
+                </span>
+                <h2 class="display-5 fw-bold mb-3">Todo lo que necesitas en un solo lugar</h2>
+                <p class="lead text-muted">Herramientas profesionales diseñadas para la gestión financiera de tu iglesia</p>
+            </div>
+
+            <div class="row g-4">
+                <div class="col-md-6 col-lg-4">
+                    <div class="feature-card">
+                        <div class="feature-icon bg-primary">
+                            <i class="bi bi-cash-coin"></i>
+                        </div>
+                        <h4>Control de Ingresos y Egresos</h4>
+                        <p class="text-muted">Registra y categoriza todos los movimientos financieros de tu iglesia de forma ordenada.</p>
+                    </div>
+                </div>
+                <div class="col-md-6 col-lg-4">
+                    <div class="feature-card">
+                        <div class="feature-icon bg-success">
+                            <i class="bi bi-calculator"></i>
+                        </div>
+                        <h4>Cálculo Automático de Saldos</h4>
+                        <p class="text-muted">El sistema calcula automáticamente los saldos mensuales y totales en tiempo real.</p>
+                    </div>
+                </div>
+                <div class="col-md-6 col-lg-4">
+                    <div class="feature-card">
+                        <div class="feature-icon bg-info">
+                            <i class="bi bi-file-earmark-pdf"></i>
+                        </div>
+                        <h4>Reportes en PDF</h4>
+                        <p class="text-muted">Genera reportes mensuales profesionales en PDF para presentar a la congregación.</p>
+                    </div>
+                </div>
+                <div class="col-md-6 col-lg-4">
+                    <div class="feature-card">
+                        <div class="feature-icon bg-warning">
+                            <i class="bi bi-file-earmark-spreadsheet"></i>
+                        </div>
+                        <h4>Exportar a Excel</h4>
+                        <p class="text-muted">Descarga todos tus movimientos en formato Excel para análisis detallados.</p>
+                    </div>
+                </div>
+                <div class="col-md-6 col-lg-4">
+                    <div class="feature-card">
+                        <div class="feature-icon bg-danger">
+                            <i class="bi bi-x-circle"></i>
+                        </div>
+                        <h4>Anulación de Movimientos</h4>
+                        <p class="text-muted">Anula movimientos con registro de motivo, fecha y responsable para auditoría completa.</p>
+                    </div>
+                </div>
+                <div class="col-md-6 col-lg-4">
+                    <div class="feature-card">
+                        <div class="feature-icon bg-purple">
+                            <i class="bi bi-graph-up"></i>
+                        </div>
+                        <h4>Gráficos y Dashboard</h4>
+                        <p class="text-muted">Visualiza la salud financiera de tu iglesia con gráficos intuitivos.</p>
+                    </div>
+                </div>
+                <div class="col-md-6 col-lg-4">
+                    <div class="feature-card">
+                        <div class="feature-icon bg-teal">
+                            <i class="bi bi-phone"></i>
+                        </div>
+                        <h4>Diseño Responsive</h4>
+                        <p class="text-muted">Accede desde cualquier dispositivo: computadora, tablet o celular.</p>
+                    </div>
+                </div>
+                <div class="col-md-6 col-lg-4">
+                    <div class="feature-card">
+                        <div class="feature-icon bg-indigo">
+                            <i class="bi bi-shield-check"></i>
+                        </div>
+                        <h4>Seguridad y Privacidad</h4>
+                        <p class="text-muted">Tus datos están protegidos y solo accesibles por usuarios autorizados.</p>
+                    </div>
+                </div>
+                <div class="col-md-6 col-lg-4">
+                    <div class="feature-card">
+                        <div class="feature-icon bg-pink">
+                            <i class="bi bi-people"></i>
+                        </div>
+                        <h4>Multi-usuario</h4>
+                        <p class="text-muted">Gestiona permisos y roles para diferentes usuarios de tu iglesia.</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Mission Section -->
+    <section id="mision" class="py-5 bg-gradient-section">
+        <div class="container py-5">
+            <div class="row align-items-center">
+                <div class="col-lg-6 mb-5 mb-lg-0">
+                    <div class="mission-image">
+                        <i class="bi bi-heart-fill display-1 text-danger"></i>
+                    </div>
+                </div>
+                <div class="col-lg-6">
+                    <span class="badge bg-white text-primary px-3 py-2 mb-3">
+                        Nuestra Misión
+                    </span>
+                    <h2 class="display-5 fw-bold text-white mb-4">Un Servicio con Propósito Eterno</h2>
+                    <div class="mission-content">
+                        <p class="text-white-50 lead mb-4">
+                            OIKOS es completamente gratuito para todas las iglesias que deseen usarlo. Creemos que la administración financiera transparente es fundamental para el testimonio de la iglesia.
+                        </p>
+
+                        <div class="mission-box mb-4">
+                            <div class="d-flex align-items-start mb-3">
+                                <div class="mission-icon">
+                                    <i class="bi bi-gift-fill"></i>
+                                </div>
+                                <div>
+                                    <h5 class="text-white mb-2">Sostenido por Donaciones</h5>
+                                    <p class="text-white-50 mb-0">
+                                        El servicio se mantiene gracias a ofrendas voluntarias de iglesias y hermanos que desean apoyar esta obra.
+                                    </p>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="mission-box mb-4">
+                            <div class="d-flex align-items-start mb-3">
+                                <div class="mission-icon">
+                                    <i class="bi bi-tools"></i>
+                                </div>
+                                <div>
+                                    <h5 class="text-white mb-2">Mantenimiento y Mejoras</h5>
+                                    <p class="text-white-50 mb-0">
+                                        Las donaciones cubren costos de servidores, desarrollo y mantenimiento continuo de la plataforma.
+                                    </p>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="mission-box">
+                            <div class="d-flex align-items-start mb-3">
+                                <div class="mission-icon">
+                                    <i class="bi bi-globe2"></i>
+                                </div>
+                                <div>
+                                    <h5 class="text-white mb-2">Apoyo Misionero</h5>
+                                    <p class="text-white-50 mb-0">
+                                        Los excedentes se destinan a proyectos misioneros y apoyo a misioneros alrededor del mundo.
+                                    </p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- How It Works -->
+    <section id="como-funciona" class="py-5">
+        <div class="container py-5">
+            <div class="text-center mb-5">
+                <span class="badge bg-primary-subtle text-primary px-3 py-2 mb-3">
+                    Cómo Funciona
+                </span>
+                <h2 class="display-5 fw-bold mb-3">Comienza en minutos</h2>
+                <p class="lead text-muted">Tres simples pasos para empezar a gestionar las finanzas de tu iglesia</p>
+            </div>
+
+            <div class="row g-4">
+                <div class="col-md-4">
+                    <div class="step-card">
+                        <div class="step-number">1</div>
+                        <div class="step-icon">
+                            <i class="bi bi-person-plus"></i>
+                        </div>
+                        <h4>Regístrate</h4>
+                        <p class="text-muted">Crea una cuenta ingresando los datos de tu iglesia. Es rápido y totalmente gratuito.</p>
+                    </div>
+                </div>
+                <div class="col-md-4">
+                    <div class="step-card">
+                        <div class="step-number">2</div>
+                        <div class="step-icon">
+                            <i class="bi bi-gear"></i>
+                        </div>
+                        <h4>Configura Categorías</h4>
+                        <p class="text-muted">Define las categorías de ingresos y egresos según las necesidades de tu congregación.</p>
+                    </div>
+                </div>
+                <div class="col-md-4">
+                    <div class="step-card">
+                        <div class="step-number">3</div>
+                        <div class="step-icon">
+                            <i class="bi bi-rocket-takeoff"></i>
+                        </div>
+                        <h4>¡Comienza a Usar!</h4>
+                        <p class="text-muted">Registra tus movimientos, genera reportes y mantén las finanzas ordenadas y transparentes.</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Donation Section -->
+    <section id="donar" class="py-5 bg-light">
+        <div class="container py-5">
+            <div class="row justify-content-center">
+                <div class="col-lg-8 text-center">
+                    <div class="donation-card">
+                        <i class="bi bi-heart-fill display-1 text-danger mb-4"></i>
+                        <h2 class="display-5 fw-bold mb-4">Apoya esta Obra</h2>
+                        <p class="lead text-muted mb-4">
+                            Si OIKOS ha sido de bendición para tu iglesia y deseas apoyar este ministerio, puedes colaborar con una ofrenda. Tu donación ayudará a mantener el servicio funcionando y apoyar proyectos misioneros.
+                        </p>
+                        <div class="donation-info p-4 bg-white rounded shadow-sm mb-4">
+                            <h5 class="mb-3">Datos para Transferencia</h5>
+                            <div class="text-start">
+                                <p class="mb-2"><strong>Alias CBU:</strong> <span class="text-primary">OIKOS.MINISTERIO</span></p>
+                                <p class="mb-2"><strong>CBU:</strong> <span class="text-primary">0000003100012345678901</span></p>
+                                <p class="mb-0"><strong>Titular:</strong> Ministerio OIKOS</p>
+                            </div>
+                        </div>
+                        <p class="text-muted small">
+                            <i class="bi bi-shield-check"></i> Todas las donaciones son voluntarias. OIKOS seguirá siendo gratuito para todas las iglesias.
+                        </p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- CTA Section -->
+    <section class="cta-section py-5">
+        <div class="container py-5">
+            <div class="row justify-content-center">
+                <div class="col-lg-8 text-center">
+                    <h2 class="display-4 fw-bold text-white mb-4">¿Listo para transformar la gestión financiera de tu iglesia?</h2>
+                    <p class="lead text-white-50 mb-5">
+                        Únete a las iglesias que ya confían en OIKOS para administrar sus finanzas de manera transparente y profesional.
+                    </p>
+                    <a href="{% url 'registro' %}" class="btn btn-light btn-lg px-5">
+                        <i class="bi bi-rocket-takeoff"></i> Comenzar Ahora - Es Gratis
+                    </a>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Footer -->
+    <footer class="bg-dark text-white py-5">
+        <div class="container">
+            <div class="row">
+                <div class="col-lg-4 mb-4 mb-lg-0">
+                    <h4 class="fw-bold mb-3">
+                        <i class="bi bi-house-heart-fill"></i> OIKOS
+                    </h4>
+                    <p class="text-white-50">
+                        Sistema gratuito de gestión financiera para iglesias. Administración transparente y profesional al servicio del Reino.
+                    </p>
+                </div>
+                <div class="col-lg-4 mb-4 mb-lg-0">
+                    <h5 class="fw-bold mb-3">Enlaces Rápidos</h5>
+                    <ul class="list-unstyled">
+                        <li class="mb-2"><a href="#caracteristicas" class="text-white-50 text-decoration-none">Características</a></li>
+                        <li class="mb-2"><a href="#mision" class="text-white-50 text-decoration-none">Nuestra Misión</a></li>
+                        <li class="mb-2"><a href="#como-funciona" class="text-white-50 text-decoration-none">Cómo Funciona</a></li>
+                        <li class="mb-2"><a href="#donar" class="text-white-50 text-decoration-none">Donar</a></li>
+                    </ul>
+                </div>
+                <div class="col-lg-4">
+                    <h5 class="fw-bold mb-3">Contacto</h5>
+                    <p class="text-white-50">
+                        <i class="bi bi-envelope"></i> contacto@oikos.ministerio<br>
+                        <i class="bi bi-geo-alt"></i> Argentina
+                    </p>
+                </div>
+            </div>
+            <hr class="my-4 bg-white-50">
+            <div class="text-center text-white-50">
+                <p class="mb-0">&copy; 2025 OIKOS. Desarrollado para la gloria de Dios.</p>
+            </div>
+        </div>
+    </footer>
+
+    <!-- Bootstrap JS -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="{% static 'js/home.js' %}"></script>
+</body>
+</html>

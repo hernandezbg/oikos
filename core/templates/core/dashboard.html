@@ -6,6 +6,21 @@
 {% block page_title %}Dashboard - {{ APP_NAME }}{% endblock %}
 
 {% block content %}
+<!-- Selector de mes -->
+<div class="row mb-3">
+    <div class="col-12">
+        <form method="get" class="d-flex align-items-center gap-2">
+            <label for="mes" class="form-label mb-0 me-2">
+                <i class="bi bi-calendar3"></i> Mes:
+            </label>
+            <input type="month" name="mes" id="mes" class="form-control" style="max-width: 200px;" value="{{ mes_seleccionado }}" onchange="this.form.submit()">
+            <button type="submit" class="btn btn-primary">
+                <i class="bi bi-search"></i> Ver
+            </button>
+        </form>
+    </div>
+</div>
+
 <!-- Alertas -->
 {% if alertas %}
 <div class="row mb-3">
@@ -27,6 +42,7 @@
             <div class="card-body">
                 <h5 class="card-title">
                     <i class="bi bi-wallet2"></i> Saldo Actual
+                    <p class="mb-1 small">Tenencia</p>
                 </h5>
                 <h2 class="card-text {{ saldo_clase }}">{{ saldo_actual_format }}</h2>
             </div>
@@ -36,8 +52,9 @@
         <div class="card text-white bg-success">
             <div class="card-body">
                 <h5 class="card-title">
-                    <i class="bi bi-arrow-up-circle"></i> Ingresos del Mes
+                    <i class="bi bi-arrow-up-circle"></i> Ingresos
                 </h5>
+                <p class="mb-1 small">{{ mes_nombre }}</p>
                 <h2 class="card-text">{{ total_ingresos_mes }}</h2>
             </div>
         </div>
@@ -46,8 +63,9 @@
         <div class="card text-white bg-danger">
             <div class="card-body">
                 <h5 class="card-title">
-                    <i class="bi bi-arrow-down-circle"></i> Egresos del Mes
+                    <i class="bi bi-arrow-down-circle"></i> Egresos
                 </h5>
+                <p class="mb-1 small">{{ mes_nombre }}</p>
                 <h2 class="card-text">{{ total_egresos_mes }}</h2>
             </div>
         </div>
@@ -129,8 +147,10 @@
 
 {% block extra_js %}
 <script>
-// Obtener datos para gráficos
-fetch("{% url 'dashboard_data_api' %}")
+// Obtener datos para gráficos con el mes seleccionado
+const mesSeleccionado = "{{ mes_seleccionado }}";
+const apiUrl = "{% url 'dashboard_data_api' %}?mes=" + mesSeleccionado;
+fetch(apiUrl)
     .then(response => response.json())
     .then(data => {
         // Gráfico de línea - Evolución de saldos

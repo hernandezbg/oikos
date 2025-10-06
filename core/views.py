@@ -20,6 +20,16 @@ from django.contrib.auth import login
 from django.contrib.auth.decorators import login_required
 
 
+def home_view(request):
+    """
+    Vista de landing page - muestra home.html para usuarios no autenticados
+    y redirige al dashboard para usuarios autenticados
+    """
+    if request.user.is_authenticated:
+        return redirect('dashboard')
+    return render(request, 'core/home.html')
+
+
 class CustomLoginView(LoginView):
     template_name = 'core/login.html'
 
@@ -110,21 +120,32 @@ class DashboardView(LoginRequiredMixin, TemplateView):
         context = super().get_context_data(**kwargs)
 
         iglesia = self.request.user.iglesia
-        fecha_actual = timezone.now()
-        mes_actual = fecha_actual.strftime('%Y-%m')
+        # Permitir seleccionar mes desde GET, por defecto el mes actual
+        mes_seleccionado = self.request.GET.get('mes', timezone.now().strftime('%Y-%m'))
 
-        # Calcular saldo actual
-        try:
-            saldo_actual = SaldoMensual.objects.get(iglesia=iglesia, año_mes=mes_actual)
-        except SaldoMensual.DoesNotExist:
-            saldo_actual = calcular_saldo_mes(iglesia, mes_actual)
+        # El saldo actual es el TOTAL acumulado de todos los movimientos hasta hoy (excluye anulados)
+        from django.db.models import Sum
+        total_ingresos_historico = Movimiento.objects.filter(
+            iglesia=iglesia,
+            tipo='INGRESO',
+            anulado=False
+        ).aggregate(total=Sum('monto'))['total'] or Decimal('0.00')
 
-        # Totales del mes actual
-        año, mes = mes_actual.split('-')
+        total_egresos_historico = Movimiento.objects.filter(
+            iglesia=iglesia,
+            tipo='EGRESO',
+            anulado=False
+        ).aggregate(total=Sum('monto'))['total'] or Decimal('0.00')
+
+        saldo_final = total_ingresos_historico - total_egresos_historico
+
+        # Totales del mes SELECCIONADO (puede ser diferente al actual, excluye anulados)
+        año, mes = mes_seleccionado.split('-')
         movimientos_mes = Movimiento.objects.filter(
             iglesia=iglesia,
             fecha__year=int(año),
-            fecha__month=int(mes)
+            fecha__month=int(mes),
+            anulado=False
         )
 
         total_ingresos_mes = movimientos_mes.filter(tipo='INGRESO').aggregate(
@@ -142,7 +163,6 @@ class DashboardView(LoginRequiredMixin, TemplateView):
 
         # Alertas
         alertas = []
-        saldo_final = saldo_actual.saldo_final
 
         if saldo_final < Decimal('2000000'):
             alertas.append({
@@ -164,8 +184,15 @@ class DashboardView(LoginRequiredMixin, TemplateView):
         else:
             saldo_clase = 'saldo-positivo'
 
+        # Formatear nombre del mes seleccionado
+        from datetime import datetime
+        fecha_sel = datetime.strptime(mes_seleccionado, '%Y-%m')
+        mes_nombre = fecha_sel.strftime('%B %Y').capitalize()
+
         context.update({
             'iglesia': iglesia,
+            'mes_seleccionado': mes_seleccionado,
+            'mes_nombre': mes_nombre,
             'saldo_actual': saldo_final,
             'saldo_actual_format': formato_pesos(saldo_final),
             'saldo_clase': saldo_clase,
@@ -230,11 +257,15 @@ class MovimientoListView(LoginRequiredMixin, ListView):
 
         if form.is_valid():
             if form.cleaned_data.get('mes'):
-                mes_fecha = form.cleaned_data['mes']
-                queryset = queryset.filter(
-                    fecha__year=mes_fecha.year,
-                    fecha__month=mes_fecha.month
-                )
+                mes_str = form.cleaned_data['mes']
+                try:
+                    año, mes = mes_str.split('-')
+                    queryset = queryset.filter(
+                        fecha__year=int(año),
+                        fecha__month=int(mes)
+                    )
+                except (ValueError, AttributeError):
+                    pass
 
             if form.cleaned_data.get('tipo'):
                 queryset = queryset.filter(tipo=form.cleaned_data['tipo'])
@@ -300,7 +331,9 @@ def dashboard_data_api(request):
                 return JsonResponse({'labels': [], 'ingresos': [], 'egresos': []})
 
     iglesia = request.user.iglesia
-    data = get_dashboard_data(iglesia, meses=6)
+    # Obtener mes seleccionado desde GET
+    mes_seleccionado = request.GET.get('mes', None)
+    data = get_dashboard_data(iglesia, meses=6, mes_distribucion=mes_seleccionado)
 
     return JsonResponse(data)
 
@@ -397,3 +430,43 @@ def exportar_excel_view(request):
     response['Content-Disposition'] = f'attachment; filename="{filename}"'
 
     return response
+
+
+@login_required
+def anular_movimiento_view(request, pk):
+    """
+    Anular un movimiento (soft delete con motivo)
+    Solo usuarios con puede_aprobar=True pueden anular
+    """
+    from django.contrib import messages
+
+    movimiento = get_object_or_404(Movimiento, pk=pk, iglesia=request.user.iglesia)
+
+    # Verificar permisos
+    if not request.user.puede_aprobar:
+        messages.error(request, 'No tienes permisos para anular movimientos.')
+        return redirect('movimiento_list')
+
+    # Verificar que no esté ya anulado
+    if movimiento.anulado:
+        messages.warning(request, 'Este movimiento ya está anulado.')
+        return redirect('movimiento_list')
+
+    if request.method == 'POST':
+        motivo = request.POST.get('motivo_anulacion', '').strip()
+
+        if not motivo:
+            messages.error(request, 'Debe ingresar un motivo para la anulación.')
+            return redirect('movimiento_list')
+
+        # Anular el movimiento
+        movimiento.anulado = True
+        movimiento.fecha_anulacion = timezone.now()
+        movimiento.motivo_anulacion = motivo
+        movimiento.anulado_por = request.user
+        movimiento.save()
+
+        messages.success(request, f'Movimiento {movimiento.comprobante_nro} anulado exitosamente.')
+        return redirect('movimiento_list')
+
+    return redirect('movimiento_list')
