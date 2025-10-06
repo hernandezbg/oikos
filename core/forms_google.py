@@ -15,7 +15,7 @@ class RegistroIglesiaGoogleForm(forms.ModelForm):
         widgets = {
             'nombre': forms.TextInput(attrs={
                 'class': 'form-control',
-                'placeholder': 'Ej: Iglesia Bautista Central'
+                'placeholder': 'Ej: Iglesia Cristiana Evangélica'
             }),
             'direccion': forms.TextInput(attrs={
                 'class': 'form-control',

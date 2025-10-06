@@ -169,7 +169,7 @@ class RegistroForm(UserCreationForm):
         max_length=200,
         required=True,
         label='Nombre de la Iglesia',
-        widget=forms.TextInput(attrs={'class': 'form-control', 'placeholder': 'Ej: Iglesia Bautista Central'})
+        widget=forms.TextInput(attrs={'class': 'form-control', 'placeholder': 'Ej: Iglesia Cristiana Evangélica'})
     )
     direccion_iglesia = forms.CharField(
         max_length=300,
