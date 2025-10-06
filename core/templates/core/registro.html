@@ -1,0 +1,67 @@
+{% extends 'base.html' %}
+{% load crispy_forms_tags %}
+{% load static %}
+
+{% block title %}Registrar Iglesia - {{ APP_NAME }}{% endblock %}
+
+{% block unauthenticated_content %}
+<div class="container py-5">
+    <div class="row justify-content-center">
+        <div class="col-md-10 col-lg-8">
+            <div class="card shadow-lg">
+                <div class="card-header bg-primary text-white text-center py-4">
+                    <h1 class="display-6 mb-0">
+                        <i class="bi bi-house-heart-fill"></i> {{ APP_NAME }}
+                    </h1>
+                    <p class="mb-0 mt-2">Registro de Nueva Iglesia</p>
+                </div>
+                <div class="card-body p-4">
+                    <div class="alert alert-info">
+                        <i class="bi bi-info-circle"></i>
+                        <strong>¡Bienvenido!</strong> Completa el formulario para registrar tu iglesia en OIKOS.
+                        Serás el <strong>Tesorero</strong> con permisos completos de administración.
+                    </div>
+
+                    {% if form.errors %}
+                        <div class="alert alert-danger">
+                            <i class="bi bi-exclamation-triangle"></i>
+                            <strong>Error:</strong> Por favor corrige los errores en el formulario.
+                        </div>
+                    {% endif %}
+
+                    <form method="post" novalidate>
+                        {% csrf_token %}
+                        {{ form|crispy }}
+                    </form>
+
+                    <hr class="my-4">
+
+                    <div class="text-center">
+                        <p class="mb-2">¿Ya tienes una cuenta?</p>
+                        <a href="{% url 'login' %}" class="btn btn-outline-primary">
+                            <i class="bi bi-box-arrow-in-right"></i> Iniciar Sesión
+                        </a>
+                    </div>
+                </div>
+                <div class="card-footer text-center text-muted py-3">
+                    <small>{{ APP_NAME }} © 2025 - Sistema de Gestión Financiera</small>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<style>
+    body {
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        min-height: 100vh;
+    }
+    .card {
+        border: none;
+        border-radius: 15px;
+    }
+    .card-header {
+        border-radius: 15px 15px 0 0 !important;
+    }
+</style>
+{% endblock %}

@@ -1,0 +1,110 @@
+{% extends 'base.html' %}
+{% load crispy_forms_tags %}
+{% load static %}
+
+{% block title %}Nuevo Movimiento - {{ APP_NAME }}{% endblock %}
+{% block page_title %}Nuevo Movimiento{% endblock %}
+
+{% block content %}
+<div class="row">
+    <div class="col-md-8 mx-auto">
+        <div class="card">
+            <div class="card-header">
+                <h5 class="mb-0"><i class="bi bi-plus-circle"></i> Registrar Nuevo Movimiento</h5>
+            </div>
+            <div class="card-body">
+                <form method="post" id="movimientoForm">
+                    {% csrf_token %}
+                    {{ form|crispy }}
+                    <div class="d-flex justify-content-between mt-3">
+                        <a href="{% url 'movimiento_list' %}" class="btn btn-secondary">
+                            <i class="bi bi-arrow-left"></i> Cancelar
+                        </a>
+                        <button type="submit" class="btn btn-primary" id="submitBtn">
+                            <i class="bi bi-save"></i> Guardar Movimiento
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const tipoRadios = document.querySelectorAll('input[name="tipo"]');
+    const montoInput = document.getElementById('id_monto');
+    const form = document.getElementById('movimientoForm');
+
+    // Función para mostrar/ocultar categorías según tipo
+    function toggleCategorias() {
+        const tipoSeleccionado = document.querySelector('input[name="tipo"]:checked');
+
+        // Buscar los divs de categorías (crispy forms genera divs con id específicos)
+        const categoriaIngresoDiv = document.getElementById('div_id_categoria_ingreso');
+        const categoriaEgresoDiv = document.getElementById('div_id_categoria_egreso');
+
+        if (tipoSeleccionado && categoriaIngresoDiv && categoriaEgresoDiv) {
+            if (tipoSeleccionado.value === 'INGRESO') {
+                categoriaIngresoDiv.style.display = 'block';
+                categoriaEgresoDiv.style.display = 'none';
+                document.getElementById('id_categoria_ingreso').required = true;
+                document.getElementById('id_categoria_egreso').required = false;
+                // Limpiar el valor del campo oculto
+                document.getElementById('id_categoria_egreso').value = '';
+            } else if (tipoSeleccionado.value === 'EGRESO') {
+                categoriaIngresoDiv.style.display = 'none';
+                categoriaEgresoDiv.style.display = 'block';
+                document.getElementById('id_categoria_ingreso').required = false;
+                document.getElementById('id_categoria_egreso').required = true;
+                // Limpiar el valor del campo oculto
+                document.getElementById('id_categoria_ingreso').value = '';
+            }
+        }
+    }
+
+    // Evento para cambio de tipo
+    tipoRadios.forEach(radio => {
+        radio.addEventListener('change', toggleCategorias);
+    });
+
+    // Inicializar visibilidad al cargar
+    // Esperar un momento para que crispy forms renderice
+    setTimeout(toggleCategorias, 100);
+
+    // Validación de monto
+    if (montoInput) {
+        montoInput.addEventListener('input', function() {
+            const monto = parseFloat(this.value);
+            const confirmacionDiv = document.createElement('div');
+            confirmacionDiv.id = 'monto-warning';
+            confirmacionDiv.className = 'alert alert-warning mt-2';
+            confirmacionDiv.innerHTML = '<i class="bi bi-exclamation-triangle"></i> El monto supera $1.000.000';
+
+            const existingWarning = document.getElementById('monto-warning');
+            if (monto > 1000000) {
+                if (!existingWarning) {
+                    montoInput.parentElement.appendChild(confirmacionDiv);
+                }
+            } else {
+                if (existingWarning) {
+                    existingWarning.remove();
+                }
+            }
+        });
+    }
+
+    // Confirmación antes de enviar si monto > 1M
+    form.addEventListener('submit', function(e) {
+        const monto = parseFloat(montoInput.value);
+        if (monto > 1000000) {
+            if (!confirm('El monto ingresado es mayor a $1.000.000. ¿Está seguro de continuar?')) {
+                e.preventDefault();
+            }
+        }
+    });
+});
+</script>
+{% endblock %}

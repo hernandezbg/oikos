@@ -1,0 +1,72 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Login - {{ APP_NAME }}{% endblock %}
+
+{% block unauthenticated_content %}
+<div class="row justify-content-center align-items-center min-vh-100">
+    <div class="col-md-6 col-lg-5">
+        <div class="card shadow">
+            <div class="card-body p-5">
+                <div class="text-center mb-4">
+                    <h1 class="display-4 text-primary">
+                        <i class="bi bi-house-heart-fill"></i>
+                    </h1>
+                    <h2 class="h3 mb-3 fw-bold">{{ APP_NAME }}</h2>
+                    <p class="text-muted">Sistema de Gestión Financiera</p>
+                </div>
+
+                <!-- Login con Google -->
+                <div class="d-grid gap-2 mb-4">
+                    <a href="{% url 'social:begin' 'google-oauth2' %}" class="btn btn-outline-danger btn-lg">
+                        <i class="bi bi-google"></i> Ingresar con Google
+                    </a>
+                </div>
+
+                <div class="text-center my-3">
+                    <small class="text-muted">— O —</small>
+                </div>
+
+                <!-- Login tradicional (solo para admin) -->
+                <div class="mb-3">
+                    <p class="text-center text-muted small">
+                        <i class="bi bi-info-circle"></i> Login tradicional solo para administradores
+                    </p>
+                </div>
+
+                {% if form.errors %}
+                    <div class="alert alert-danger" role="alert">
+                        Usuario o contraseña incorrectos. Por favor, intente nuevamente.
+                    </div>
+                {% endif %}
+
+                <form method="post">
+                    {% csrf_token %}
+                    <div class="mb-3">
+                        <label for="id_username" class="form-label">Usuario</label>
+                        <div class="input-group">
+                            <span class="input-group-text"><i class="bi bi-person"></i></span>
+                            <input type="text" class="form-control" id="id_username" name="username" required>
+                        </div>
+                    </div>
+                    <div class="mb-3">
+                        <label for="id_password" class="form-label">Contraseña</label>
+                        <div class="input-group">
+                            <span class="input-group-text"><i class="bi bi-lock"></i></span>
+                            <input type="password" class="form-control" id="id_password" name="password" required>
+                        </div>
+                    </div>
+                    <div class="d-grid">
+                        <button type="submit" class="btn btn-secondary">
+                            <i class="bi bi-box-arrow-in-right"></i> Ingresar (Admin)
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+        <div class="text-center mt-3 text-muted">
+            <small>{{ APP_NAME }} © 2025</small>
+        </div>
+    </div>
+</div>
+{% endblock %}
