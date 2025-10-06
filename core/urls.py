@@ -6,6 +6,7 @@ from core.views import (
     MovimientoCreateView,
     MovimientoListView,
     reporte_mensual_view,
+    generar_reporte_pdf_view,
     dashboard_data_api,
     exportar_excel_view,
     registro_view,
@@ -28,6 +29,7 @@ urlpatterns = [
     path('movimientos/', MovimientoListView.as_view(), name='movimiento_list'),
     path('movimientos/<int:pk>/anular/', anular_movimiento_view, name='anular_movimiento'),
     path('reportes/mensual/', reporte_mensual_view, name='reporte_mensual'),
+    path('reportes/generar-pdf/', generar_reporte_pdf_view, name='generar_reporte_pdf'),
     path('api/dashboard-data/', dashboard_data_api, name='dashboard_data_api'),
     path('exportar/excel/', exportar_excel_view, name='exportar_excel'),
 ]

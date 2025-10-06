@@ -1,0 +1,134 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Reportes Mensuales - {{ APP_NAME }}{% endblock %}
+{% block page_title %}Reportes Mensuales{% endblock %}
+
+{% block content %}
+<div class="row">
+    <div class="col-lg-8 mx-auto">
+        <div class="card shadow">
+            <div class="card-header bg-primary text-white">
+                <h4 class="mb-0">
+                    <i class="bi bi-file-earmark-pdf"></i> Generar Reporte Mensual
+                </h4>
+            </div>
+            <div class="card-body">
+                <div class="alert alert-info">
+                    <i class="bi bi-info-circle"></i>
+                    <strong>Reportes Profesionales en PDF</strong><br>
+                    Genera reportes mensuales completos con el resumen financiero, detalle de movimientos y gráficos.
+                    Ideal para presentar a la congregación o para archivo.
+                </div>
+
+                <form method="get" action="{% url 'generar_reporte_pdf' %}" target="_blank">
+                    <div class="row">
+                        <div class="col-md-6 mb-3">
+                            <label for="mes" class="form-label">
+                                <i class="bi bi-calendar3"></i> Selecciona el Mes
+                            </label>
+                            <input type="month" name="mes" id="mes" class="form-control" value="{{ mes_actual }}" required>
+                            <small class="form-text text-muted">
+                                Selecciona el mes para el cual deseas generar el reporte
+                            </small>
+                        </div>
+                        <div class="col-md-6 mb-3 d-flex align-items-end">
+                            <button type="submit" class="btn btn-primary btn-lg w-100">
+                                <i class="bi bi-download"></i> Descargar Reporte PDF
+                            </button>
+                        </div>
+                    </div>
+                </form>
+
+                <hr class="my-4">
+
+                <h5 class="mb-3"><i class="bi bi-list-check"></i> El reporte incluye:</h5>
+                <div class="row">
+                    <div class="col-md-6">
+                        <ul class="list-unstyled">
+                            <li class="mb-2">
+                                <i class="bi bi-check-circle-fill text-success"></i>
+                                Información de la iglesia
+                            </li>
+                            <li class="mb-2">
+                                <i class="bi bi-check-circle-fill text-success"></i>
+                                Resumen financiero mensual
+                            </li>
+                            <li class="mb-2">
+                                <i class="bi bi-check-circle-fill text-success"></i>
+                                Saldo inicial y final
+                            </li>
+                            <li class="mb-2">
+                                <i class="bi bi-check-circle-fill text-success"></i>
+                                Total de ingresos y egresos
+                            </li>
+                        </ul>
+                    </div>
+                    <div class="col-md-6">
+                        <ul class="list-unstyled">
+                            <li class="mb-2">
+                                <i class="bi bi-check-circle-fill text-success"></i>
+                                Detalle completo de movimientos
+                            </li>
+                            <li class="mb-2">
+                                <i class="bi bi-check-circle-fill text-success"></i>
+                                Resumen por categorías
+                            </li>
+                            <li class="mb-2">
+                                <i class="bi bi-check-circle-fill text-success"></i>
+                                Fecha de generación
+                            </li>
+                            <li class="mb-2">
+                                <i class="bi bi-check-circle-fill text-success"></i>
+                                Formato profesional
+                            </li>
+                        </ul>
+                    </div>
+                </div>
+
+                <div class="alert alert-warning mt-3">
+                    <i class="bi bi-exclamation-triangle"></i>
+                    <strong>Nota:</strong> Los movimientos anulados no se incluyen en los reportes.
+                </div>
+            </div>
+        </div>
+
+        <!-- Reportes rápidos -->
+        <div class="card shadow mt-4">
+            <div class="card-header bg-secondary text-white">
+                <h5 class="mb-0">
+                    <i class="bi bi-lightning-fill"></i> Acceso Rápido
+                </h5>
+            </div>
+            <div class="card-body">
+                <div class="row g-3">
+                    <div class="col-md-4">
+                        <a href="{% url 'generar_reporte_pdf' %}?mes={{ mes_actual }}"
+                           target="_blank"
+                           class="btn btn-outline-primary w-100">
+                            <i class="bi bi-calendar"></i><br>
+                            Mes Actual
+                        </a>
+                    </div>
+                    <div class="col-md-4">
+                        <a href="{% url 'generar_reporte_pdf' %}?mes={{ mes_anterior }}"
+                           target="_blank"
+                           class="btn btn-outline-secondary w-100">
+                            <i class="bi bi-calendar-minus"></i><br>
+                            Mes Anterior
+                        </a>
+                    </div>
+                    <div class="col-md-4">
+                        <a href="{% url 'generar_reporte_pdf' %}?mes={{ mes_anterior_2 }}"
+                           target="_blank"
+                           class="btn btn-outline-secondary w-100">
+                            <i class="bi bi-calendar-minus"></i><br>
+                            Hace 2 Meses
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

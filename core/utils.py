@@ -100,33 +100,74 @@ def calcular_saldo_mes(iglesia, año_mes):
 
 def generar_reporte_pdf(iglesia, año_mes):
     """
-    Genera un PDF con el reporte mensual de movimientos
+    Genera un PDF profesional con el reporte mensual de movimientos
     """
-    from core.models import Movimiento, SaldoMensual, CategoriaEgreso
+    from core.models import Movimiento, SaldoMensual, CategoriaEgreso, CategoriaIngreso
+    from django.db.models import Sum
 
     buffer = BytesIO()
-    doc = SimpleDocTemplate(buffer, pagesize=letter)
+    doc = SimpleDocTemplate(buffer, pagesize=letter, topMargin=0.5*inch, bottomMargin=0.75*inch)
     elements = []
 
     styles = getSampleStyleSheet()
+
+    # Estilos personalizados
     title_style = ParagraphStyle(
         'CustomTitle',
         parent=styles['Heading1'],
-        fontSize=24,
-        textColor=colors.HexColor('#2c3e50'),
-        spaceAfter=30,
+        fontSize=28,
+        textColor=colors.HexColor('#6366f1'),
+        spaceAfter=10,
+        alignment=TA_CENTER,
+        fontName='Helvetica-Bold'
+    )
+
+    subtitle_style = ParagraphStyle(
+        'CustomSubtitle',
+        parent=styles['Normal'],
+        fontSize=16,
+        textColor=colors.HexColor('#4f46e5'),
+        spaceAfter=5,
+        alignment=TA_CENTER,
+        fontName='Helvetica-Bold'
+    )
+
+    info_style = ParagraphStyle(
+        'InfoStyle',
+        parent=styles['Normal'],
+        fontSize=10,
+        textColor=colors.HexColor('#6b7280'),
         alignment=TA_CENTER
     )
 
-    # Título
-    title = Paragraph(f"OIKOS - Reporte Mensual", title_style)
+    # Encabezado con información
+    title = Paragraph("OIKOS - Sistema de Gestión Financiera", title_style)
     elements.append(title)
 
-    subtitle = Paragraph(
-        f"{iglesia.nombre}<br/>{año_mes}",
-        ParagraphStyle('subtitle', parent=styles['Normal'], fontSize=14, alignment=TA_CENTER)
-    )
+    subtitle = Paragraph(f"Reporte Mensual", subtitle_style)
     elements.append(subtitle)
+
+    # Información de la iglesia
+    año, mes = año_mes.split('-')
+    meses_es = ['', 'Enero', 'Febrero', 'Marzo', 'Abril', 'Mayo', 'Junio',
+                'Julio', 'Agosto', 'Septiembre', 'Octubre', 'Noviembre', 'Diciembre']
+    mes_nombre = meses_es[int(mes)]
+
+    info_iglesia = Paragraph(
+        f"<b>{iglesia.nombre}</b><br/>"
+        f"{iglesia.direccion if iglesia.direccion else ''}<br/>"
+        f"Período: {mes_nombre} {año}",
+        info_style
+    )
+    elements.append(info_iglesia)
+
+    # Fecha de generación
+    fecha_generacion = datetime.now().strftime('%d/%m/%Y %H:%M')
+    info_generacion = Paragraph(
+        f"<i>Generado: {fecha_generacion}</i>",
+        ParagraphStyle('small', parent=info_style, fontSize=8, textColor=colors.HexColor('#9ca3af'))
+    )
+    elements.append(info_generacion)
     elements.append(Spacer(1, 20))
 
     # Obtener saldo mensual
@@ -135,71 +176,182 @@ def generar_reporte_pdf(iglesia, año_mes):
     except SaldoMensual.DoesNotExist:
         saldo = calcular_saldo_mes(iglesia, año_mes)
 
-    # Tabla de resumen
+    # Tabla de resumen financiero
     data_resumen = [
-        ['RESUMEN MENSUAL', ''],
+        ['RESUMEN FINANCIERO', ''],
         ['Saldo Inicial', formato_pesos(saldo.saldo_inicial)],
-        ['Total Ingresos', formato_pesos(saldo.total_ingresos)],
-        ['Total Egresos', formato_pesos(saldo.total_egresos)],
+        ['(+) Total Ingresos', formato_pesos(saldo.total_ingresos)],
+        ['(-) Total Egresos', formato_pesos(saldo.total_egresos)],
         ['Saldo Final', formato_pesos(saldo.saldo_final)],
     ]
 
-    table_resumen = Table(data_resumen, colWidths=[4*inch, 2*inch])
+    table_resumen = Table(data_resumen, colWidths=[4.5*inch, 2*inch])
     table_resumen.setStyle(TableStyle([
-        ('BACKGROUND', (0, 0), (-1, 0), colors.HexColor('#3498db')),
+        ('BACKGROUND', (0, 0), (-1, 0), colors.HexColor('#6366f1')),
         ('TEXTCOLOR', (0, 0), (-1, 0), colors.whitesmoke),
         ('ALIGN', (0, 0), (-1, -1), 'LEFT'),
         ('ALIGN', (1, 0), (1, -1), 'RIGHT'),
         ('FONTNAME', (0, 0), (-1, 0), 'Helvetica-Bold'),
-        ('FONTSIZE', (0, 0), (-1, 0), 12),
+        ('FONTSIZE', (0, 0), (-1, 0), 14),
         ('BOTTOMPADDING', (0, 0), (-1, 0), 12),
-        ('BACKGROUND', (0, 1), (-1, -1), colors.beige),
-        ('GRID', (0, 0), (-1, -1), 1, colors.black),
+        ('TOPPADDING', (0, 0), (-1, 0), 12),
+        ('BACKGROUND', (0, 1), (-1, -2), colors.HexColor('#f9fafb')),
+        ('GRID', (0, 0), (-1, -1), 1, colors.HexColor('#e5e7eb')),
         ('FONTNAME', (0, -1), (-1, -1), 'Helvetica-Bold'),
-        ('BACKGROUND', (0, -1), (-1, -1), colors.HexColor('#ecf0f1')),
+        ('FONTSIZE', (0, -1), (-1, -1), 12),
+        ('BACKGROUND', (0, -1), (-1, -1), colors.HexColor('#dbeafe')),
+        ('TEXTCOLOR', (0, -1), (-1, -1), colors.HexColor('#1e40af')),
+        ('TOPPADDING', (0, 1), (-1, -1), 8),
+        ('BOTTOMPADDING', (0, 1), (-1, -1), 8),
     ]))
 
     elements.append(table_resumen)
-    elements.append(Spacer(1, 30))
+    elements.append(Spacer(1, 20))
 
-    # Movimientos del mes
-    año, mes = año_mes.split('-')
+    # Resumen por categorías de INGRESOS
+    ingresos_por_categoria = Movimiento.objects.filter(
+        iglesia=iglesia,
+        tipo='INGRESO',
+        fecha__year=int(año),
+        fecha__month=int(mes),
+        anulado=False
+    ).values('categoria_ingreso__nombre').annotate(
+        total=Sum('monto')
+    ).order_by('-total')
+
+    if ingresos_por_categoria:
+        elements.append(Paragraph("INGRESOS POR CATEGORÍA", styles['Heading3']))
+        elements.append(Spacer(1, 10))
+
+        data_ingresos_cat = [['Categoría', 'Monto']]
+        for item in ingresos_por_categoria:
+            data_ingresos_cat.append([
+                item['categoria_ingreso__nombre'],
+                formato_pesos(item['total'])
+            ])
+
+        table_ingresos_cat = Table(data_ingresos_cat, colWidths=[4.5*inch, 2*inch])
+        table_ingresos_cat.setStyle(TableStyle([
+            ('BACKGROUND', (0, 0), (-1, 0), colors.HexColor('#10b981')),
+            ('TEXTCOLOR', (0, 0), (-1, 0), colors.whitesmoke),
+            ('ALIGN', (0, 0), (-1, -1), 'LEFT'),
+            ('ALIGN', (1, 0), (1, -1), 'RIGHT'),
+            ('FONTNAME', (0, 0), (-1, 0), 'Helvetica-Bold'),
+            ('FONTSIZE', (0, 0), (-1, 0), 11),
+            ('BOTTOMPADDING', (0, 0), (-1, 0), 10),
+            ('TOPPADDING', (0, 0), (-1, 0), 10),
+            ('GRID', (0, 0), (-1, -1), 1, colors.HexColor('#e5e7eb')),
+            ('ROWBACKGROUNDS', (0, 1), (-1, -1), [colors.white, colors.HexColor('#f0fdf4')]),
+            ('TOPPADDING', (0, 1), (-1, -1), 6),
+            ('BOTTOMPADDING', (0, 1), (-1, -1), 6),
+        ]))
+
+        elements.append(table_ingresos_cat)
+        elements.append(Spacer(1, 20))
+
+    # Resumen por categorías de EGRESOS
+    egresos_por_categoria = Movimiento.objects.filter(
+        iglesia=iglesia,
+        tipo='EGRESO',
+        fecha__year=int(año),
+        fecha__month=int(mes),
+        anulado=False
+    ).values('categoria_egreso__nombre').annotate(
+        total=Sum('monto')
+    ).order_by('-total')
+
+    if egresos_por_categoria:
+        elements.append(Paragraph("EGRESOS POR CATEGORÍA", styles['Heading3']))
+        elements.append(Spacer(1, 10))
+
+        data_egresos_cat = [['Categoría', 'Monto']]
+        for item in egresos_por_categoria:
+            data_egresos_cat.append([
+                item['categoria_egreso__nombre'],
+                formato_pesos(item['total'])
+            ])
+
+        table_egresos_cat = Table(data_egresos_cat, colWidths=[4.5*inch, 2*inch])
+        table_egresos_cat.setStyle(TableStyle([
+            ('BACKGROUND', (0, 0), (-1, 0), colors.HexColor('#ef4444')),
+            ('TEXTCOLOR', (0, 0), (-1, 0), colors.whitesmoke),
+            ('ALIGN', (0, 0), (-1, -1), 'LEFT'),
+            ('ALIGN', (1, 0), (1, -1), 'RIGHT'),
+            ('FONTNAME', (0, 0), (-1, 0), 'Helvetica-Bold'),
+            ('FONTSIZE', (0, 0), (-1, 0), 11),
+            ('BOTTOMPADDING', (0, 0), (-1, 0), 10),
+            ('TOPPADDING', (0, 0), (-1, 0), 10),
+            ('GRID', (0, 0), (-1, -1), 1, colors.HexColor('#e5e7eb')),
+            ('ROWBACKGROUNDS', (0, 1), (-1, -1), [colors.white, colors.HexColor('#fef2f2')]),
+            ('TOPPADDING', (0, 1), (-1, -1), 6),
+            ('BOTTOMPADDING', (0, 1), (-1, -1), 6),
+        ]))
+
+        elements.append(table_egresos_cat)
+        elements.append(Spacer(1, 20))
+
+    # Detalle de movimientos del mes (excluye anulados)
     movimientos = Movimiento.objects.filter(
         iglesia=iglesia,
         fecha__year=int(año),
-        fecha__month=int(mes)
-    ).order_by('fecha')
+        fecha__month=int(mes),
+        anulado=False
+    ).order_by('fecha', 'tipo')
 
     if movimientos.exists():
-        elements.append(Paragraph("DETALLE DE MOVIMIENTOS", styles['Heading2']))
-        elements.append(Spacer(1, 12))
+        elements.append(Paragraph("DETALLE DE MOVIMIENTOS", styles['Heading3']))
+        elements.append(Spacer(1, 10))
 
         data_movimientos = [['Fecha', 'Tipo', 'Categoría', 'Concepto', 'Monto']]
 
         for mov in movimientos:
             categoria = mov.categoria_ingreso or mov.categoria_egreso
+            tipo_color = 'green' if mov.tipo == 'INGRESO' else 'red'
+
             data_movimientos.append([
-                mov.fecha.strftime('%d/%m/%Y'),
-                mov.get_tipo_display(),
+                mov.fecha.strftime('%d/%m'),
+                Paragraph(f'<font color="{tipo_color}">{mov.get_tipo_display()}</font>', styles['Normal']),
                 str(categoria),
-                mov.concepto[:40] + '...' if len(mov.concepto) > 40 else mov.concepto,
+                mov.concepto[:45] + '...' if len(mov.concepto) > 45 else mov.concepto,
                 formato_pesos(mov.monto)
             ])
 
-        table_movimientos = Table(data_movimientos, colWidths=[1*inch, 1*inch, 1.5*inch, 2.5*inch, 1*inch])
+        table_movimientos = Table(data_movimientos, colWidths=[0.7*inch, 0.9*inch, 1.4*inch, 2.5*inch, 1*inch])
         table_movimientos.setStyle(TableStyle([
-            ('BACKGROUND', (0, 0), (-1, 0), colors.HexColor('#34495e')),
+            ('BACKGROUND', (0, 0), (-1, 0), colors.HexColor('#374151')),
             ('TEXTCOLOR', (0, 0), (-1, 0), colors.whitesmoke),
             ('ALIGN', (0, 0), (-1, -1), 'LEFT'),
             ('ALIGN', (4, 0), (4, -1), 'RIGHT'),
+            ('ALIGN', (0, 0), (0, -1), 'CENTER'),
             ('FONTNAME', (0, 0), (-1, 0), 'Helvetica-Bold'),
             ('FONTSIZE', (0, 0), (-1, 0), 10),
-            ('BOTTOMPADDING', (0, 0), (-1, 0), 12),
-            ('GRID', (0, 0), (-1, -1), 1, colors.black),
-            ('ROWBACKGROUNDS', (0, 1), (-1, -1), [colors.white, colors.lightgrey]),
+            ('FONTSIZE', (0, 1), (-1, -1), 9),
+            ('BOTTOMPADDING', (0, 0), (-1, 0), 10),
+            ('TOPPADDING', (0, 0), (-1, 0), 10),
+            ('GRID', (0, 0), (-1, -1), 0.5, colors.HexColor('#d1d5db')),
+            ('ROWBACKGROUNDS', (0, 1), (-1, -1), [colors.white, colors.HexColor('#f9fafb')]),
+            ('TOPPADDING', (0, 1), (-1, -1), 5),
+            ('BOTTOMPADDING', (0, 1), (-1, -1), 5),
+            ('VALIGN', (0, 0), (-1, -1), 'MIDDLE'),
         ]))
 
         elements.append(table_movimientos)
+
+    # Pie de página
+    elements.append(Spacer(1, 30))
+    footer_style = ParagraphStyle(
+        'Footer',
+        parent=styles['Normal'],
+        fontSize=8,
+        textColor=colors.HexColor('#9ca3af'),
+        alignment=TA_CENTER
+    )
+    footer = Paragraph(
+        "<i>Este reporte fue generado automáticamente por OIKOS - Sistema de Gestión Financiera para Iglesias<br/>"
+        "Los movimientos anulados no están incluidos en este reporte</i>",
+        footer_style
+    )
+    elements.append(footer)
 
     # Construir PDF
     doc.build(elements)

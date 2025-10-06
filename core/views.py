@@ -298,7 +298,34 @@ class MovimientoListView(LoginRequiredMixin, ListView):
 @login_required
 def reporte_mensual_view(request):
     """
-    Vista para generar reporte PDF mensual
+    Vista para mostrar la página de reportes mensuales
+    """
+    # Si el usuario no tiene iglesia, redirigir a registro de iglesia
+    if request.user.is_authenticated:
+        if not request.user.is_staff and not request.user.is_superuser:
+            if not request.user.iglesia:
+                return redirect('registro_iglesia_google')
+
+    from dateutil.relativedelta import relativedelta
+
+    fecha_actual = datetime.now()
+    mes_actual = fecha_actual.strftime('%Y-%m')
+    mes_anterior = (fecha_actual - relativedelta(months=1)).strftime('%Y-%m')
+    mes_anterior_2 = (fecha_actual - relativedelta(months=2)).strftime('%Y-%m')
+
+    context = {
+        'mes_actual': mes_actual,
+        'mes_anterior': mes_anterior,
+        'mes_anterior_2': mes_anterior_2,
+    }
+
+    return render(request, 'core/reporte_mensual.html', context)
+
+
+@login_required
+def generar_reporte_pdf_view(request):
+    """
+    Vista para generar y descargar reporte PDF mensual
     """
     # Si el usuario no tiene iglesia, redirigir a registro de iglesia
     if request.user.is_authenticated:
