@@ -32,7 +32,7 @@ environ.Env.read_env(BASE_DIR / '.env')
 SECRET_KEY = env('SECRET_KEY', default='django-insecure-+e8*mh7g5xze7f+@-9s=b3@(=#55q*2h#rx-ko@ag+vzp+a@z@')
 
 # SECURITY WARNING: don't run with debug turned on in production!
-DEBUG = env('DEBUG')
+DEBUG = env.bool('DEBUG', default=True)
 
 ALLOWED_HOSTS = env.list('ALLOWED_HOSTS', default=['*'])
 # Always allow Railway healthcheck
