@@ -35,6 +35,9 @@ SECRET_KEY = env('SECRET_KEY', default='django-insecure-+e8*mh7g5xze7f+@-9s=b3@(
 DEBUG = env('DEBUG')
 
 ALLOWED_HOSTS = env.list('ALLOWED_HOSTS', default=['*'])
+# Always allow Railway healthcheck
+if 'healthcheck.railway.app' not in ALLOWED_HOSTS:
+    ALLOWED_HOSTS.append('healthcheck.railway.app')
 
 # Application name
 APP_NAME = env('APP_NAME', default='OIKOS')
