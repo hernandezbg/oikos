@@ -39,6 +39,12 @@ ALLOWED_HOSTS = env.list('ALLOWED_HOSTS', default=['*'])
 if 'healthcheck.railway.app' not in ALLOWED_HOSTS:
     ALLOWED_HOSTS.append('healthcheck.railway.app')
 
+# CSRF Trusted Origins (for HTTPS)
+CSRF_TRUSTED_ORIGINS = env.list('CSRF_TRUSTED_ORIGINS', default=[])
+# Add Railway domain if running on Railway
+if env('RAILWAY_ENVIRONMENT', default=None):
+    CSRF_TRUSTED_ORIGINS.append('https://oikos-production.up.railway.app')
+
 # Application name
 APP_NAME = env('APP_NAME', default='OIKOS')
 
