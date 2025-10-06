@@ -28,8 +28,9 @@
             <button class="btn btn-link text-white d-md-none me-2" type="button" id="sidebarToggle">
                 <i class="bi bi-list fs-4"></i>
             </button>
-            <a class="navbar-brand fw-bold" href="{% url 'dashboard' %}">
-                <i class="bi bi-house-heart-fill"></i> {{ APP_NAME }}
+            <a class="navbar-brand fw-bold d-flex align-items-center" href="{% url 'dashboard' %}">
+                <img src="{% static 'images/logo.png' %}" alt="OIKOS Logo" style="height: 40px; margin-right: 8px;">
+                {{ APP_NAME }}
             </a>
             <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
                 <span class="navbar-toggler-icon"></span>
