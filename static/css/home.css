@@ -126,56 +126,24 @@ html {
 /* Hero Image Container */
 .hero-image-container {
     position: relative;
-    height: 500px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    min-height: 500px;
 }
 
-.hero-mockup {
-    position: absolute;
-    top: 50%;
-    left: 50%;
-    transform: translate(-50%, -50%);
-    background: white;
-    padding: 3rem;
+.hero-image {
+    width: 100%;
+    max-width: 600px;
+    height: auto;
     border-radius: 2rem;
     box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.25);
     animation: float 6s ease-in-out infinite;
 }
 
 @keyframes float {
-    0%, 100% { transform: translate(-50%, -50%) translateY(0px); }
-    50% { transform: translate(-50%, -50%) translateY(-20px); }
-}
-
-.floating-card {
-    position: absolute;
-    background: white;
-    padding: 1.5rem;
-    border-radius: 1rem;
-    box-shadow: 0 10px 25px rgba(0, 0, 0, 0.1);
-    animation: floatCard 4s ease-in-out infinite;
-}
-
-.card-1 {
-    top: 10%;
-    left: 0;
-    animation-delay: 0s;
-}
-
-.card-2 {
-    top: 50%;
-    right: 0;
-    animation-delay: 1s;
-}
-
-.card-3 {
-    bottom: 10%;
-    left: 10%;
-    animation-delay: 2s;
-}
-
-@keyframes floatCard {
     0%, 100% { transform: translateY(0px); }
-    50% { transform: translateY(-15px); }
+    50% { transform: translateY(-20px); }
 }
 
 /* Features Section */
@@ -424,12 +392,14 @@ footer a:hover {
 }
 
 @media (max-width: 767.98px) {
-    .hero-mockup {
-        padding: 2rem;
+    .hero-image-container {
+        min-height: 300px;
+        margin-top: 2rem;
     }
 
-    .floating-card {
-        display: none;
+    .hero-image {
+        max-width: 100%;
+        border-radius: 1rem;
     }
 
     .donation-card {

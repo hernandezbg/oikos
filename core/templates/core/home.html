@@ -22,8 +22,9 @@
     <!-- Navigation -->
     <nav class="navbar navbar-expand-lg navbar-light bg-white fixed-top shadow-sm">
         <div class="container">
-            <a class="navbar-brand fw-bold fs-3" href="#">
-                <i class="bi bi-house-heart-fill text-primary"></i> OIKOS
+            <a class="navbar-brand fw-bold fs-3 d-flex align-items-center" href="#">
+                <img src="{% static 'images/logo.png' %}" alt="OIKOS Logo" style="height: 50px; margin-right: 10px;">
+                OIKOS
             </a>
             <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
                 <span class="navbar-toggler-icon"></span>
@@ -110,30 +111,7 @@
                 </div>
                 <div class="col-lg-6">
                     <div class="hero-image-container">
-                        <div class="floating-card card-1">
-                            <i class="bi bi-cash-stack fs-1 text-success"></i>
-                            <div class="mt-2">
-                                <small class="text-muted">Ingresos del Mes</small>
-                                <h5 class="mb-0">$2.450.000</h5>
-                            </div>
-                        </div>
-                        <div class="floating-card card-2">
-                            <i class="bi bi-graph-up-arrow fs-1 text-primary"></i>
-                            <div class="mt-2">
-                                <small class="text-muted">Saldo Actual</small>
-                                <h5 class="mb-0">$8.750.000</h5>
-                            </div>
-                        </div>
-                        <div class="floating-card card-3">
-                            <i class="bi bi-file-earmark-check fs-1 text-info"></i>
-                            <div class="mt-2">
-                                <small class="text-muted">Reportes</small>
-                                <h5 class="mb-0">Automáticos</h5>
-                            </div>
-                        </div>
-                        <div class="hero-mockup">
-                            <i class="bi bi-laptop display-1 text-primary"></i>
-                        </div>
+                        <img src="{% static 'images/hero.png' %}" alt="OIKOS Dashboard" class="hero-image img-fluid">
                     </div>
                 </div>
             </div>

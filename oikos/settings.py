@@ -212,8 +212,8 @@ SOCIAL_AUTH_GOOGLE_OAUTH2_SCOPE = [
 SOCIAL_AUTH_GOOGLE_OAUTH2_EXTRA_DATA = ['first_name', 'last_name', 'email']
 
 # Configuración de URLs de redirección
-# Forzar HTTPS en Railway (Railway siempre usa HTTPS)
-SOCIAL_AUTH_REDIRECT_IS_HTTPS = True
+# Forzar HTTPS solo en producción (Railway), no en desarrollo local
+SOCIAL_AUTH_REDIRECT_IS_HTTPS = not DEBUG
 
 # Pipelines de autenticación
 SOCIAL_AUTH_PIPELINE = (

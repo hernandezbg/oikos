@@ -35,3 +35,4 @@ Thumbs.db
 # Migrations (opcional - algunos prefieren commitearlas)
 # */migrations/*.py
 # !*/migrations/__init__.py
+*:Zone.Identifier

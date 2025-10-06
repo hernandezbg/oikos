@@ -80,15 +80,14 @@ document.addEventListener('DOMContentLoaded', function() {
         });
     });
 
-    // Parallax effect for hero section
+    // Parallax effect for hero image
     window.addEventListener('scroll', function() {
-        const scrolled = window.pageYOffset;
-        const parallaxElements = document.querySelectorAll('.floating-card');
-
-        parallaxElements.forEach((el, index) => {
-            const speed = 0.5 + (index * 0.1);
-            el.style.transform = `translateY(${scrolled * speed * 0.1}px)`;
-        });
+        const heroImage = document.querySelector('.hero-image');
+        if (heroImage) {
+            const scrolled = window.pageYOffset;
+            const speed = 0.3;
+            heroImage.style.transform = `translateY(${scrolled * speed * 0.1}px)`;
+        }
     });
 
     // Copy to clipboard for donation data
