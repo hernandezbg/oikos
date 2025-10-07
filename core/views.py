@@ -573,3 +573,96 @@ def anular_movimiento_view(request, pk):
         return redirect('movimiento_list')
 
     return redirect('movimiento_list')
+
+
+@login_required
+def gestionar_usuarios_view(request):
+    """
+    Vista para que el ADMIN gestione usuarios y códigos de invitación de su iglesia
+    """
+    # Verificar que el usuario sea ADMIN
+    if not request.user.puede_gestionar_usuarios:
+        messages.error(request, 'No tienes permisos para acceder a esta sección.')
+        return redirect('dashboard')
+
+    # Verificar que tenga iglesia
+    if not request.user.iglesia:
+        return redirect('seleccionar_tipo_registro')
+
+    from core.models import CodigoInvitacion, Usuario
+    from core.forms_invitacion import GenerarCodigoInvitacionForm
+
+    iglesia = request.user.iglesia
+
+    # Procesar generación de nuevo código
+    if request.method == 'POST' and 'generar_codigo' in request.POST:
+        form = GenerarCodigoInvitacionForm(request.POST)
+        if form.is_valid():
+            rol = form.cleaned_data['rol']
+            dias_expiracion = form.cleaned_data['dias_expiracion']
+            usos_maximos = form.cleaned_data['usos_maximos']
+
+            # Crear código
+            codigo = CodigoInvitacion.crear(
+                iglesia=iglesia,
+                rol=rol,
+                creado_por=request.user,
+                dias_expiracion=dias_expiracion
+            )
+            codigo.usos_maximos = usos_maximos
+            codigo.save()
+
+            messages.success(
+                request,
+                f'Código generado: <strong>{codigo.codigo}</strong> (válido por {dias_expiracion} días)',
+                extra_tags='safe'
+            )
+            return redirect('gestionar_usuarios')
+    else:
+        form = GenerarCodigoInvitacionForm()
+
+    # Procesar revocación de código
+    if request.method == 'POST' and 'revocar_codigo' in request.POST:
+        codigo_id = request.POST.get('codigo_id')
+        try:
+            codigo = CodigoInvitacion.objects.get(id=codigo_id, iglesia=iglesia)
+            codigo.activo = False
+            codigo.save()
+            messages.success(request, f'Código {codigo.codigo} revocado exitosamente.')
+        except CodigoInvitacion.DoesNotExist:
+            messages.error(request, 'Código no encontrado.')
+        return redirect('gestionar_usuarios')
+
+    # Obtener datos para el template
+    usuarios = Usuario.objects.filter(iglesia=iglesia).order_by('-date_joined')
+
+    codigos_activos = CodigoInvitacion.objects.filter(
+        iglesia=iglesia,
+        activo=True
+    ).filter(
+        fecha_expiracion__gt=timezone.now()
+    ).order_by('-fecha_creacion')
+
+    codigos_usados = CodigoInvitacion.objects.filter(
+        iglesia=iglesia,
+        usado_por__isnull=False
+    ).order_by('-fecha_uso')
+
+    codigos_expirados = CodigoInvitacion.objects.filter(
+        iglesia=iglesia
+    ).exclude(
+        id__in=codigos_activos.values_list('id', flat=True)
+    ).exclude(
+        id__in=codigos_usados.values_list('id', flat=True)
+    ).order_by('-fecha_creacion')
+
+    context = {
+        'form': form,
+        'usuarios': usuarios,
+        'codigos_activos': codigos_activos,
+        'codigos_usados': codigos_usados,
+        'codigos_expirados': codigos_expirados,
+        'total_usuarios': usuarios.count(),
+    }
+
+    return render(request, 'core/gestionar_usuarios.html', context)

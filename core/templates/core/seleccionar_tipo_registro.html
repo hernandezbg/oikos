@@ -1,0 +1,102 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Registro - {{ APP_NAME }}{% endblock %}
+
+{% block unauthenticated_content %}
+<div class="container py-5">
+    <div class="row justify-content-center">
+        <div class="col-md-8 col-lg-6">
+            <div class="card shadow-lg">
+                <div class="card-header bg-primary text-white text-center py-4">
+                    <img src="{% static 'images/logo.png' %}" alt="OIKOS Logo" style="height: 80px; margin-bottom: 0.5rem;">
+                    <h1 class="display-6 mb-0">¡Bienvenido a OIKOS!</h1>
+                    <p class="mb-0 mt-2">{{ user.first_name }} {{ user.last_name }}</p>
+                </div>
+                <div class="card-body p-5">
+                    <h4 class="text-center mb-4">¿Cómo deseas continuar?</h4>
+
+                    <form method="post">
+                        {% csrf_token %}
+
+                        <div class="mb-4">
+                            {% for choice in form.tipo %}
+                            <div class="card mb-3 tipo-registro-card" style="cursor: pointer; transition: all 0.3s;">
+                                <div class="card-body p-4">
+                                    <div class="form-check">
+                                        {{ choice.tag }}
+                                        <label class="form-check-label w-100" for="{{ choice.id_for_label }}" style="cursor: pointer;">
+                                            <div class="d-flex align-items-start">
+                                                <div class="flex-shrink-0 me-3">
+                                                    {% if choice.choice_value == 'crear_iglesia' %}
+                                                        <i class="bi bi-building text-primary" style="font-size: 2.5rem;"></i>
+                                                    {% else %}
+                                                        <i class="bi bi-ticket-perforated text-success" style="font-size: 2.5rem;"></i>
+                                                    {% endif %}
+                                                </div>
+                                                <div class="flex-grow-1">
+                                                    <h5 class="mb-2">
+                                                        {% if choice.choice_value == 'crear_iglesia' %}
+                                                            Crear Nueva Iglesia
+                                                        {% else %}
+                                                            Unirme con Código
+                                                        {% endif %}
+                                                    </h5>
+                                                    <p class="text-muted mb-0 small">
+                                                        {% if choice.choice_value == 'crear_iglesia' %}
+                                                            Soy el primer usuario de mi iglesia y seré el <strong>Administrador</strong>
+                                                        {% else %}
+                                                            Ya hay usuarios de mi iglesia registrados y tengo un código de invitación
+                                                        {% endif %}
+                                                    </p>
+                                                </div>
+                                            </div>
+                                        </label>
+                                    </div>
+                                </div>
+                            </div>
+                            {% endfor %}
+                        </div>
+
+                        <div class="d-grid">
+                            <button type="submit" class="btn btn-primary btn-lg">
+                                <i class="bi bi-arrow-right-circle"></i> Continuar
+                            </button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<style>
+.tipo-registro-card:hover {
+    border-color: var(--bs-primary) !important;
+    box-shadow: 0 4px 12px rgba(99, 102, 241, 0.3) !important;
+}
+
+.form-check-input:checked ~ .form-check-label {
+    color: var(--bs-primary);
+}
+
+.tipo-registro-card:has(.form-check-input:checked) {
+    border-color: var(--bs-primary) !important;
+    background-color: rgba(99, 102, 241, 0.05);
+}
+</style>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // Click en toda la tarjeta selecciona el radio
+    document.querySelectorAll('.tipo-registro-card').forEach(card => {
+        card.addEventListener('click', function() {
+            const radio = this.querySelector('input[type="radio"]');
+            if (radio) {
+                radio.checked = true;
+            }
+        });
+    });
+});
+</script>
+{% endblock %}
