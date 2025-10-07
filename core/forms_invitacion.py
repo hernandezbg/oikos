@@ -78,9 +78,9 @@ class SeleccionTipoRegistroForm(forms.Form):
 
     tipo = forms.ChoiceField(
         choices=[
-            ('crear_iglesia', 'Crear Nueva Iglesia (soy el primero de mi iglesia)'),
-            ('usar_codigo', 'Unirme con Código de Invitación (ya hay usuarios de mi iglesia)'),
+            ('crear_iglesia', 'Registrarme por primera vez'),
+            ('usar_codigo', 'Ya tengo un código de invitación'),
         ],
         widget=forms.RadioSelect(attrs={'class': 'form-check-input'}),
-        label='¿Cómo deseas registrarte?'
+        label='¿Cómo deseas continuar?'
     )

@@ -3,7 +3,7 @@
 
 {% block title %}Registro - {{ APP_NAME }}{% endblock %}
 
-{% block unauthenticated_content %}
+{% block content %}
 <div class="container py-5">
     <div class="row justify-content-center">
         <div class="col-md-8 col-lg-6">
@@ -28,7 +28,7 @@
                                         <label class="form-check-label w-100" for="{{ choice.id_for_label }}" style="cursor: pointer;">
                                             <div class="d-flex align-items-start">
                                                 <div class="flex-shrink-0 me-3">
-                                                    {% if choice.choice_value == 'crear_iglesia' %}
+                                                    {% if forloop.first %}
                                                         <i class="bi bi-building text-primary" style="font-size: 2.5rem;"></i>
                                                     {% else %}
                                                         <i class="bi bi-ticket-perforated text-success" style="font-size: 2.5rem;"></i>
@@ -36,17 +36,17 @@
                                                 </div>
                                                 <div class="flex-grow-1">
                                                     <h5 class="mb-2">
-                                                        {% if choice.choice_value == 'crear_iglesia' %}
-                                                            Crear Nueva Iglesia
+                                                        {% if forloop.first %}
+                                                            Registrarme por Primera Vez
                                                         {% else %}
-                                                            Unirme con Código
+                                                            Ya Tengo un Código de Invitación
                                                         {% endif %}
                                                     </h5>
                                                     <p class="text-muted mb-0 small">
-                                                        {% if choice.choice_value == 'crear_iglesia' %}
-                                                            Soy el primer usuario de mi iglesia y seré el <strong>Administrador</strong>
+                                                        {% if forloop.first %}
+                                                            Daré de alta mi iglesia y seré el <strong>Administrador</strong> de la misma. Podré invitar a otros usuarios.
                                                         {% else %}
-                                                            Ya hay usuarios de mi iglesia registrados y tengo un código de invitación
+                                                            Mi iglesia ya está registrada y tengo un código para unirme a ella.
                                                         {% endif %}
                                                     </p>
                                                 </div>
