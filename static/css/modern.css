@@ -235,6 +235,43 @@ body {
     color: var(--gray-800);
 }
 
+/* Card Headers con colores específicos de Bootstrap */
+.card-header.bg-primary {
+    background: linear-gradient(135deg, var(--primary-color), var(--primary-dark)) !important;
+    color: white !important;
+    border-bottom-color: var(--primary-dark);
+}
+
+.card-header.bg-secondary {
+    background: linear-gradient(135deg, #6c757d, #5a6268) !important;
+    color: white !important;
+    border-bottom-color: #5a6268;
+}
+
+.card-header.bg-success {
+    background: linear-gradient(135deg, #10b981, #059669) !important;
+    color: white !important;
+    border-bottom-color: #059669;
+}
+
+.card-header.bg-warning {
+    background: linear-gradient(135deg, #f59e0b, #d97706) !important;
+    color: #78350f !important;
+    border-bottom-color: #d97706;
+}
+
+.card-header.bg-info {
+    background: linear-gradient(135deg, #06b6d4, #0891b2) !important;
+    color: white !important;
+    border-bottom-color: #0891b2;
+}
+
+.card-header.bg-danger {
+    background: linear-gradient(135deg, #ef4444, #dc2626) !important;
+    color: white !important;
+    border-bottom-color: #dc2626;
+}
+
 .card-body {
     padding: 1.5rem;
 }

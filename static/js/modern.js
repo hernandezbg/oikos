@@ -47,13 +47,57 @@ document.addEventListener('DOMContentLoaded', function() {
         });
     });
 
-    // Auto-dismiss alerts after 5 seconds
+    // Auto-dismiss alerts after 7 seconds with countdown
     const alerts = document.querySelectorAll('.alert:not(.alert-permanent)');
     alerts.forEach(alert => {
+        // Crear barra de progreso y contador
+        const countdownContainer = document.createElement('div');
+        countdownContainer.className = 'alert-countdown-container';
+        countdownContainer.innerHTML = `
+            <div class="d-flex align-items-center gap-2 mt-2 pt-2" style="border-top: 1px solid rgba(0,0,0,0.1);">
+                <small class="text-muted">Se cerrará en <strong class="countdown-number">7</strong>s</small>
+                <div class="progress flex-grow-1" style="height: 4px;">
+                    <div class="progress-bar countdown-progress" role="progressbar" style="width: 100%; transition: width 100ms linear;"></div>
+                </div>
+            </div>
+        `;
+        alert.appendChild(countdownContainer);
+
+        const countdownNumber = alert.querySelector('.countdown-number');
+        const progressBar = alert.querySelector('.countdown-progress');
+
+        let timeLeft = 7;
+        let progress = 100;
+
+        // Actualizar cada 100ms para animación suave
+        const interval = setInterval(() => {
+            progress -= (100 / 70); // 7000ms / 100ms = 70 pasos
+            progressBar.style.width = Math.max(0, progress) + '%';
+        }, 100);
+
+        // Actualizar contador cada segundo
+        const counterInterval = setInterval(() => {
+            timeLeft--;
+            if (timeLeft > 0) {
+                countdownNumber.textContent = timeLeft;
+            } else {
+                clearInterval(counterInterval);
+            }
+        }, 1000);
+
+        // Cerrar después de 7 segundos
         setTimeout(() => {
+            clearInterval(interval);
+            clearInterval(counterInterval);
             const bsAlert = new bootstrap.Alert(alert);
             bsAlert.close();
-        }, 5000);
+        }, 7000);
+
+        // Si el usuario cierra manualmente, limpiar intervalos
+        alert.addEventListener('closed.bs.alert', () => {
+            clearInterval(interval);
+            clearInterval(counterInterval);
+        });
     });
 
     // Smooth scroll to top button
