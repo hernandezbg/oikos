@@ -42,6 +42,156 @@ class Usuario(AbstractUser):
         iglesia_nombre = self.iglesia.nombre if self.iglesia else 'Sin iglesia'
         return f"{self.get_full_name() or self.username} ({iglesia_nombre})"
 
+    # Métodos de permisos
+    @property
+    def puede_gestionar_usuarios(self):
+        """Solo ADMIN puede gestionar usuarios de su iglesia"""
+        return self.rol == 'ADMIN'
+
+    @property
+    def puede_crear_movimientos(self):
+        """ADMIN y TESORERO pueden crear movimientos"""
+        return self.rol in ['ADMIN', 'TESORERO']
+
+    @property
+    def puede_anular_movimientos(self):
+        """ADMIN y TESORERO con permiso pueden anular"""
+        return self.puede_aprobar and self.rol in ['ADMIN', 'TESORERO']
+
+    @property
+    def puede_eliminar_movimientos(self):
+        """Solo ADMIN puede eliminar movimientos"""
+        return self.rol == 'ADMIN'
+
+    @property
+    def puede_generar_reportes(self):
+        """ADMIN, TESORERO y PASTOR pueden generar reportes"""
+        return self.rol in ['ADMIN', 'TESORERO', 'PASTOR']
+
+    @property
+    def puede_ver_detalles_completos(self):
+        """ADMIN, TESORERO y PASTOR ven detalles completos"""
+        return self.rol in ['ADMIN', 'TESORERO', 'PASTOR']
+
+
+class CodigoInvitacion(models.Model):
+    """
+    Código de invitación para unirse a una iglesia con un rol específico.
+    Formato: T4K8M9 (6 caracteres: Rol + 5 alfanuméricos)
+    """
+    ROLES_INVITACION = (
+        ('TESORERO', 'Tesorero'),
+        ('PASTOR', 'Pastor'),
+        ('COLABORADOR', 'Colaborador'),
+    )
+
+    iglesia = models.ForeignKey(Iglesia, on_delete=models.CASCADE, related_name='codigos_invitacion')
+    codigo = models.CharField(max_length=10, unique=True, db_index=True)
+    rol = models.CharField(max_length=20, choices=ROLES_INVITACION)
+
+    creado_por = models.ForeignKey(
+        'Usuario',
+        on_delete=models.CASCADE,
+        related_name='codigos_generados'
+    )
+    usado_por = models.ForeignKey(
+        'Usuario',
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name='codigo_usado'
+    )
+
+    fecha_creacion = models.DateTimeField(auto_now_add=True)
+    fecha_expiracion = models.DateTimeField()
+    fecha_uso = models.DateTimeField(null=True, blank=True)
+
+    activo = models.BooleanField(default=True)
+    usos_maximos = models.IntegerField(default=1)
+    usos_actuales = models.IntegerField(default=0)
+
+    class Meta:
+        verbose_name = 'Código de Invitación'
+        verbose_name_plural = 'Códigos de Invitación'
+        ordering = ['-fecha_creacion']
+
+    def __str__(self):
+        return f"{self.codigo} - {self.get_rol_display()} ({self.iglesia.nombre})"
+
+    @property
+    def esta_vigente(self):
+        """Verifica si el código está activo y no expiró"""
+        from django.utils import timezone
+        return (
+            self.activo and
+            self.usos_actuales < self.usos_maximos and
+            self.fecha_expiracion > timezone.now()
+        )
+
+    def usar_codigo(self, usuario):
+        """Marca el código como usado por un usuario"""
+        from django.utils import timezone
+
+        if not self.esta_vigente:
+            raise ValueError("Código no válido o expirado")
+
+        self.usado_por = usuario
+        self.fecha_uso = timezone.now()
+        self.usos_actuales += 1
+
+        if self.usos_actuales >= self.usos_maximos:
+            self.activo = False
+
+        self.save()
+
+    @staticmethod
+    def generar_codigo_unico():
+        """
+        Genera un código corto y único de 6 caracteres: T4K8M9
+        Usa solo caracteres no ambiguos (sin 0, O, 1, I, L)
+        """
+        import secrets
+        import string
+
+        # Caracteres sin ambigüedad: sin 0/O, 1/I/L
+        chars = '23456789ABCDEFGHJKMNPQRSTUVWXYZ'
+
+        while True:
+            # Generar 5 caracteres aleatorios
+            codigo_base = ''.join(secrets.choice(chars) for _ in range(5))
+
+            # El prefijo de rol se agregará después
+            # Por ahora solo verificamos que el formato base no exista
+            if not CodigoInvitacion.objects.filter(codigo__endswith=codigo_base).exists():
+                return codigo_base
+
+    @staticmethod
+    def crear(iglesia, rol, creado_por, dias_expiracion=30):
+        """Crea un nuevo código de invitación"""
+        from django.utils import timezone
+        from datetime import timedelta
+
+        # Prefijo según rol
+        prefijos = {
+            'TESORERO': 'T',
+            'PASTOR': 'P',
+            'COLABORADOR': 'C',
+        }
+
+        # Generar código único: T4K8M9
+        codigo_base = CodigoInvitacion.generar_codigo_unico()
+        codigo_completo = f"{prefijos[rol]}{codigo_base}"
+
+        return CodigoInvitacion.objects.create(
+            iglesia=iglesia,
+            codigo=codigo_completo,
+            rol=rol,
+            creado_por=creado_por,
+            fecha_expiracion=timezone.now() + timedelta(days=dias_expiracion),
+            activo=True,
+            usos_maximos=1
+        )
+
 
 class CategoriaIngreso(models.Model):
     iglesia = models.ForeignKey(Iglesia, on_delete=models.CASCADE, related_name='categorias_ingreso')

@@ -64,16 +64,45 @@ def registro_view(request):
 
 
 @login_required
-def registro_iglesia_google_view(request):
+def seleccionar_tipo_registro_view(request):
     """
-    Vista para registrar iglesia después de login con Google.
-    El usuario ya está autenticado pero no tiene iglesia asignada.
+    Vista para seleccionar si crear iglesia o unirse con código
     """
     # Si ya tiene iglesia, redirigir al dashboard
     if hasattr(request.user, 'iglesia') and request.user.iglesia:
         return redirect('dashboard')
 
     # Si es admin/staff, puede acceder al dashboard sin iglesia
+    if request.user.is_staff or request.user.is_superuser:
+        return redirect('dashboard')
+
+    from core.forms_invitacion import SeleccionTipoRegistroForm
+
+    if request.method == 'POST':
+        form = SeleccionTipoRegistroForm(request.POST)
+        if form.is_valid():
+            tipo = form.cleaned_data['tipo']
+            if tipo == 'crear_iglesia':
+                return redirect('registro_iglesia_google')
+            else:
+                return redirect('registro_con_codigo')
+    else:
+        form = SeleccionTipoRegistroForm()
+
+    return render(request, 'core/seleccionar_tipo_registro.html', {
+        'form': form,
+        'user': request.user
+    })
+
+
+def registro_iglesia_google_view(request):
+    """
+    Vista para crear nueva iglesia (primer usuario = ADMIN)
+    """
+    # Si ya tiene iglesia, redirigir al dashboard
+    if hasattr(request.user, 'iglesia') and request.user.iglesia:
+        return redirect('dashboard')
+
     if request.user.is_staff or request.user.is_superuser:
         return redirect('dashboard')
 
@@ -85,15 +114,16 @@ def registro_iglesia_google_view(request):
             iglesia.activa = True
             iglesia.save()
 
-            # Asignar iglesia al usuario y hacerlo tesorero
+            # Asignar iglesia al usuario y hacerlo ADMIN
             request.user.iglesia = iglesia
-            request.user.rol = 'TESORERO'
+            request.user.rol = 'ADMIN'  # El fundador es ADMIN
             request.user.puede_aprobar = True
             request.user.save()
 
             messages.success(
                 request,
-                f'¡Bienvenido a OIKOS! La iglesia {iglesia.nombre} ha sido registrada exitosamente.'
+                f'¡Bienvenido a OIKOS! La iglesia {iglesia.nombre} ha sido registrada exitosamente. '
+                f'Eres el administrador y puedes invitar a otros usuarios.'
             )
             return redirect('dashboard')
     else:
@@ -105,15 +135,61 @@ def registro_iglesia_google_view(request):
     })
 
 
+@login_required
+def registro_con_codigo_view(request):
+    """
+    Vista para unirse a una iglesia usando un código de invitación
+    """
+    # Si ya tiene iglesia, redirigir al dashboard
+    if hasattr(request.user, 'iglesia') and request.user.iglesia:
+        return redirect('dashboard')
+
+    from core.forms_invitacion import ValidarCodigoInvitacionForm
+    from core.models import CodigoInvitacion
+
+    if request.method == 'POST':
+        form = ValidarCodigoInvitacionForm(request.POST)
+        if form.is_valid():
+            codigo_obj = form.codigo_obj
+
+            # Asignar iglesia y rol al usuario
+            request.user.iglesia = codigo_obj.iglesia
+            request.user.rol = codigo_obj.rol
+
+            # Permisos según rol
+            if codigo_obj.rol in ['ADMIN', 'TESORERO']:
+                request.user.puede_aprobar = True
+            else:
+                request.user.puede_aprobar = False
+
+            request.user.save()
+
+            # Marcar código como usado
+            codigo_obj.usar_codigo(request.user)
+
+            messages.success(
+                request,
+                f'¡Bienvenido a OIKOS! Te has unido a {codigo_obj.iglesia.nombre} como {codigo_obj.get_rol_display()}.'
+            )
+            return redirect('dashboard')
+    else:
+        form = ValidarCodigoInvitacionForm()
+
+    return render(request, 'core/registro_con_codigo.html', {
+        'form': form,
+        'user': request.user
+    })
+
+
 class DashboardView(LoginRequiredMixin, TemplateView):
     template_name = 'core/dashboard.html'
 
     def dispatch(self, request, *args, **kwargs):
-        # Si el usuario no tiene iglesia, redirigir a registro de iglesia
+        # Si el usuario no tiene iglesia, redirigir a selección de tipo de registro
         if request.user.is_authenticated:
             if not request.user.is_staff and not request.user.is_superuser:
                 if not request.user.iglesia:
-                    return redirect('registro_iglesia_google')
+                    return redirect('seleccionar_tipo_registro')
         return super().dispatch(request, *args, **kwargs)
 
     def get_context_data(self, **kwargs):
@@ -212,11 +288,11 @@ class MovimientoCreateView(LoginRequiredMixin, CreateView):
     success_url = reverse_lazy('movimiento_list')
 
     def dispatch(self, request, *args, **kwargs):
-        # Si el usuario no tiene iglesia, redirigir a registro de iglesia
+        # Si el usuario no tiene iglesia, redirigir a selección de tipo de registro
         if request.user.is_authenticated:
             if not request.user.is_staff and not request.user.is_superuser:
                 if not request.user.iglesia:
-                    return redirect('registro_iglesia_google')
+                    return redirect('seleccionar_tipo_registro')
         return super().dispatch(request, *args, **kwargs)
 
     def get_form_kwargs(self):
@@ -237,11 +313,11 @@ class MovimientoListView(LoginRequiredMixin, ListView):
     paginate_by = 20
 
     def dispatch(self, request, *args, **kwargs):
-        # Si el usuario no tiene iglesia, redirigir a registro de iglesia
+        # Si el usuario no tiene iglesia, redirigir a selección de tipo de registro
         if request.user.is_authenticated:
             if not request.user.is_staff and not request.user.is_superuser:
                 if not request.user.iglesia:
-                    return redirect('registro_iglesia_google')
+                    return redirect('seleccionar_tipo_registro')
         return super().dispatch(request, *args, **kwargs)
 
     def get_queryset(self):
@@ -304,7 +380,7 @@ def reporte_mensual_view(request):
     if request.user.is_authenticated:
         if not request.user.is_staff and not request.user.is_superuser:
             if not request.user.iglesia:
-                return redirect('registro_iglesia_google')
+                return redirect('seleccionar_tipo_registro')
 
     from dateutil.relativedelta import relativedelta
 
@@ -331,7 +407,7 @@ def generar_reporte_pdf_view(request):
     if request.user.is_authenticated:
         if not request.user.is_staff and not request.user.is_superuser:
             if not request.user.iglesia:
-                return redirect('registro_iglesia_google')
+                return redirect('seleccionar_tipo_registro')
 
     iglesia = request.user.iglesia
     año_mes = request.GET.get('mes', timezone.now().strftime('%Y-%m'))
@@ -374,7 +450,7 @@ def exportar_excel_view(request):
     if request.user.is_authenticated:
         if not request.user.is_staff and not request.user.is_superuser:
             if not request.user.iglesia:
-                return redirect('registro_iglesia_google')
+                return redirect('seleccionar_tipo_registro')
 
     import openpyxl
     from openpyxl.styles import Font, Alignment, PatternFill
