@@ -44,6 +44,8 @@ CSRF_TRUSTED_ORIGINS = env.list('CSRF_TRUSTED_ORIGINS', default=[])
 # Add Railway domain if running on Railway
 if env('RAILWAY_ENVIRONMENT', default=None):
     CSRF_TRUSTED_ORIGINS.append('https://oikos-production.up.railway.app')
+    CSRF_TRUSTED_ORIGINS.append('https://oikos.com.ar')
+    CSRF_TRUSTED_ORIGINS.append('https://www.oikos.com.ar')
 
 # Application name
 APP_NAME = env('APP_NAME', default='OIKOS')
