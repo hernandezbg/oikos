@@ -576,8 +576,11 @@
                     <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">
                         <i class="bi bi-x"></i> Cancelar
                     </button>
-                    <button type="submit" class="btn btn-primary">
-                        <i class="bi bi-save"></i> Guardar Movimiento
+                    <button type="submit" name="action" value="save_and_new" class="btn btn-success" id="btnSaveAndNew">
+                        <i class="bi bi-plus-circle"></i> Guardar y agregar otro
+                    </button>
+                    <button type="submit" name="action" value="save" class="btn btn-primary" id="btnSave">
+                        <i class="bi bi-save"></i> Guardar
                     </button>
                 </div>
             </form>
@@ -653,50 +656,161 @@ document.addEventListener('DOMContentLoaded', function() {
         });
     });
 
-    // Formatear monto con separador de miles y decimales
+    // Formatear monto en tiempo real con separador de miles y coma decimal
     montoDisplay.addEventListener('input', function(e) {
-        // Obtener posición del cursor
+        // Obtener posición del cursor antes de formatear
         let cursorPos = this.selectionStart;
-        let oldLength = this.value.length;
+        const oldLength = this.value.length;
 
-        // Remover todo excepto números, punto y coma
-        let value = this.value.replace(/[^\d.,]/g, '');
+        // Remover todo excepto números y coma
+        let value = this.value.replace(/[^\d,]/g, '');
 
-        // Reemplazar comas por puntos
-        value = value.replace(/,/g, '.');
+        // Separar parte entera y decimal por la coma
+        let parts = value.split(',');
 
-        // Permitir solo un punto decimal
-        let parts = value.split('.');
+        // Si hay más de una coma, quedarse solo con la primera
         if (parts.length > 2) {
-            value = parts[0] + '.' + parts.slice(1).join('');
+            value = parts[0] + ',' + parts.slice(1).join('');
+            parts = value.split(',');
         }
 
-        // Guardar el valor decimal en el campo hidden
-        montoHidden.value = value;
+        // Limitar decimales a 2 dígitos
+        if (parts.length === 2 && parts[1].length > 2) {
+            parts[1] = parts[1].substring(0, 2);
+        }
 
-        // Formatear con separador de miles
-        if (value) {
-            let [entero, decimal] = value.split('.');
+        // Parte entera sin formato
+        let entero = parts[0];
+        let decimal = parts[1];
 
-            // Formatear parte entera con separador de miles
-            if (entero) {
-                const formattedEntero = parseInt(entero).toLocaleString('es-AR');
-                this.value = decimal !== undefined ? formattedEntero + ',' + decimal : formattedEntero;
+        // Guardar valor limpio en hidden (con punto como decimal)
+        if (decimal !== undefined) {
+            montoHidden.value = entero + '.' + decimal;
+        } else {
+            montoHidden.value = entero;
+        }
+
+        // Formatear parte entera con separador de miles (punto)
+        if (entero) {
+            const numero = parseInt(entero);
+            if (!isNaN(numero)) {
+                const formattedEntero = numero.toLocaleString('es-AR');
+                // Construir el valor formateado
+                const formattedValue = decimal !== undefined ? formattedEntero + ',' + decimal : formattedEntero;
+                this.value = formattedValue;
+
+                // Ajustar posición del cursor
+                const newLength = this.value.length;
+                const diff = newLength - oldLength;
+                cursorPos = Math.max(0, cursorPos + diff);
+                this.setSelectionRange(cursorPos, cursorPos);
+
+                console.log('Input - Display:', this.value, '| Hidden:', montoHidden.value);
             }
-
-            // Ajustar posición del cursor
-            let newLength = this.value.length;
-            cursorPos += newLength - oldLength;
-            this.setSelectionRange(cursorPos, cursorPos);
+        } else {
+            this.value = '';
+            montoHidden.value = '';
         }
     });
 
-    // Al enviar el formulario, asegurar que el monto hidden tenga el valor correcto
+    // Variable para rastrear qué botón se presionó
+    let submitAction = 'save';
+
+    document.getElementById('btnSave').addEventListener('click', function() {
+        submitAction = 'save';
+    });
+
+    document.getElementById('btnSaveAndNew').addEventListener('click', function() {
+        submitAction = 'save_and_new';
+    });
+
+    // Al enviar el formulario via AJAX
     form.addEventListener('submit', function(e) {
-        if (!montoHidden.value) {
-            e.preventDefault();
+        e.preventDefault();
+
+        console.log('=== DEBUGGING FORM SUBMISSION ===');
+        console.log('Monto display value:', montoDisplay.value);
+        console.log('Monto hidden value:', montoHidden.value);
+        console.log('Submit action:', submitAction);
+
+        if (!montoHidden.value || isNaN(parseFloat(montoHidden.value))) {
             alert('Por favor ingrese un monto válido');
+            console.error('Monto inválido:', montoHidden.value);
+            return;
         }
+
+        // Deshabilitar botones mientras se procesa
+        const btnSave = document.getElementById('btnSave');
+        const btnSaveAndNew = document.getElementById('btnSaveAndNew');
+        btnSave.disabled = true;
+        btnSaveAndNew.disabled = true;
+
+        // Enviar formulario via AJAX
+        const formData = new FormData(form);
+        formData.set('action', submitAction);
+
+        // Debug: mostrar todos los datos del formulario
+        console.log('=== FORM DATA ===');
+        for (let pair of formData.entries()) {
+            console.log(pair[0] + ': ' + pair[1]);
+        }
+
+        const url = form.getAttribute('action');
+        console.log('Submitting to URL:', url);
+
+        // Usar getAttribute para obtener la URL correctamente
+        fetch(url, {
+            method: 'POST',
+            body: formData,
+            headers: {
+                'X-Requested-With': 'XMLHttpRequest'
+            }
+        })
+        .then(response => {
+            console.log('Response status:', response.status);
+            console.log('Response redirected:', response.redirected);
+            console.log('Response URL:', response.url);
+
+            if (response.redirected) {
+                // Si hay redirect, verificar si es "save_and_new"
+                if (submitAction === 'save_and_new') {
+                    // Cerrar modal, recargar página con parámetro nuevo=1
+                    window.location.href = response.url + (response.url.includes('?') ? '&' : '?') + 'nuevo=1';
+                } else {
+                    // Redirect normal
+                    window.location.href = response.url;
+                }
+            } else {
+                return response.text();
+            }
+        })
+        .then(html => {
+            if (html) {
+                console.log('Response HTML length:', html.length);
+                // Si hay HTML de respuesta, probablemente hay errores
+                // Crear un div temporal para parsear el HTML
+                const parser = new DOMParser();
+                const doc = parser.parseFromString(html, 'text/html');
+
+                // Buscar errores del formulario
+                const errors = doc.querySelectorAll('.errorlist, .alert-danger');
+                if (errors.length > 0) {
+                    console.error('Form errors found:', errors);
+                    errors.forEach(error => console.error(error.textContent));
+                    alert('Error al guardar: Por favor revise los campos del formulario');
+                }
+                // Re-habilitar botones
+                btnSave.disabled = false;
+                btnSaveAndNew.disabled = false;
+            }
+        })
+        .catch(error => {
+            console.error('Fetch error:', error);
+            alert('Error al guardar el movimiento');
+            // Re-habilitar botones
+            btnSave.disabled = false;
+            btnSaveAndNew.disabled = false;
+        });
     });
 
     // Limpiar formulario al cerrar modal
@@ -707,6 +821,26 @@ document.addEventListener('DOMContentLoaded', function() {
         montoDisplay.value = '';
         montoHidden.value = '';
     });
+
+    // Abrir modal automáticamente si hay parámetro 'nuevo' en la URL
+    const urlParams = new URLSearchParams(window.location.search);
+
+    if (urlParams.get('nuevo') === '1') {
+        // Esperar un momento para asegurar que todo esté listo
+        setTimeout(() => {
+            // Scroll hacia arriba
+            window.scrollTo(0, 0);
+
+            const bsModal = new bootstrap.Modal(modal);
+            bsModal.show();
+
+            // Limpiar el parámetro 'nuevo' de la URL sin recargar la página
+            urlParams.delete('nuevo');
+            const newSearch = urlParams.toString();
+            const newUrl = window.location.pathname + (newSearch ? '?' + newSearch : '');
+            window.history.replaceState({}, '', newUrl);
+        }, 300);
+    }
 });
 </script>
 {% endblock %}

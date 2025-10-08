@@ -305,6 +305,13 @@ class MovimientoCreateView(LoginRequiredMixin, CreateView):
             self.request,
             f'Movimiento registrado exitosamente: {self.object.get_tipo_display()} de ${self.object.monto:,.2f}'
         )
+
+        # Si el usuario clickeó "Guardar y agregar otro", redirigir con parámetro
+        action = self.request.POST.get('action', 'save')
+        if action == 'save_and_new':
+            from django.urls import reverse
+            return redirect(reverse('movimiento_list') + '?nuevo=1')
+
         return response
 
 
