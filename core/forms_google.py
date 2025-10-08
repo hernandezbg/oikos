@@ -11,7 +11,7 @@ class RegistroIglesiaGoogleForm(forms.ModelForm):
 
     class Meta:
         model = Iglesia
-        fields = ['nombre', 'direccion', 'telefono', 'email']
+        fields = ['nombre', 'direccion', 'localidad', 'provincia', 'celular', 'email']
         widgets = {
             'nombre': forms.TextInput(attrs={
                 'class': 'form-control',
@@ -21,9 +21,17 @@ class RegistroIglesiaGoogleForm(forms.ModelForm):
                 'class': 'form-control',
                 'placeholder': 'Calle y número'
             }),
-            'telefono': forms.TextInput(attrs={
+            'localidad': forms.TextInput(attrs={
                 'class': 'form-control',
-                'placeholder': '011-1234-5678'
+                'placeholder': 'Ej: San Martín, CABA, etc.'
+            }),
+            'provincia': forms.TextInput(attrs={
+                'class': 'form-control',
+                'placeholder': 'Ej: Buenos Aires, Córdoba, etc.'
+            }),
+            'celular': forms.TextInput(attrs={
+                'class': 'form-control',
+                'placeholder': '11-1234-5678'
             }),
             'email': forms.EmailInput(attrs={
                 'class': 'form-control',
@@ -33,7 +41,9 @@ class RegistroIglesiaGoogleForm(forms.ModelForm):
         labels = {
             'nombre': 'Nombre de la Iglesia',
             'direccion': 'Dirección',
-            'telefono': 'Teléfono de la Iglesia',
+            'localidad': 'Localidad',
+            'provincia': 'Provincia',
+            'celular': 'Celular (WhatsApp)',
             'email': 'Email de la Iglesia',
         }
 
@@ -42,7 +52,9 @@ class RegistroIglesiaGoogleForm(forms.ModelForm):
         # Solo el nombre es obligatorio
         self.fields['nombre'].required = True
         self.fields['direccion'].required = False
-        self.fields['telefono'].required = False
+        self.fields['localidad'].required = False
+        self.fields['provincia'].required = False
+        self.fields['celular'].required = False
         self.fields['email'].required = False
 
     def clean_nombre(self):

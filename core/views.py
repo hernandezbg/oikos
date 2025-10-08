@@ -22,11 +22,8 @@ from django.contrib.auth.decorators import login_required
 
 def home_view(request):
     """
-    Vista de landing page - muestra home.html para usuarios no autenticados
-    y redirige al dashboard para usuarios autenticados
+    Vista de landing page - muestra home.html
     """
-    if request.user.is_authenticated:
-        return redirect('dashboard')
     return render(request, 'core/home.html')
 
 

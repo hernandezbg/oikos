@@ -177,11 +177,23 @@ class RegistroForm(UserCreationForm):
         label='Dirección',
         widget=forms.TextInput(attrs={'class': 'form-control', 'placeholder': 'Calle y número'})
     )
-    telefono_iglesia = forms.CharField(
+    localidad_iglesia = forms.CharField(
+        max_length=100,
+        required=False,
+        label='Localidad',
+        widget=forms.TextInput(attrs={'class': 'form-control', 'placeholder': 'Ej: San Martín, CABA, etc.'})
+    )
+    provincia_iglesia = forms.CharField(
+        max_length=100,
+        required=False,
+        label='Provincia',
+        widget=forms.TextInput(attrs={'class': 'form-control', 'placeholder': 'Ej: Buenos Aires, Córdoba, etc.'})
+    )
+    celular_iglesia = forms.CharField(
         max_length=50,
         required=False,
-        label='Teléfono de la Iglesia',
-        widget=forms.TextInput(attrs={'class': 'form-control', 'placeholder': '011-1234-5678'})
+        label='Celular (WhatsApp)',
+        widget=forms.TextInput(attrs={'class': 'form-control', 'placeholder': '11-1234-5678'})
     )
     email_iglesia = forms.EmailField(
         required=False,
@@ -243,18 +255,23 @@ class RegistroForm(UserCreationForm):
                     css_class='form-row'
                 ),
                 Row(
-                    Column('direccion_iglesia', css_class='form-group col-md-8 mb-0'),
-                    Column('telefono_iglesia', css_class='form-group col-md-4 mb-0'),
+                    Column('direccion_iglesia', css_class='form-group col-md-12 mb-0'),
                     css_class='form-row'
                 ),
                 Row(
-                    Column('email_iglesia', css_class='form-group col-md-12 mb-0'),
+                    Column('localidad_iglesia', css_class='form-group col-md-6 mb-0'),
+                    Column('provincia_iglesia', css_class='form-group col-md-6 mb-0'),
+                    css_class='form-row'
+                ),
+                Row(
+                    Column('celular_iglesia', css_class='form-group col-md-6 mb-0'),
+                    Column('email_iglesia', css_class='form-group col-md-6 mb-0'),
                     css_class='form-row'
                 ),
                 css_class='border p-3 mb-3 rounded bg-light'
             ),
             Fieldset(
-                'Tus Datos (Tesorero)',
+                'Tus Datos (Administrador)',
                 Row(
                     Column('first_name', css_class='form-group col-md-6 mb-0'),
                     Column('last_name', css_class='form-group col-md-6 mb-0'),
@@ -296,7 +313,9 @@ class RegistroForm(UserCreationForm):
         iglesia = Iglesia.objects.create(
             nombre=self.cleaned_data['nombre_iglesia'],
             direccion=self.cleaned_data.get('direccion_iglesia', ''),
-            telefono=self.cleaned_data.get('telefono_iglesia', ''),
+            localidad=self.cleaned_data.get('localidad_iglesia', ''),
+            provincia=self.cleaned_data.get('provincia_iglesia', ''),
+            celular=self.cleaned_data.get('celular_iglesia', ''),
             email=self.cleaned_data.get('email_iglesia', ''),
             activa=True
         )
@@ -308,7 +327,7 @@ class RegistroForm(UserCreationForm):
         user.email = self.cleaned_data['email']
         user.celular = self.cleaned_data.get('celular', '')
         user.iglesia = iglesia
-        user.rol = 'TESORERO'
+        user.rol = 'ADMIN'
         user.puede_aprobar = True
 
         if commit:

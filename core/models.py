@@ -6,7 +6,9 @@ from decimal import Decimal
 class Iglesia(models.Model):
     nombre = models.CharField(max_length=200)
     direccion = models.CharField(max_length=300, blank=True, null=True)
-    telefono = models.CharField(max_length=50, blank=True, null=True)
+    localidad = models.CharField(max_length=100, blank=True, null=True)
+    provincia = models.CharField(max_length=100, blank=True, null=True)
+    celular = models.CharField(max_length=50, blank=True, null=True, help_text="Celular con WhatsApp")
     email = models.EmailField(blank=True, null=True)
     activa = models.BooleanField(default=True)
     fecha_creacion = models.DateTimeField(auto_now_add=True)
@@ -197,7 +199,6 @@ class CategoriaIngreso(models.Model):
     iglesia = models.ForeignKey(Iglesia, on_delete=models.CASCADE, related_name='categorias_ingreso')
     codigo = models.CharField(max_length=20)
     nombre = models.CharField(max_length=100)
-    es_recurrente = models.BooleanField(default=False, help_text="Indica si es un ingreso recurrente mensual")
     activa = models.BooleanField(default=True)
 
     class Meta:
@@ -207,14 +208,13 @@ class CategoriaIngreso(models.Model):
         unique_together = ['iglesia', 'codigo']
 
     def __str__(self):
-        return f"{self.codigo} - {self.nombre}"
+        return self.nombre
 
 
 class CategoriaEgreso(models.Model):
     iglesia = models.ForeignKey(Iglesia, on_delete=models.CASCADE, related_name='categorias_egreso')
     codigo = models.CharField(max_length=20)
     nombre = models.CharField(max_length=100)
-    es_fijo_mensual = models.BooleanField(default=False, help_text="Indica si es un egreso fijo mensual")
     presupuesto_mensual = models.DecimalField(
         max_digits=12,
         decimal_places=2,
@@ -232,7 +232,7 @@ class CategoriaEgreso(models.Model):
         unique_together = ['iglesia', 'codigo']
 
     def __str__(self):
-        return f"{self.codigo} - {self.nombre}"
+        return self.nombre
 
 
 class Movimiento(models.Model):

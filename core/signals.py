@@ -25,11 +25,10 @@ def crear_categorias_default(sender, instance, created, **kwargs):
 
         # Categorías de ingreso por defecto
         categorias_ingreso = [
-            {'codigo': 'DIEZMO', 'nombre': 'Diezmos', 'es_recurrente': True},
-            {'codigo': 'OFRENDA', 'nombre': 'Ofrendas', 'es_recurrente': True},
-            {'codigo': 'DONACION', 'nombre': 'Donaciones', 'es_recurrente': False},
-            {'codigo': 'EVENTO', 'nombre': 'Eventos Especiales', 'es_recurrente': False},
-            {'codigo': 'OTRO_ING', 'nombre': 'Otros Ingresos', 'es_recurrente': False},
+            {'codigo': 'OFRENDA', 'nombre': 'Ofrendas'},
+            {'codigo': 'DONACION', 'nombre': 'Donaciones'},
+            {'codigo': 'EVENTO', 'nombre': 'Eventos Especiales'},
+            {'codigo': 'OTRO_ING', 'nombre': 'Otros Ingresos'},
         ]
 
         for cat in categorias_ingreso:
@@ -40,14 +39,16 @@ def crear_categorias_default(sender, instance, created, **kwargs):
 
         # Categorías de egreso por defecto
         categorias_egreso = [
-            {'codigo': 'ALQUILER', 'nombre': 'Alquiler Local', 'es_fijo_mensual': True},
-            {'codigo': 'SERVICIOS', 'nombre': 'Servicios (Luz, Gas, Agua)', 'es_fijo_mensual': True},
-            {'codigo': 'SUELDOS', 'nombre': 'Sueldos Personal', 'es_fijo_mensual': True},
-            {'codigo': 'MISIONES', 'nombre': 'Misiones', 'es_fijo_mensual': False},
-            {'codigo': 'MANTENIMIENTO', 'nombre': 'Mantenimiento', 'es_fijo_mensual': False},
-            {'codigo': 'EVENTOS', 'nombre': 'Eventos y Actividades', 'es_fijo_mensual': False},
-            {'codigo': 'AYUDA_SOCIAL', 'nombre': 'Ayuda Social', 'es_fijo_mensual': False},
-            {'codigo': 'OTRO_EGR', 'nombre': 'Otros Egresos', 'es_fijo_mensual': False},
+            {'codigo': 'OFRENDA', 'nombre': 'Ofrendas'},
+            {'codigo': 'ALQUILER', 'nombre': 'Alquiler'},
+            {'codigo': 'SERVICIOS', 'nombre': 'Servicios (Luz, Gas, Agua)'},
+            {'codigo': 'IMPUESTO', 'nombre': 'Impuestos'},
+            {'codigo': 'SUELDOS', 'nombre': 'Sueldos'},
+            {'codigo': 'MISIONES', 'nombre': 'Misiones'},
+            {'codigo': 'MANTENIMIENTO', 'nombre': 'Mantenimiento'},
+            {'codigo': 'EVENTOS', 'nombre': 'Eventos y Actividades'},
+            {'codigo': 'AYUDA_MUTUA', 'nombre': 'Ayuda Mutua'},
+            {'codigo': 'OTRO_EGR', 'nombre': 'Otros Egresos'},
         ]
 
         for cat in categorias_egreso:

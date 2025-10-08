@@ -10,20 +10,20 @@ from core.utils import formato_pesos
 class CategoriasIngresoInline(admin.TabularInline):
     model = CategoriaIngreso
     extra = 1
-    fields = ('codigo', 'nombre', 'es_recurrente', 'activa')
+    fields = ('codigo', 'nombre', 'activa')
 
 
 class CategoriasEgresoInline(admin.TabularInline):
     model = CategoriaEgreso
     extra = 1
-    fields = ('codigo', 'nombre', 'es_fijo_mensual', 'presupuesto_mensual', 'activa')
+    fields = ('codigo', 'nombre', 'presupuesto_mensual', 'activa')
 
 
 @admin.register(Iglesia)
 class IglesiaAdmin(admin.ModelAdmin):
-    list_display = ('nombre', 'direccion', 'telefono', 'email', 'activa', 'fecha_creacion')
-    list_filter = ('activa', 'fecha_creacion')
-    search_fields = ('nombre', 'email')
+    list_display = ('nombre', 'localidad', 'provincia', 'celular', 'email', 'activa', 'fecha_creacion')
+    list_filter = ('activa', 'provincia', 'fecha_creacion')
+    search_fields = ('nombre', 'localidad', 'provincia', 'email')
     inlines = [CategoriasIngresoInline, CategoriasEgresoInline]
     readonly_fields = ('fecha_creacion',)
 
@@ -49,16 +49,16 @@ class UsuarioAdmin(UserAdmin):
 
 @admin.register(CategoriaIngreso)
 class CategoriaIngresoAdmin(admin.ModelAdmin):
-    list_display = ('codigo', 'nombre', 'iglesia', 'es_recurrente', 'activa')
-    list_filter = ('iglesia', 'es_recurrente', 'activa')
+    list_display = ('codigo', 'nombre', 'iglesia', 'activa')
+    list_filter = ('iglesia', 'activa')
     search_fields = ('codigo', 'nombre')
     ordering = ('iglesia', 'codigo')
 
 
 @admin.register(CategoriaEgreso)
 class CategoriaEgresoAdmin(admin.ModelAdmin):
-    list_display = ('codigo', 'nombre', 'iglesia', 'es_fijo_mensual', 'presupuesto_formateado', 'activa')
-    list_filter = ('iglesia', 'es_fijo_mensual', 'activa')
+    list_display = ('codigo', 'nombre', 'iglesia', 'presupuesto_formateado', 'activa')
+    list_filter = ('iglesia', 'activa')
     search_fields = ('codigo', 'nombre')
     ordering = ('iglesia', 'codigo')
 

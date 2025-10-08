@@ -20,7 +20,7 @@
                         <strong>¡Hola {{ user.first_name }}!</strong><br>
                         Has iniciado sesión con Google exitosamente.
                         Ahora necesitamos que registres tu iglesia para comenzar a usar OIKOS.
-                        Serás el <strong>Tesorero</strong> con permisos completos de administración.
+                        Serás el <strong>Administrador</strong> con permisos completos.
                     </div>
 
                     <div class="mb-3 p-3 bg-light border rounded">
@@ -49,29 +49,46 @@
                             {% endif %}
                         </div>
 
+                        <div class="mb-3">
+                            <label for="{{ form.direccion.id_for_label }}" class="form-label">{{ form.direccion.label }}</label>
+                            {{ form.direccion }}
+                            {% if form.direccion.errors %}
+                                <div class="text-danger">{{ form.direccion.errors }}</div>
+                            {% endif %}
+                        </div>
+
                         <div class="row">
-                            <div class="col-md-8 mb-3">
-                                <label for="{{ form.direccion.id_for_label }}" class="form-label">{{ form.direccion.label }}</label>
-                                {{ form.direccion }}
-                                {% if form.direccion.errors %}
-                                    <div class="text-danger">{{ form.direccion.errors }}</div>
+                            <div class="col-md-6 mb-3">
+                                <label for="{{ form.localidad.id_for_label }}" class="form-label">{{ form.localidad.label }}</label>
+                                {{ form.localidad }}
+                                {% if form.localidad.errors %}
+                                    <div class="text-danger">{{ form.localidad.errors }}</div>
                                 {% endif %}
                             </div>
-                            <div class="col-md-4 mb-3">
-                                <label for="{{ form.telefono.id_for_label }}" class="form-label">{{ form.telefono.label }}</label>
-                                {{ form.telefono }}
-                                {% if form.telefono.errors %}
-                                    <div class="text-danger">{{ form.telefono.errors }}</div>
+                            <div class="col-md-6 mb-3">
+                                <label for="{{ form.provincia.id_for_label }}" class="form-label">{{ form.provincia.label }}</label>
+                                {{ form.provincia }}
+                                {% if form.provincia.errors %}
+                                    <div class="text-danger">{{ form.provincia.errors }}</div>
                                 {% endif %}
                             </div>
                         </div>
 
-                        <div class="mb-3">
-                            <label for="{{ form.email.id_for_label }}" class="form-label">{{ form.email.label }}</label>
-                            {{ form.email }}
-                            {% if form.email.errors %}
-                                <div class="text-danger">{{ form.email.errors }}</div>
-                            {% endif %}
+                        <div class="row">
+                            <div class="col-md-6 mb-3">
+                                <label for="{{ form.celular.id_for_label }}" class="form-label">{{ form.celular.label }}</label>
+                                {{ form.celular }}
+                                {% if form.celular.errors %}
+                                    <div class="text-danger">{{ form.celular.errors }}</div>
+                                {% endif %}
+                            </div>
+                            <div class="col-md-6 mb-3">
+                                <label for="{{ form.email.id_for_label }}" class="form-label">{{ form.email.label }}</label>
+                                {{ form.email }}
+                                {% if form.email.errors %}
+                                    <div class="text-danger">{{ form.email.errors }}</div>
+                                {% endif %}
+                            </div>
                         </div>
 
                         <div class="d-grid">
