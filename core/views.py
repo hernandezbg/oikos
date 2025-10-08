@@ -303,7 +303,12 @@ class MovimientoCreateView(LoginRequiredMixin, CreateView):
     def form_valid(self, form):
         form.instance.iglesia = self.request.user.iglesia
         form.instance.creado_por = self.request.user
-        return super().form_valid(form)
+        response = super().form_valid(form)
+        messages.success(
+            self.request,
+            f'Movimiento registrado exitosamente: {self.object.get_tipo_display()} de ${self.object.monto:,.2f}'
+        )
+        return response
 
 
 class MovimientoListView(LoginRequiredMixin, ListView):
@@ -458,8 +463,8 @@ def exportar_excel_view(request):
 
     iglesia = request.user.iglesia
 
-    # Obtener filtros
-    queryset = Movimiento.objects.filter(iglesia=iglesia).order_by('-fecha')
+    # Obtener filtros (excluir movimientos anulados)
+    queryset = Movimiento.objects.filter(iglesia=iglesia, anulado=False).order_by('-fecha')
 
     # Aplicar filtros si existen
     mes = request.GET.get('mes')
@@ -666,3 +671,16 @@ def gestionar_usuarios_view(request):
     }
 
     return render(request, 'core/gestionar_usuarios.html', context)
+
+@login_required
+def ayuda_view(request):
+    """
+    Vista de ayuda con explicación de métricas del dashboard
+    """
+    return render(request, 'core/ayuda.html')
+
+def politica_cookies_view(request):
+    """
+    Vista para mostrar la política de cookies
+    """
+    return render(request, 'core/politica_cookies.html')

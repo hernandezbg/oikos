@@ -12,9 +12,9 @@
             <div class="card-header d-flex justify-content-between align-items-center">
                 <h5 class="mb-0"><i class="bi bi-filter"></i> Filtros</h5>
                 <div>
-                    <a href="{% url 'movimiento_create' %}" class="btn btn-primary btn-sm">
+                    <button type="button" class="btn btn-primary btn-sm" data-bs-toggle="modal" data-bs-target="#nuevoMovimientoModal">
                         <i class="bi bi-plus-circle"></i> Nuevo
-                    </a>
+                    </button>
                     <a href="{% url 'exportar_excel' %}?{{ request.GET.urlencode }}" class="btn btn-success btn-sm">
                         <i class="bi bi-file-excel"></i> Exportar Excel
                     </a>
@@ -502,4 +502,211 @@
 {% endif %}
 {% endfor %}
 
+<!-- Modal Nuevo Movimiento -->
+<div class="modal fade" id="nuevoMovimientoModal" tabindex="-1" aria-labelledby="nuevoMovimientoModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header bg-primary text-white">
+                <h5 class="modal-title" id="nuevoMovimientoModalLabel">
+                    <i class="bi bi-plus-circle"></i> Nuevo Movimiento
+                </h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <form method="post" action="{% url 'movimiento_create' %}" id="nuevoMovimientoForm">
+                {% csrf_token %}
+                <div class="modal-body">
+                    <!-- Tipo de Movimiento -->
+                    <div class="mb-3">
+                        <label class="form-label fw-bold">Tipo de Movimiento <span class="text-danger">*</span></label>
+                        <div>
+                            <div class="form-check form-check-inline">
+                                <input class="form-check-input" type="radio" name="tipo" id="tipo_ingreso" value="INGRESO" required>
+                                <label class="form-check-label" for="tipo_ingreso">
+                                    <i class="bi bi-arrow-up-circle text-success"></i> Ingreso
+                                </label>
+                            </div>
+                            <div class="form-check form-check-inline">
+                                <input class="form-check-input" type="radio" name="tipo" id="tipo_egreso" value="EGRESO">
+                                <label class="form-check-label" for="tipo_egreso">
+                                    <i class="bi bi-arrow-down-circle text-danger"></i> Egreso
+                                </label>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="row">
+                        <!-- Fecha -->
+                        <div class="col-md-6 mb-3">
+                            <label for="fecha" class="form-label fw-bold">Fecha <span class="text-danger">*</span></label>
+                            <input type="date" class="form-control" id="fecha" name="fecha" required>
+                        </div>
+
+                        <!-- Monto -->
+                        <div class="col-md-6 mb-3">
+                            <label for="monto" class="form-label fw-bold">Monto ($) <span class="text-danger">*</span></label>
+                            <input type="text" class="form-control" id="monto_display" placeholder="1.500.000,50" required>
+                            <input type="hidden" id="monto" name="monto">
+                            <small class="text-muted">Se formatea automáticamente con separador de miles</small>
+                        </div>
+                    </div>
+
+                    <!-- Categoría Ingreso (oculta por defecto) -->
+                    <div class="mb-3 d-none" id="categoria_ingreso_div">
+                        <label for="categoria_ingreso" class="form-label fw-bold">Categoría de Ingreso <span class="text-danger">*</span></label>
+                        <select class="form-select" id="categoria_ingreso" name="categoria_ingreso">
+                            <option value="">Seleccione una categoría...</option>
+                        </select>
+                    </div>
+
+                    <!-- Categoría Egreso (oculta por defecto) -->
+                    <div class="mb-3 d-none" id="categoria_egreso_div">
+                        <label for="categoria_egreso" class="form-label fw-bold">Categoría de Egreso <span class="text-danger">*</span></label>
+                        <select class="form-select" id="categoria_egreso" name="categoria_egreso">
+                            <option value="">Seleccione una categoría...</option>
+                        </select>
+                    </div>
+
+                    <!-- Concepto -->
+                    <div class="mb-3">
+                        <label for="concepto" class="form-label fw-bold">Concepto/Descripción <span class="text-danger">*</span></label>
+                        <textarea class="form-control" id="concepto" name="concepto" rows="3" required placeholder="Describa el motivo del movimiento..."></textarea>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">
+                        <i class="bi bi-x"></i> Cancelar
+                    </button>
+                    <button type="submit" class="btn btn-primary">
+                        <i class="bi bi-save"></i> Guardar Movimiento
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+{% endblock %}
+
+{% block extra_js %}
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const modal = document.getElementById('nuevoMovimientoModal');
+    const form = document.getElementById('nuevoMovimientoForm');
+    const fechaInput = document.getElementById('fecha');
+    const montoDisplay = document.getElementById('monto_display');
+    const montoHidden = document.getElementById('monto');
+    const tipoRadios = document.querySelectorAll('input[name="tipo"]');
+    const categoriaIngresoDiv = document.getElementById('categoria_ingreso_div');
+    const categoriaEgresoDiv = document.getElementById('categoria_egreso_div');
+    const categoriaIngresoSelect = document.getElementById('categoria_ingreso');
+    const categoriaEgresoSelect = document.getElementById('categoria_egreso');
+
+    // Establecer fecha del día al abrir el modal
+    modal.addEventListener('show.bs.modal', function() {
+        const today = new Date().toISOString().split('T')[0];
+        fechaInput.value = today;
+
+        // Cargar categorías via AJAX
+        cargarCategorias();
+    });
+
+    // Función para cargar categorías
+    function cargarCategorias() {
+        // Aquí cargaremos las categorías dinámicamente
+        // Por ahora usaremos las que ya están en el contexto
+        fetch('{% url "movimiento_create" %}')
+            .then(response => response.text())
+            .then(html => {
+                const parser = new DOMParser();
+                const doc = parser.parseFromString(html, 'text/html');
+
+                // Extraer opciones de categorías de ingreso
+                const selectIngreso = doc.querySelector('[name="categoria_ingreso"]');
+                if (selectIngreso) {
+                    categoriaIngresoSelect.innerHTML = selectIngreso.innerHTML;
+                }
+
+                // Extraer opciones de categorías de egreso
+                const selectEgreso = doc.querySelector('[name="categoria_egreso"]');
+                if (selectEgreso) {
+                    categoriaEgresoSelect.innerHTML = selectEgreso.innerHTML;
+                }
+            });
+    }
+
+    // Mostrar/ocultar categorías según tipo
+    tipoRadios.forEach(radio => {
+        radio.addEventListener('change', function() {
+            if (this.value === 'INGRESO') {
+                categoriaIngresoDiv.classList.remove('d-none');
+                categoriaEgresoDiv.classList.add('d-none');
+                categoriaIngresoSelect.required = true;
+                categoriaEgresoSelect.required = false;
+                categoriaEgresoSelect.value = '';
+            } else if (this.value === 'EGRESO') {
+                categoriaIngresoDiv.classList.add('d-none');
+                categoriaEgresoDiv.classList.remove('d-none');
+                categoriaIngresoSelect.required = false;
+                categoriaEgresoSelect.required = true;
+                categoriaIngresoSelect.value = '';
+            }
+        });
+    });
+
+    // Formatear monto con separador de miles y decimales
+    montoDisplay.addEventListener('input', function(e) {
+        // Obtener posición del cursor
+        let cursorPos = this.selectionStart;
+        let oldLength = this.value.length;
+
+        // Remover todo excepto números, punto y coma
+        let value = this.value.replace(/[^\d.,]/g, '');
+
+        // Reemplazar comas por puntos
+        value = value.replace(/,/g, '.');
+
+        // Permitir solo un punto decimal
+        let parts = value.split('.');
+        if (parts.length > 2) {
+            value = parts[0] + '.' + parts.slice(1).join('');
+        }
+
+        // Guardar el valor decimal en el campo hidden
+        montoHidden.value = value;
+
+        // Formatear con separador de miles
+        if (value) {
+            let [entero, decimal] = value.split('.');
+
+            // Formatear parte entera con separador de miles
+            if (entero) {
+                const formattedEntero = parseInt(entero).toLocaleString('es-AR');
+                this.value = decimal !== undefined ? formattedEntero + ',' + decimal : formattedEntero;
+            }
+
+            // Ajustar posición del cursor
+            let newLength = this.value.length;
+            cursorPos += newLength - oldLength;
+            this.setSelectionRange(cursorPos, cursorPos);
+        }
+    });
+
+    // Al enviar el formulario, asegurar que el monto hidden tenga el valor correcto
+    form.addEventListener('submit', function(e) {
+        if (!montoHidden.value) {
+            e.preventDefault();
+            alert('Por favor ingrese un monto válido');
+        }
+    });
+
+    // Limpiar formulario al cerrar modal
+    modal.addEventListener('hidden.bs.modal', function() {
+        form.reset();
+        categoriaIngresoDiv.classList.add('d-none');
+        categoriaEgresoDiv.classList.add('d-none');
+        montoDisplay.value = '';
+        montoHidden.value = '';
+    });
+});
+</script>
 {% endblock %}

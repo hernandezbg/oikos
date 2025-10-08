@@ -14,7 +14,9 @@ from core.views import (
     seleccionar_tipo_registro_view,
     registro_con_codigo_view,
     gestionar_usuarios_view,
-    anular_movimiento_view
+    anular_movimiento_view,
+    ayuda_view,
+    politica_cookies_view
 )
 from django.contrib.auth.views import LogoutView
 
@@ -38,6 +40,10 @@ urlpatterns = [
     path('reportes/generar-pdf/', generar_reporte_pdf_view, name='generar_reporte_pdf'),
     # Gestión de usuarios (solo ADMIN)
     path('usuarios/gestionar/', gestionar_usuarios_view, name='gestionar_usuarios'),
+    # Ayuda
+    path('ayuda/', ayuda_view, name='ayuda'),
+    # Política de Cookies
+    path('politica-cookies/', politica_cookies_view, name='politica_cookies'),
     # API y exportación
     path('api/dashboard-data/', dashboard_data_api, name='dashboard_data_api'),
     path('exportar/excel/', exportar_excel_view, name='exportar_excel'),

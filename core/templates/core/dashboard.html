@@ -5,6 +5,21 @@
 {% block title %}Dashboard - {{ APP_NAME }}{% endblock %}
 {% block page_title %}Dashboard - {{ APP_NAME }}{% endblock %}
 
+{% block extra_css %}
+<style>
+/* Mejorar altura del gráfico en móviles */
+.chart-container-saldos {
+    height: 300px;
+}
+
+@media (max-width: 768px) {
+    .chart-container-saldos {
+        height: 400px !important;
+    }
+}
+</style>
+{% endblock %}
+
 {% block content %}
 <!-- Selector de mes -->
 <div class="row mb-3">
@@ -80,7 +95,9 @@
                 <h5 class="mb-0"><i class="bi bi-graph-up"></i> Evolución de Saldos (Últimos 6 Meses)</h5>
             </div>
             <div class="card-body">
-                <canvas id="saldosChart" height="80"></canvas>
+                <div class="chart-container-saldos" style="position: relative; height: 300px;">
+                    <canvas id="saldosChart"></canvas>
+                </div>
             </div>
         </div>
     </div>
@@ -170,11 +187,18 @@ fetch(apiUrl)
             },
             options: {
                 responsive: true,
-                maintainAspectRatio: true,
+                maintainAspectRatio: false,
                 plugins: {
                     legend: {
                         display: true,
                         position: 'top'
+                    },
+                    tooltip: {
+                        callbacks: {
+                            label: function(context) {
+                                return 'Saldo: $' + context.parsed.y.toLocaleString('es-AR');
+                            }
+                        }
                     }
                 },
                 scales: {
@@ -184,6 +208,12 @@ fetch(apiUrl)
                             callback: function(value) {
                                 return '$' + value.toLocaleString('es-AR');
                             }
+                        }
+                    },
+                    x: {
+                        ticks: {
+                            maxRotation: 45,
+                            minRotation: 0
                         }
                     }
                 }
@@ -213,7 +243,43 @@ fetch(apiUrl)
                 maintainAspectRatio: true,
                 plugins: {
                     legend: {
-                        position: 'bottom'
+                        position: 'bottom',
+                        align: 'start',
+                        labels: {
+                            boxWidth: 15,
+                            padding: 10,
+                            textAlign: 'left',
+                            generateLabels: function(chart) {
+                                const data = chart.data;
+                                if (data.labels.length && data.datasets.length) {
+                                    const dataset = data.datasets[0];
+                                    const total = dataset.data.reduce((acc, val) => acc + val, 0);
+
+                                    return data.labels.map((label, i) => {
+                                        const value = dataset.data[i];
+                                        const percentage = total > 0 ? ((value / total) * 100).toFixed(1) : 0;
+                                        return {
+                                            text: `${label}: ${percentage}%`,
+                                            fillStyle: dataset.backgroundColor[i],
+                                            hidden: false,
+                                            index: i
+                                        };
+                                    });
+                                }
+                                return [];
+                            }
+                        }
+                    },
+                    tooltip: {
+                        callbacks: {
+                            label: function(context) {
+                                const label = context.label || '';
+                                const value = context.parsed;
+                                const total = context.dataset.data.reduce((acc, val) => acc + val, 0);
+                                const percentage = total > 0 ? ((value / total) * 100).toFixed(1) : 0;
+                                return `${label}: $${value.toLocaleString('es-AR')} (${percentage}%)`;
+                            }
+                        }
                     }
                 }
             }

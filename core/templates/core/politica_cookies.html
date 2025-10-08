@@ -1,0 +1,180 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Política de Cookies - OIKOS</title>
+
+    <!-- Bootstrap 5 CSS -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <!-- Bootstrap Icons -->
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.0/font/bootstrap-icons.css">
+
+    <style>
+        body {
+            background-color: #f8f9fa;
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+        }
+        .content-wrapper {
+            max-width: 900px;
+            margin: 2rem auto;
+            padding: 0 1rem;
+        }
+        .card {
+            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+            border: none;
+            border-radius: 12px;
+        }
+        .card-header {
+            background: linear-gradient(135deg, #1e3a8a 0%, #3b82f6 100%);
+            color: white;
+            border-radius: 12px 12px 0 0 !important;
+            padding: 2rem;
+        }
+        h2 {
+            color: #1e3a8a;
+            margin-top: 2rem;
+            margin-bottom: 1rem;
+        }
+        h3 {
+            color: #3b82f6;
+            margin-top: 1.5rem;
+            margin-bottom: 0.75rem;
+            font-size: 1.25rem;
+        }
+        .cookie-type {
+            background: #f0f9ff;
+            border-left: 4px solid #3b82f6;
+            padding: 1rem;
+            margin: 1rem 0;
+            border-radius: 4px;
+        }
+        .cookie-type h4 {
+            color: #1e3a8a;
+            font-size: 1.1rem;
+            margin-bottom: 0.5rem;
+        }
+        .back-btn {
+            margin-top: 2rem;
+        }
+    </style>
+</head>
+<body>
+    <div class="content-wrapper">
+        <div class="card">
+            <div class="card-header text-center">
+                <h1 class="mb-0">
+                    <i class="bi bi-shield-check"></i> Política de Cookies
+                </h1>
+                <p class="mb-0 mt-2">OIKOS - Sistema de Gestión Financiera</p>
+            </div>
+            <div class="card-body p-4 p-md-5">
+                <p class="lead">
+                    En OIKOS nos tomamos muy en serio tu privacidad. Esta política explica qué son las cookies,
+                    cómo las usamos y cómo puedes controlarlas.
+                </p>
+
+                <h2><i class="bi bi-question-circle"></i> ¿Qué son las cookies?</h2>
+                <p>
+                    Las cookies son pequeños archivos de texto que se almacenan en tu navegador cuando visitas un sitio web.
+                    Estos archivos permiten que el sitio web recuerde información sobre tu visita, como tus preferencias
+                    y configuraciones.
+                </p>
+
+                <h2><i class="bi bi-gear"></i> ¿Cómo usamos las cookies?</h2>
+                <p>
+                    En OIKOS utilizamos cookies únicamente para funcionalidades esenciales que permiten que el sistema funcione correctamente.
+                    <strong>No utilizamos cookies de seguimiento, publicidad o análisis de terceros.</strong>
+                </p>
+
+                <h3>Tipos de cookies que utilizamos:</h3>
+
+                <div class="cookie-type">
+                    <h4><i class="bi bi-key"></i> Cookies de Sesión (Estrictamente necesarias)</h4>
+                    <p class="mb-2"><strong>Propósito:</strong> Mantener tu sesión activa mientras usas el sistema.</p>
+                    <p class="mb-2"><strong>Nombre:</strong> <code>sessionid</code>, <code>csrftoken</code></p>
+                    <p class="mb-2"><strong>Duración:</strong> Se eliminan cuando cierras el navegador o cuando cierras sesión.</p>
+                    <p class="mb-0"><strong>¿Por qué son necesarias?</strong> Sin estas cookies, no podrías iniciar sesión ni realizar
+                    operaciones de forma segura en el sistema.</p>
+                </div>
+
+                <div class="cookie-type">
+                    <h4><i class="bi bi-shield-lock"></i> Cookies de Seguridad (Estrictamente necesarias)</h4>
+                    <p class="mb-2"><strong>Propósito:</strong> Proteger tu cuenta contra ataques CSRF (falsificación de peticiones).</p>
+                    <p class="mb-2"><strong>Nombre:</strong> <code>csrftoken</code></p>
+                    <p class="mb-2"><strong>Duración:</strong> 1 año</p>
+                    <p class="mb-0"><strong>¿Por qué son necesarias?</strong> Protegen tu cuenta de accesos no autorizados
+                    y garantizan que todas las acciones realizadas en el sistema sean legítimas.</p>
+                </div>
+
+                <div class="cookie-type">
+                    <h4><i class="bi bi-sliders"></i> Cookies de Preferencias (Funcionales)</h4>
+                    <p class="mb-2"><strong>Propósito:</strong> Recordar tu consentimiento de cookies y tus preferencias del sitio.</p>
+                    <p class="mb-2"><strong>Almacenamiento:</strong> localStorage del navegador</p>
+                    <p class="mb-2"><strong>Nombre:</strong> <code>cookieConsent</code></p>
+                    <p class="mb-2"><strong>Duración:</strong> Permanente hasta que limpies los datos del navegador</p>
+                    <p class="mb-0"><strong>¿Por qué las usamos?</strong> Para recordar si ya aceptaste o rechazaste las cookies
+                    y no molestarte con el banner cada vez que visitas el sitio.</p>
+                </div>
+
+                <h2><i class="bi bi-x-circle"></i> ¿Qué NO hacemos con cookies?</h2>
+                <ul>
+                    <li>❌ No rastreamos tu comportamiento en otros sitios web</li>
+                    <li>❌ No compartimos tus datos con terceros</li>
+                    <li>❌ No utilizamos cookies de publicidad</li>
+                    <li>❌ No utilizamos cookies de análisis de terceros (como Google Analytics)</li>
+                    <li>❌ No vendemos tu información</li>
+                </ul>
+
+                <h2><i class="bi bi-toggles"></i> ¿Cómo puedo controlar las cookies?</h2>
+
+                <h3>En tu navegador:</h3>
+                <p>Puedes configurar tu navegador para que te notifique cuando recibas una cookie o para que las rechace automáticamente:</p>
+                <ul>
+                    <li><strong>Chrome:</strong> Configuración → Privacidad y seguridad → Cookies</li>
+                    <li><strong>Firefox:</strong> Opciones → Privacidad y seguridad → Cookies</li>
+                    <li><strong>Safari:</strong> Preferencias → Privacidad → Cookies</li>
+                    <li><strong>Edge:</strong> Configuración → Privacidad → Cookies</li>
+                </ul>
+
+                <div class="alert alert-warning mt-3">
+                    <i class="bi bi-exclamation-triangle"></i>
+                    <strong>Importante:</strong> Si bloqueas o eliminas todas las cookies, <strong>no podrás iniciar sesión</strong>
+                    en OIKOS ni usar el sistema, ya que las cookies de sesión son esenciales para su funcionamiento.
+                </div>
+
+                <h3>En OIKOS:</h3>
+                <p>Para eliminar tu preferencia de cookies guardada:</p>
+                <ol>
+                    <li>Abre la consola del navegador (F12)</li>
+                    <li>Ve a la pestaña "Console"</li>
+                    <li>Escribe: <code>localStorage.clear()</code></li>
+                    <li>Recarga la página</li>
+                </ol>
+
+                <h2><i class="bi bi-calendar3"></i> Última actualización</h2>
+                <p>Esta política de cookies fue actualizada por última vez el <strong>8 de octubre de 2025</strong>.</p>
+
+                <h2><i class="bi bi-envelope"></i> Contacto</h2>
+                <p>
+                    Si tienes alguna pregunta sobre nuestra política de cookies, puedes contactarnos en:
+                    <strong>contacto@oikos.ministerio</strong>
+                </p>
+
+                <div class="back-btn text-center">
+                    <a href="javascript:window.close()" class="btn btn-primary me-2">
+                        <i class="bi bi-x-circle"></i> Cerrar
+                    </a>
+                    <a href="{% url 'home' %}" class="btn btn-outline-primary">
+                        <i class="bi bi-house"></i> Volver al inicio
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Bootstrap JS -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+</body>
+</html>

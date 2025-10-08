@@ -1,0 +1,146 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Ayuda - {{ APP_NAME }}{% endblock %}
+{% block page_title %}Ayuda{% endblock %}
+
+{% block content %}
+<div class="row">
+    <div class="col-lg-10 mx-auto">
+        <div class="card shadow">
+            <div class="card-header bg-info text-white">
+                <h4 class="mb-0">
+                    <i class="bi bi-question-circle"></i> Explicación de Métricas del Dashboard
+                </h4>
+            </div>
+            <div class="card-body">
+                <p class="lead">Aquí encontrarás explicaciones breves y claras sobre cómo se calculan las métricas que ves en el Dashboard.</p>
+
+                <hr class="my-4">
+
+                <!-- Saldo Actual -->
+                <div class="mb-4">
+                    <h5 class="text-primary"><i class="bi bi-cash-coin"></i> Saldo Actual</h5>
+                    <p class="mb-2">
+                        <strong>¿Qué es?</strong> El dinero total disponible en la iglesia en este momento.
+                    </p>
+                    <p class="mb-2">
+                        <strong>¿Cómo se calcula?</strong>
+                    </p>
+                    <div class="bg-light p-3 rounded">
+                        <code>Saldo Actual = Todos los Ingresos - Todos los Egresos</code>
+                    </div>
+                    <p class="mt-2 text-muted small">
+                        <i class="bi bi-info-circle"></i> Solo cuenta movimientos NO anulados. Es el total acumulado desde el inicio.
+                    </p>
+                </div>
+
+                <hr>
+
+                <!-- Ingresos del Mes -->
+                <div class="mb-4">
+                    <h5 class="text-success"><i class="bi bi-arrow-down-circle"></i> Ingresos del Mes</h5>
+                    <p class="mb-2">
+                        <strong>¿Qué es?</strong> El dinero que entró durante el mes seleccionado.
+                    </p>
+                    <p class="mb-2">
+                        <strong>¿Cómo se calcula?</strong>
+                    </p>
+                    <div class="bg-light p-3 rounded">
+                        <code>Ingresos del Mes = Suma de todos los movimientos tipo INGRESO del mes</code>
+                    </div>
+                    <p class="mt-2 text-muted small">
+                        <i class="bi bi-info-circle"></i> Incluye ofrendas, donaciones, diezmos y cualquier entrada de dinero.
+                    </p>
+                </div>
+
+                <hr>
+
+                <!-- Egresos del Mes -->
+                <div class="mb-4">
+                    <h5 class="text-danger"><i class="bi bi-arrow-up-circle"></i> Egresos del Mes</h5>
+                    <p class="mb-2">
+                        <strong>¿Qué es?</strong> El dinero que salió durante el mes seleccionado.
+                    </p>
+                    <p class="mb-2">
+                        <strong>¿Cómo se calcula?</strong>
+                    </p>
+                    <div class="bg-light p-3 rounded">
+                        <code>Egresos del Mes = Suma de todos los movimientos tipo EGRESO del mes</code>
+                    </div>
+                    <p class="mt-2 text-muted small">
+                        <i class="bi bi-info-circle"></i> Incluye gastos de servicios, sueldos, mantenimiento y cualquier salida de dinero.
+                    </p>
+                </div>
+
+                <hr>
+
+                <!-- Evolución de Saldos -->
+                <div class="mb-4">
+                    <h5 class="text-info"><i class="bi bi-graph-up"></i> Evolución de Saldos (Últimos 6 Meses)</h5>
+                    <p class="mb-2">
+                        <strong>¿Qué es?</strong> Un gráfico que muestra cómo ha cambiado el saldo mes a mes.
+                    </p>
+                    <p class="mb-2">
+                        <strong>¿Cómo se calcula cada punto del gráfico?</strong>
+                    </p>
+                    <div class="bg-light p-3 rounded">
+                        <p class="mb-2"><strong>Para cada mes:</strong></p>
+                        <ol class="mb-0">
+                            <li><strong>Saldo Inicial</strong> = Saldo Final del mes anterior</li>
+                            <li><strong>Ingresos del mes</strong> = Suma de todos los ingresos</li>
+                            <li><strong>Egresos del mes</strong> = Suma de todos los egresos</li>
+                            <li><strong>Saldo Final</strong> = Saldo Inicial + Ingresos - Egresos</li>
+                        </ol>
+                    </div>
+                    <p class="mt-2 text-muted small">
+                        <i class="bi bi-info-circle"></i> El gráfico muestra el Saldo Final de cada mes. Es como un extracto bancario mes a mes.
+                    </p>
+
+                    <div class="alert alert-info mt-3">
+                        <strong>Ejemplo:</strong>
+                        <ul class="mb-0 mt-2">
+                            <li><strong>Enero:</strong> Inicial $0 + Ingresos $50,000 - Egresos $30,000 = <strong>Saldo Final $20,000</strong></li>
+                            <li><strong>Febrero:</strong> Inicial $20,000 + Ingresos $45,000 - Egresos $35,000 = <strong>Saldo Final $30,000</strong></li>
+                            <li><strong>Marzo:</strong> Inicial $30,000 + Ingresos $60,000 - Egresos $40,000 = <strong>Saldo Final $50,000</strong></li>
+                        </ul>
+                    </div>
+                </div>
+
+                <hr>
+
+                <!-- Distribución de Gastos -->
+                <div class="mb-4">
+                    <h5 class="text-warning"><i class="bi bi-pie-chart"></i> Distribución de Gastos</h5>
+                    <p class="mb-2">
+                        <strong>¿Qué es?</strong> Un gráfico de torta que muestra en qué se gastó el dinero durante el mes seleccionado.
+                    </p>
+                    <p class="mb-2">
+                        <strong>¿Cómo se calcula?</strong>
+                    </p>
+                    <div class="bg-light p-3 rounded">
+                        <ol class="mb-0">
+                            <li>Se agrupan todos los <strong>egresos del mes</strong> por categoría</li>
+                            <li>Se suma el total gastado en cada categoría</li>
+                            <li>Se calcula el <strong>porcentaje</strong> que representa cada categoría del total</li>
+                        </ol>
+                    </div>
+                    <p class="mt-2 text-muted small">
+                        <i class="bi bi-info-circle"></i> Te ayuda a ver dónde se concentra el gasto de tu iglesia (ej: 40% en servicios, 30% en sueldos, etc.)
+                    </p>
+                </div>
+
+                <hr>
+
+                <div class="alert alert-success">
+                    <h5><i class="bi bi-lightbulb"></i> Nota Importante</h5>
+                    <p class="mb-0">
+                        Todos los cálculos <strong>excluyen movimientos anulados</strong>. Solo se consideran movimientos activos y válidos para garantizar la precisión de las métricas.
+                    </p>
+                </div>
+
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
