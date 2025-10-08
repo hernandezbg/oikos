@@ -1,6 +1,7 @@
 {% extends 'base.html' %}
 {% load static %}
 {% load custom_filters %}
+{% load l10n %}
 
 {% block title %}Movimientos - {{ APP_NAME }}{% endblock %}
 {% block page_title %}Movimientos{% endblock %}
@@ -10,7 +11,12 @@
     <div class="col-12">
         <div class="card">
             <div class="card-header d-flex justify-content-between align-items-center">
-                <h5 class="mb-0"><i class="bi bi-filter"></i> Filtros</h5>
+                <div class="d-flex align-items-center">
+                    <button class="btn btn-sm btn-link text-decoration-none p-0 me-2" type="button" data-bs-toggle="collapse" data-bs-target="#filtrosCollapse" aria-expanded="false" aria-controls="filtrosCollapse">
+                        <i class="bi bi-filter"></i>
+                    </button>
+                    <h5 class="mb-0">Filtros</h5>
+                </div>
                 <div>
                     <button type="button" class="btn btn-primary btn-sm" data-bs-toggle="modal" data-bs-target="#nuevoMovimientoModal">
                         <i class="bi bi-plus-circle"></i> Nuevo
@@ -20,30 +26,32 @@
                     </a>
                 </div>
             </div>
-            <div class="card-body">
-                <form method="get" class="row g-3">
-                    <div class="col-md-3">
-                        {{ form.mes.label_tag }}
-                        {{ form.mes }}
-                    </div>
-                    <div class="col-md-2">
-                        {{ form.tipo.label_tag }}
-                        {{ form.tipo }}
-                    </div>
-                    <div class="col-md-3">
-                        {{ form.categoria.label_tag }}
-                        {{ form.categoria }}
-                    </div>
-                    <div class="col-md-3">
-                        {{ form.buscar.label_tag }}
-                        {{ form.buscar }}
-                    </div>
-                    <div class="col-md-1 d-flex align-items-end">
-                        <button type="submit" class="btn btn-primary w-100">
-                            <i class="bi bi-search"></i>
-                        </button>
-                    </div>
-                </form>
+            <div class="collapse" id="filtrosCollapse">
+                <div class="card-body">
+                    <form method="get" class="row g-3">
+                        <div class="col-md-3">
+                            {{ form.mes.label_tag }}
+                            {{ form.mes }}
+                        </div>
+                        <div class="col-md-2">
+                            {{ form.tipo.label_tag }}
+                            {{ form.tipo }}
+                        </div>
+                        <div class="col-md-3">
+                            {{ form.categoria.label_tag }}
+                            {{ form.categoria }}
+                        </div>
+                        <div class="col-md-3">
+                            {{ form.buscar.label_tag }}
+                            {{ form.buscar }}
+                        </div>
+                        <div class="col-md-1 d-flex align-items-end">
+                            <button type="submit" class="btn btn-primary w-100">
+                                <i class="bi bi-search"></i>
+                            </button>
+                        </div>
+                    </form>
+                </div>
             </div>
         </div>
     </div>
@@ -126,6 +134,14 @@
                                             title="Ver información completa">
                                         <i class="bi bi-info-circle"></i>
                                     </button>
+                                    {% if not mov.anulado and user.rol in 'ADMIN,TESORERO' %}
+                                    <button class="btn btn-sm btn-outline-primary me-1"
+                                            data-bs-toggle="modal"
+                                            data-bs-target="#editarModal{{ mov.id }}"
+                                            title="Editar movimiento">
+                                        <i class="bi bi-pencil"></i>
+                                    </button>
+                                    {% endif %}
                                     {% if not mov.anulado and user.puede_aprobar %}
                                     <button class="btn btn-sm btn-outline-danger"
                                             data-bs-toggle="modal"
@@ -222,6 +238,13 @@
                                             data-bs-target="#infoModal{{ mov.id }}">
                                         <i class="bi bi-info-circle"></i> Ver Información Completa
                                     </button>
+                                    {% if not mov.anulado and user.rol in 'ADMIN,TESORERO' %}
+                                    <button class="btn btn-sm btn-outline-primary"
+                                            data-bs-toggle="modal"
+                                            data-bs-target="#editarModal{{ mov.id }}">
+                                        <i class="bi bi-pencil"></i> Editar Movimiento
+                                    </button>
+                                    {% endif %}
                                     {% if not mov.anulado and user.puede_aprobar %}
                                     <button class="btn btn-sm btn-outline-danger"
                                             data-bs-toggle="modal"
@@ -499,6 +522,173 @@
         </div>
     </div>
 </div>
+{% endif %}
+{% endfor %}
+
+<!-- Modales para editar movimientos -->
+{% for mov in movimientos %}
+{% if not mov.anulado and user.rol in 'ADMIN,TESORERO' %}
+<div class="modal fade" id="editarModal{{ mov.id }}" tabindex="-1" aria-labelledby="editarModalLabel{{ mov.id }}" aria-hidden="true">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header bg-primary text-white">
+                <h5 class="modal-title" id="editarModalLabel{{ mov.id }}">
+                    <i class="bi bi-pencil"></i> Editar Movimiento
+                </h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <form method="post" action="{% url 'movimiento_update' mov.id %}" id="editarMovimientoForm{{ mov.id }}">
+                {% csrf_token %}
+                <div class="modal-body">
+                    <!-- Tipo de Movimiento -->
+                    <div class="mb-3">
+                        <label class="form-label fw-bold">Tipo de Movimiento <span class="text-danger">*</span></label>
+                        <div>
+                            <div class="form-check form-check-inline">
+                                <input class="form-check-input tipo-radio-{{ mov.id }}" type="radio" name="tipo" id="tipo_ingreso_edit_{{ mov.id }}" value="INGRESO" {% if mov.tipo == 'INGRESO' %}checked{% endif %} required>
+                                <label class="form-check-label" for="tipo_ingreso_edit_{{ mov.id }}">
+                                    <i class="bi bi-arrow-up-circle text-success"></i> Ingreso
+                                </label>
+                            </div>
+                            <div class="form-check form-check-inline">
+                                <input class="form-check-input tipo-radio-{{ mov.id }}" type="radio" name="tipo" id="tipo_egreso_edit_{{ mov.id }}" value="EGRESO" {% if mov.tipo == 'EGRESO' %}checked{% endif %}>
+                                <label class="form-check-label" for="tipo_egreso_edit_{{ mov.id }}">
+                                    <i class="bi bi-arrow-down-circle text-danger"></i> Egreso
+                                </label>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="row">
+                        <!-- Fecha -->
+                        <div class="col-md-6 mb-3">
+                            <label for="fecha_edit_{{ mov.id }}" class="form-label fw-bold">Fecha <span class="text-danger">*</span></label>
+                            <input type="date" class="form-control" id="fecha_edit_{{ mov.id }}" name="fecha" value="{{ mov.fecha|date:'Y-m-d' }}" required>
+                        </div>
+
+                        <!-- Monto -->
+                        <div class="col-md-6 mb-3">
+                            <label for="monto_edit_{{ mov.id }}" class="form-label fw-bold">Monto ($) <span class="text-danger">*</span></label>
+                            <input type="text" class="form-control monto-display-{{ mov.id }}" placeholder="1.500.000,50" required>
+                            <input type="hidden" name="monto" class="monto-hidden-{{ mov.id }}" value="{{ mov.monto|unlocalize }}">
+                            <small class="text-muted">Se formatea automáticamente con separador de miles</small>
+                        </div>
+                    </div>
+
+                    <!-- Categoría Ingreso -->
+                    <div class="mb-3 categoria-ingreso-div-{{ mov.id }} {% if mov.tipo != 'INGRESO' %}d-none{% endif %}">
+                        <label for="categoria_ingreso_edit_{{ mov.id }}" class="form-label fw-bold">Categoría de Ingreso <span class="text-danger">*</span></label>
+                        <select class="form-select" id="categoria_ingreso_edit_{{ mov.id }}" name="categoria_ingreso">
+                            <option value="">Seleccione una categoría...</option>
+                            {% for cat in user.iglesia.categorias_ingreso.all %}
+                            {% if cat.activa %}
+                            <option value="{{ cat.id }}" {% if mov.categoria_ingreso.id == cat.id %}selected{% endif %}>{{ cat.nombre }}</option>
+                            {% endif %}
+                            {% endfor %}
+                        </select>
+                    </div>
+
+                    <!-- Categoría Egreso -->
+                    <div class="mb-3 categoria-egreso-div-{{ mov.id }} {% if mov.tipo != 'EGRESO' %}d-none{% endif %}">
+                        <label for="categoria_egreso_edit_{{ mov.id }}" class="form-label fw-bold">Categoría de Egreso <span class="text-danger">*</span></label>
+                        <select class="form-select" id="categoria_egreso_edit_{{ mov.id }}" name="categoria_egreso">
+                            <option value="">Seleccione una categoría...</option>
+                            {% for cat in user.iglesia.categorias_egreso.all %}
+                            {% if cat.activa %}
+                            <option value="{{ cat.id }}" {% if mov.categoria_egreso.id == cat.id %}selected{% endif %}>{{ cat.nombre }}</option>
+                            {% endif %}
+                            {% endfor %}
+                        </select>
+                    </div>
+
+                    <!-- Concepto -->
+                    <div class="mb-3">
+                        <label for="concepto_edit_{{ mov.id }}" class="form-label fw-bold">Concepto/Descripción <span class="text-danger">*</span></label>
+                        <textarea class="form-control" id="concepto_edit_{{ mov.id }}" name="concepto" rows="3" required>{{ mov.concepto }}</textarea>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">
+                        <i class="bi bi-x"></i> Cancelar
+                    </button>
+                    <button type="submit" class="btn btn-primary">
+                        <i class="bi bi-save"></i> Actualizar
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // Formateo de monto para modal de edición {{ mov.id }}
+    const montoDisplay{{ mov.id }} = document.querySelector('.monto-display-{{ mov.id }}');
+    const montoHidden{{ mov.id }} = document.querySelector('.monto-hidden-{{ mov.id }}');
+
+    // Inicializar con el valor formateado
+    if (montoHidden{{ mov.id }}.value) {
+        const valor = parseFloat(montoHidden{{ mov.id }}.value);
+        const parts = valor.toString().split('.');
+        const entero = parseInt(parts[0]);
+        const decimal = parts[1];
+        const formattedEntero = entero.toLocaleString('es-AR');
+        montoDisplay{{ mov.id }}.value = decimal ? formattedEntero + ',' + decimal : formattedEntero;
+    }
+
+    montoDisplay{{ mov.id }}.addEventListener('input', function(e) {
+        let value = this.value.replace(/[^\d,]/g, '');
+        const comas = value.split(',');
+        if (comas.length > 2) {
+            value = comas[0] + ',' + comas.slice(1).join('');
+        }
+        if (comas.length === 2 && comas[1].length > 2) {
+            value = comas[0] + ',' + comas[1].substring(0, 2);
+        }
+        this.value = value;
+        montoHidden{{ mov.id }}.value = value.replace(',', '.');
+
+        if (value && comas[0]) {
+            let entero = comas[0];
+            let decimal = comas[1];
+            const numero = parseInt(entero);
+            if (!isNaN(numero)) {
+                const formattedEntero = numero.toLocaleString('es-AR');
+                const formattedValue = decimal !== undefined ? formattedEntero + ',' + decimal : formattedEntero;
+                this.value = formattedValue;
+            }
+        } else if (!value) {
+            this.value = '';
+            montoHidden{{ mov.id }}.value = '';
+        }
+    });
+
+    // Mostrar/ocultar categorías según tipo para edición {{ mov.id }}
+    const tipoRadios{{ mov.id }} = document.querySelectorAll('.tipo-radio-{{ mov.id }}');
+    const categoriaIngresoDiv{{ mov.id }} = document.querySelector('.categoria-ingreso-div-{{ mov.id }}');
+    const categoriaEgresoDiv{{ mov.id }} = document.querySelector('.categoria-egreso-div-{{ mov.id }}');
+    const categoriaIngresoSelect{{ mov.id }} = document.getElementById('categoria_ingreso_edit_{{ mov.id }}');
+    const categoriaEgresoSelect{{ mov.id }} = document.getElementById('categoria_egreso_edit_{{ mov.id }}');
+
+    tipoRadios{{ mov.id }}.forEach(radio => {
+        radio.addEventListener('change', function() {
+            if (this.value === 'INGRESO') {
+                categoriaIngresoDiv{{ mov.id }}.classList.remove('d-none');
+                categoriaEgresoDiv{{ mov.id }}.classList.add('d-none');
+                categoriaIngresoSelect{{ mov.id }}.required = true;
+                categoriaEgresoSelect{{ mov.id }}.required = false;
+                categoriaEgresoSelect{{ mov.id }}.value = '';
+            } else if (this.value === 'EGRESO') {
+                categoriaIngresoDiv{{ mov.id }}.classList.add('d-none');
+                categoriaEgresoDiv{{ mov.id }}.classList.remove('d-none');
+                categoriaIngresoSelect{{ mov.id }}.required = false;
+                categoriaEgresoSelect{{ mov.id }}.required = true;
+                categoriaIngresoSelect{{ mov.id }}.value = '';
+            }
+        });
+    });
+});
+</script>
 {% endif %}
 {% endfor %}
 
@@ -840,6 +1030,35 @@ document.addEventListener('DOMContentLoaded', function() {
             const newUrl = window.location.pathname + (newSearch ? '?' + newSearch : '');
             window.history.replaceState({}, '', newUrl);
         }, 300);
+    }
+
+    // Gestión de collapse de filtros - mostrar en desktop, ocultar en móvil
+    const filtrosCollapse = document.getElementById('filtrosCollapse');
+    const filtrosToggleBtn = document.querySelector('[data-bs-target="#filtrosCollapse"]');
+    const filtrosIcon = filtrosToggleBtn.querySelector('i');
+
+    // Mostrar filtros por defecto en desktop (pantallas >= 768px)
+    if (window.innerWidth >= 768) {
+        const bsCollapse = new bootstrap.Collapse(filtrosCollapse, {
+            show: true
+        });
+    }
+
+    // Cambiar ícono cuando se expande/colapsa
+    filtrosCollapse.addEventListener('show.bs.collapse', function () {
+        filtrosIcon.classList.remove('bi-filter');
+        filtrosIcon.classList.add('bi-funnel-fill');
+    });
+
+    filtrosCollapse.addEventListener('hide.bs.collapse', function () {
+        filtrosIcon.classList.remove('bi-funnel-fill');
+        filtrosIcon.classList.add('bi-filter');
+    });
+
+    // Actualizar estado del ícono si está abierto inicialmente
+    if (filtrosCollapse.classList.contains('show')) {
+        filtrosIcon.classList.remove('bi-filter');
+        filtrosIcon.classList.add('bi-funnel-fill');
     }
 });
 </script>

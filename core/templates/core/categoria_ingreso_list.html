@@ -1,0 +1,164 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Categorías de Ingreso - {{ APP_NAME }}{% endblock %}
+{% block page_title %}Categorías de Ingreso{% endblock %}
+
+{% block content %}
+<div class="row mb-3">
+    <div class="col-12">
+        <div class="card">
+            <div class="card-header d-flex justify-content-between align-items-center">
+                <h5 class="mb-0"><i class="bi bi-tags"></i> Gestión de Categorías de Ingreso</h5>
+                <button type="button" class="btn btn-primary btn-sm" data-bs-toggle="modal" data-bs-target="#nuevaCategoriaModal">
+                    <i class="bi bi-plus-circle"></i> Nueva Categoría
+                </button>
+            </div>
+            <div class="card-body">
+                <div class="row mb-3">
+                    <div class="col-md-6">
+                        <div class="alert alert-info">
+                            <i class="bi bi-info-circle"></i>
+                            <strong>Total:</strong> {{ categorias|length }} categorías
+                            ({{ activas }} activas, {{ inactivas }} inactivas)
+                        </div>
+                    </div>
+                </div>
+
+                <div class="table-responsive">
+                    <table class="table table-hover table-striped">
+                        <thead class="table-dark">
+                            <tr>
+                                <th>Código</th>
+                                <th>Nombre</th>
+                                <th>Estado</th>
+                                <th class="text-center">Acciones</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for categoria in categorias %}
+                            <tr class="{% if not categoria.activa %}table-secondary text-muted{% endif %}">
+                                <td>
+                                    <strong>{{ categoria.codigo }}</strong>
+                                </td>
+                                <td>
+                                    {{ categoria.nombre }}
+                                </td>
+                                <td>
+                                    {% if categoria.activa %}
+                                    <span class="badge bg-success">
+                                        <i class="bi bi-check-circle"></i> Activa
+                                    </span>
+                                    {% else %}
+                                    <span class="badge bg-secondary">
+                                        <i class="bi bi-x-circle"></i> Inactiva
+                                    </span>
+                                    {% endif %}
+                                </td>
+                                <td class="text-center">
+                                    <button class="btn btn-sm btn-outline-primary me-1"
+                                            data-bs-toggle="modal"
+                                            data-bs-target="#editarCategoriaModal{{ categoria.id }}"
+                                            title="Editar categoría">
+                                        <i class="bi bi-pencil"></i>
+                                    </button>
+                                    <a href="{% url 'toggle_categoria_ingreso' categoria.id %}"
+                                       class="btn btn-sm {% if categoria.activa %}btn-outline-warning{% else %}btn-outline-success{% endif %}"
+                                       title="{% if categoria.activa %}Desactivar{% else %}Activar{% endif %}"
+                                       onclick="return confirm('¿Está seguro de {% if categoria.activa %}desactivar{% else %}activar{% endif %} esta categoría?')">
+                                        <i class="bi bi-{% if categoria.activa %}pause-circle{% else %}play-circle{% endif %}"></i>
+                                    </a>
+                                </td>
+                            </tr>
+                            {% empty %}
+                            <tr>
+                                <td colspan="4" class="text-center text-muted">
+                                    No hay categorías de ingreso registradas
+                                </td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Modal Nueva Categoría -->
+<div class="modal fade" id="nuevaCategoriaModal" tabindex="-1" aria-labelledby="nuevaCategoriaModalLabel" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header bg-primary text-white">
+                <h5 class="modal-title" id="nuevaCategoriaModalLabel">
+                    <i class="bi bi-plus-circle"></i> Nueva Categoría de Ingreso
+                </h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <form method="post" action="{% url 'categoria_ingreso_create' %}">
+                {% csrf_token %}
+                <div class="modal-body">
+                    <div class="mb-3">
+                        <label for="codigo" class="form-label fw-bold">Código <span class="text-danger">*</span></label>
+                        <input type="text" class="form-control" id="codigo" name="codigo" required placeholder="Ej: ING-001">
+                        <small class="text-muted">Código único para identificar esta categoría</small>
+                    </div>
+
+                    <div class="mb-3">
+                        <label for="nombre" class="form-label fw-bold">Nombre <span class="text-danger">*</span></label>
+                        <input type="text" class="form-control" id="nombre" name="nombre" required placeholder="Ej: Ofrendas, Diezmos, etc.">
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">
+                        <i class="bi bi-x"></i> Cancelar
+                    </button>
+                    <button type="submit" class="btn btn-primary">
+                        <i class="bi bi-save"></i> Guardar
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<!-- Modales de Edición -->
+{% for categoria in categorias %}
+<div class="modal fade" id="editarCategoriaModal{{ categoria.id }}" tabindex="-1" aria-labelledby="editarCategoriaModalLabel{{ categoria.id }}" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header bg-primary text-white">
+                <h5 class="modal-title" id="editarCategoriaModalLabel{{ categoria.id }}">
+                    <i class="bi bi-pencil"></i> Editar Categoría de Ingreso
+                </h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <form method="post" action="{% url 'categoria_ingreso_update' categoria.id %}">
+                {% csrf_token %}
+                <div class="modal-body">
+                    <div class="mb-3">
+                        <label for="codigo_{{ categoria.id }}" class="form-label fw-bold">Código <span class="text-danger">*</span></label>
+                        <input type="text" class="form-control" id="codigo_{{ categoria.id }}" name="codigo" value="{{ categoria.codigo }}" required>
+                        <small class="text-muted">Código único para identificar esta categoría</small>
+                    </div>
+
+                    <div class="mb-3">
+                        <label for="nombre_{{ categoria.id }}" class="form-label fw-bold">Nombre <span class="text-danger">*</span></label>
+                        <input type="text" class="form-control" id="nombre_{{ categoria.id }}" name="nombre" value="{{ categoria.nombre }}" required>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">
+                        <i class="bi bi-x"></i> Cancelar
+                    </button>
+                    <button type="submit" class="btn btn-primary">
+                        <i class="bi bi-save"></i> Actualizar
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+{% endfor %}
+
+{% endblock %}

@@ -2,7 +2,7 @@ from django.shortcuts import render, redirect, get_object_or_404
 from django.contrib.auth.decorators import login_required
 from django.contrib.auth.views import LoginView
 from django.contrib.auth.mixins import LoginRequiredMixin
-from django.views.generic import TemplateView, CreateView, ListView
+from django.views.generic import TemplateView, CreateView, ListView, UpdateView
 from django.urls import reverse_lazy
 from django.http import JsonResponse, HttpResponse
 from django.db.models import Sum, Q
@@ -12,7 +12,7 @@ from dateutil.relativedelta import relativedelta
 from decimal import Decimal
 
 from core.models import Movimiento, SaldoMensual, CategoriaIngreso, CategoriaEgreso, Iglesia
-from core.forms import MovimientoForm, FiltroMovimientosForm, RegistroForm
+from core.forms import MovimientoForm, FiltroMovimientosForm, RegistroForm, CategoriaIngresoForm, CategoriaEgresoForm
 from core.forms_google import RegistroIglesiaGoogleForm
 from core.utils import formato_pesos, calcular_saldo_mes, generar_reporte_pdf, get_dashboard_data
 from django.contrib import messages
@@ -313,6 +313,73 @@ class MovimientoCreateView(LoginRequiredMixin, CreateView):
             return redirect(reverse('movimiento_list') + '?nuevo=1')
 
         return response
+
+
+class MovimientoUpdateView(LoginRequiredMixin, UpdateView):
+    model = Movimiento
+    form_class = MovimientoForm
+    template_name = 'core/movimiento_list.html'
+    success_url = reverse_lazy('movimiento_list')
+
+    def dispatch(self, request, *args, **kwargs):
+        # Verificar que el usuario sea ADMIN o TESORERO
+        if not request.user.rol in ['ADMIN', 'TESORERO']:
+            messages.error(request, 'No tiene permisos para editar movimientos')
+            return redirect('movimiento_list')
+
+        # Verificar que el movimiento pertenezca a la iglesia del usuario
+        movimiento = self.get_object()
+        if movimiento.iglesia != request.user.iglesia:
+            messages.error(request, 'No puede editar movimientos de otra iglesia')
+            return redirect('movimiento_list')
+
+        # Verificar que el movimiento no esté anulado
+        if movimiento.anulado:
+            messages.error(request, 'No puede editar un movimiento anulado')
+            return redirect('movimiento_list')
+
+        return super().dispatch(request, *args, **kwargs)
+
+    def get_queryset(self):
+        return Movimiento.objects.filter(
+            iglesia=self.request.user.iglesia,
+            anulado=False
+        )
+
+    def get_form_kwargs(self):
+        kwargs = super().get_form_kwargs()
+        kwargs['iglesia'] = self.request.user.iglesia
+        return kwargs
+
+    def form_valid(self, form):
+        response = super().form_valid(form)
+        messages.success(
+            self.request,
+            f'Movimiento actualizado exitosamente: {self.object.get_tipo_display()} de ${self.object.monto:,.2f}'
+        )
+        return response
+
+    def form_invalid(self, form):
+        # Mostrar errores específicos del formulario
+        error_messages = []
+        for field, errors in form.errors.items():
+            if field == '__all__':
+                for error in errors:
+                    error_messages.append(error)
+            else:
+                field_label = form.fields[field].label if field in form.fields else field
+                for error in errors:
+                    error_messages.append(f'{field_label}: {error}')
+
+        if error_messages:
+            for error_msg in error_messages:
+                messages.error(self.request, error_msg)
+        else:
+            messages.error(
+                self.request,
+                'Error al actualizar el movimiento. Por favor revise los campos.'
+            )
+        return redirect('movimiento_list')
 
 
 class MovimientoListView(LoginRequiredMixin, ListView):
@@ -688,3 +755,205 @@ def politica_cookies_view(request):
     Vista para mostrar la política de cookies
     """
     return render(request, 'core/politica_cookies.html')
+
+
+# ============================================================================
+# VISTAS DE CATEGORÍAS DE INGRESO
+# ============================================================================
+
+class CategoriaIngresoListView(LoginRequiredMixin, ListView):
+    model = CategoriaIngreso
+    template_name = 'core/categoria_ingreso_list.html'
+    context_object_name = 'categorias'
+    paginate_by = 20
+
+    def get_queryset(self):
+        return CategoriaIngreso.objects.filter(
+            iglesia=self.request.user.iglesia
+        ).order_by('codigo')
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        context['activas'] = self.get_queryset().filter(activa=True).count()
+        context['inactivas'] = self.get_queryset().filter(activa=False).count()
+        return context
+
+
+class CategoriaIngresoCreateView(LoginRequiredMixin, CreateView):
+    model = CategoriaIngreso
+    form_class = CategoriaIngresoForm
+    template_name = 'core/categoria_ingreso_list.html'
+    success_url = reverse_lazy('categoria_ingreso_list')
+
+    def get_form_kwargs(self):
+        kwargs = super().get_form_kwargs()
+        kwargs['iglesia'] = self.request.user.iglesia
+        return kwargs
+
+    def form_valid(self, form):
+        form.instance.iglesia = self.request.user.iglesia
+        response = super().form_valid(form)
+        messages.success(
+            self.request,
+            f'Categoría "{self.object.nombre}" creada exitosamente'
+        )
+        return response
+
+    def form_invalid(self, form):
+        messages.error(
+            self.request,
+            'Error al crear la categoría. Por favor revise los campos.'
+        )
+        return redirect('categoria_ingreso_list')
+
+
+class CategoriaIngresoUpdateView(LoginRequiredMixin, UpdateView):
+    model = CategoriaIngreso
+    form_class = CategoriaIngresoForm
+    template_name = 'core/categoria_ingreso_list.html'
+    success_url = reverse_lazy('categoria_ingreso_list')
+
+    def get_queryset(self):
+        return CategoriaIngreso.objects.filter(iglesia=self.request.user.iglesia)
+
+    def get_form_kwargs(self):
+        kwargs = super().get_form_kwargs()
+        kwargs['iglesia'] = self.request.user.iglesia
+        return kwargs
+
+    def form_valid(self, form):
+        response = super().form_valid(form)
+        messages.success(
+            self.request,
+            f'Categoría "{self.object.nombre}" actualizada exitosamente'
+        )
+        return response
+
+    def form_invalid(self, form):
+        messages.error(
+            self.request,
+            'Error al actualizar la categoría. Por favor revise los campos.'
+        )
+        return redirect('categoria_ingreso_list')
+
+
+@login_required
+def toggle_categoria_ingreso(request, pk):
+    """Activa o desactiva una categoría de ingreso"""
+    categoria = get_object_or_404(
+        CategoriaIngreso,
+        pk=pk,
+        iglesia=request.user.iglesia
+    )
+
+    categoria.activa = not categoria.activa
+    categoria.save()
+
+    estado = "activada" if categoria.activa else "desactivada"
+    messages.success(
+        request,
+        f'Categoría "{categoria.nombre}" {estado} exitosamente'
+    )
+
+    return redirect('categoria_ingreso_list')
+
+
+# ============================================================================
+# VISTAS DE CATEGORÍAS DE EGRESO
+# ============================================================================
+
+class CategoriaEgresoListView(LoginRequiredMixin, ListView):
+    model = CategoriaEgreso
+    template_name = 'core/categoria_egreso_list.html'
+    context_object_name = 'categorias'
+    paginate_by = 20
+
+    def get_queryset(self):
+        return CategoriaEgreso.objects.filter(
+            iglesia=self.request.user.iglesia
+        ).order_by('codigo')
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        context['activas'] = self.get_queryset().filter(activa=True).count()
+        context['inactivas'] = self.get_queryset().filter(activa=False).count()
+        return context
+
+
+class CategoriaEgresoCreateView(LoginRequiredMixin, CreateView):
+    model = CategoriaEgreso
+    form_class = CategoriaEgresoForm
+    template_name = 'core/categoria_egreso_list.html'
+    success_url = reverse_lazy('categoria_egreso_list')
+
+    def get_form_kwargs(self):
+        kwargs = super().get_form_kwargs()
+        kwargs['iglesia'] = self.request.user.iglesia
+        return kwargs
+
+    def form_valid(self, form):
+        form.instance.iglesia = self.request.user.iglesia
+        response = super().form_valid(form)
+        messages.success(
+            self.request,
+            f'Categoría "{self.object.nombre}" creada exitosamente'
+        )
+        return response
+
+    def form_invalid(self, form):
+        messages.error(
+            self.request,
+            'Error al crear la categoría. Por favor revise los campos.'
+        )
+        return redirect('categoria_egreso_list')
+
+
+class CategoriaEgresoUpdateView(LoginRequiredMixin, UpdateView):
+    model = CategoriaEgreso
+    form_class = CategoriaEgresoForm
+    template_name = 'core/categoria_egreso_list.html'
+    success_url = reverse_lazy('categoria_egreso_list')
+
+    def get_queryset(self):
+        return CategoriaEgreso.objects.filter(iglesia=self.request.user.iglesia)
+
+    def get_form_kwargs(self):
+        kwargs = super().get_form_kwargs()
+        kwargs['iglesia'] = self.request.user.iglesia
+        return kwargs
+
+    def form_valid(self, form):
+        response = super().form_valid(form)
+        messages.success(
+            self.request,
+            f'Categoría "{self.object.nombre}" actualizada exitosamente'
+        )
+        return response
+
+    def form_invalid(self, form):
+        messages.error(
+            self.request,
+            'Error al actualizar la categoría. Por favor revise los campos.'
+        )
+        return redirect('categoria_egreso_list')
+
+
+@login_required
+def toggle_categoria_egreso(request, pk):
+    """Activa o desactiva una categoría de egreso"""
+    categoria = get_object_or_404(
+        CategoriaEgreso,
+        pk=pk,
+        iglesia=request.user.iglesia
+    )
+
+    categoria.activa = not categoria.activa
+    categoria.save()
+
+    estado = "activada" if categoria.activa else "desactivada"
+    messages.success(
+        request,
+        f'Categoría "{categoria.nombre}" {estado} exitosamente'
+    )
+
+    return redirect('categoria_egreso_list')

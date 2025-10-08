@@ -334,3 +334,64 @@ class RegistroForm(UserCreationForm):
             user.save()
 
         return user
+
+
+class CategoriaIngresoForm(forms.ModelForm):
+    class Meta:
+        model = CategoriaIngreso
+        fields = ['codigo', 'nombre']
+        widgets = {
+            'codigo': forms.TextInput(attrs={'class': 'form-control', 'placeholder': 'Ej: ING-001'}),
+            'nombre': forms.TextInput(attrs={'class': 'form-control', 'placeholder': 'Ej: Ofrendas, Diezmos, etc.'}),
+        }
+        labels = {
+            'codigo': 'Código',
+            'nombre': 'Nombre de la Categoría',
+        }
+
+    def __init__(self, *args, **kwargs):
+        self.iglesia = kwargs.pop('iglesia', None)
+        super().__init__(*args, **kwargs)
+
+    def clean_codigo(self):
+        codigo = self.cleaned_data.get('codigo')
+        if self.iglesia:
+            # Verificar que el código no exista para esta iglesia
+            qs = CategoriaIngreso.objects.filter(iglesia=self.iglesia, codigo=codigo)
+            if self.instance and self.instance.pk:
+                qs = qs.exclude(pk=self.instance.pk)
+            if qs.exists():
+                raise ValidationError('Ya existe una categoría con este código en su iglesia')
+        return codigo
+
+
+class CategoriaEgresoForm(forms.ModelForm):
+    class Meta:
+        model = CategoriaEgreso
+        fields = ['codigo', 'nombre', 'presupuesto_mensual']
+        widgets = {
+            'codigo': forms.TextInput(attrs={'class': 'form-control', 'placeholder': 'Ej: EGR-001'}),
+            'nombre': forms.TextInput(attrs={'class': 'form-control', 'placeholder': 'Ej: Servicios, Mantenimiento, etc.'}),
+            'presupuesto_mensual': forms.NumberInput(attrs={'class': 'form-control', 'step': '0.01', 'min': '0', 'placeholder': '0.00'}),
+        }
+        labels = {
+            'codigo': 'Código',
+            'nombre': 'Nombre de la Categoría',
+            'presupuesto_mensual': 'Presupuesto Mensual ($)',
+        }
+
+    def __init__(self, *args, **kwargs):
+        self.iglesia = kwargs.pop('iglesia', None)
+        super().__init__(*args, **kwargs)
+        self.fields['presupuesto_mensual'].required = False
+
+    def clean_codigo(self):
+        codigo = self.cleaned_data.get('codigo')
+        if self.iglesia:
+            # Verificar que el código no exista para esta iglesia
+            qs = CategoriaEgreso.objects.filter(iglesia=self.iglesia, codigo=codigo)
+            if self.instance and self.instance.pk:
+                qs = qs.exclude(pk=self.instance.pk)
+            if qs.exists():
+                raise ValidationError('Ya existe una categoría con este código en su iglesia')
+        return codigo

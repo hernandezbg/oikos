@@ -150,6 +150,16 @@
                             </a>
                         </li>
                         <li class="nav-item">
+                            <a class="nav-link {% if 'categoria_ingreso' in request.resolver_match.url_name %}active{% endif %}" href="{% url 'categoria_ingreso_list' %}">
+                                <i class="bi bi-tag"></i> Categorías de Ingreso
+                            </a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link {% if 'categoria_egreso' in request.resolver_match.url_name %}active{% endif %}" href="{% url 'categoria_egreso_list' %}">
+                                <i class="bi bi-tags"></i> Categorías de Egreso
+                            </a>
+                        </li>
+                        <li class="nav-item">
                             <a class="nav-link" href="{% url 'reporte_mensual' %}">
                                 <i class="bi bi-file-earmark-pdf"></i> Reportes
                             </a>

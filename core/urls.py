@@ -4,6 +4,7 @@ from core.views import (
     CustomLoginView,
     DashboardView,
     MovimientoCreateView,
+    MovimientoUpdateView,
     MovimientoListView,
     reporte_mensual_view,
     generar_reporte_pdf_view,
@@ -16,7 +17,17 @@ from core.views import (
     gestionar_usuarios_view,
     anular_movimiento_view,
     ayuda_view,
-    politica_cookies_view
+    politica_cookies_view,
+    # Categorías de Ingreso
+    CategoriaIngresoListView,
+    CategoriaIngresoCreateView,
+    CategoriaIngresoUpdateView,
+    toggle_categoria_ingreso,
+    # Categorías de Egreso
+    CategoriaEgresoListView,
+    CategoriaEgresoCreateView,
+    CategoriaEgresoUpdateView,
+    toggle_categoria_egreso,
 )
 from django.contrib.auth.views import LogoutView
 
@@ -34,6 +45,7 @@ urlpatterns = [
     # Dashboard y vistas principales
     path('dashboard/', DashboardView.as_view(), name='dashboard'),
     path('movimientos/nuevo/', MovimientoCreateView.as_view(), name='movimiento_create'),
+    path('movimientos/<int:pk>/editar/', MovimientoUpdateView.as_view(), name='movimiento_update'),
     path('movimientos/', MovimientoListView.as_view(), name='movimiento_list'),
     path('movimientos/<int:pk>/anular/', anular_movimiento_view, name='anular_movimiento'),
     path('reportes/mensual/', reporte_mensual_view, name='reporte_mensual'),
@@ -47,4 +59,14 @@ urlpatterns = [
     # API y exportación
     path('api/dashboard-data/', dashboard_data_api, name='dashboard_data_api'),
     path('exportar/excel/', exportar_excel_view, name='exportar_excel'),
+    # Categorías de Ingreso
+    path('categorias/ingresos/', CategoriaIngresoListView.as_view(), name='categoria_ingreso_list'),
+    path('categorias/ingresos/nueva/', CategoriaIngresoCreateView.as_view(), name='categoria_ingreso_create'),
+    path('categorias/ingresos/<int:pk>/editar/', CategoriaIngresoUpdateView.as_view(), name='categoria_ingreso_update'),
+    path('categorias/ingresos/<int:pk>/toggle/', toggle_categoria_ingreso, name='toggle_categoria_ingreso'),
+    # Categorías de Egreso
+    path('categorias/egresos/', CategoriaEgresoListView.as_view(), name='categoria_egreso_list'),
+    path('categorias/egresos/nueva/', CategoriaEgresoCreateView.as_view(), name='categoria_egreso_create'),
+    path('categorias/egresos/<int:pk>/editar/', CategoriaEgresoUpdateView.as_view(), name='categoria_egreso_update'),
+    path('categorias/egresos/<int:pk>/toggle/', toggle_categoria_egreso, name='toggle_categoria_egreso'),
 ]

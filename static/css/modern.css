@@ -195,6 +195,18 @@ body {
         left: 0;
     }
 
+    /* Letra más pequeña en sidebar móvil */
+    .sidebar .nav-link {
+        font-size: 0.875rem;
+        padding: 0.75rem 1rem;
+        margin: 0.2rem 0.5rem;
+    }
+
+    .sidebar .nav-link i {
+        font-size: 1rem;
+        margin-right: 0.5rem;
+    }
+
     .sidebar-overlay {
         display: none;
         position: fixed;
@@ -627,4 +639,24 @@ html {
 @keyframes slideIn {
     from { transform: translateX(-20px); opacity: 0; }
     to { transform: translateX(0); opacity: 1; }
+}
+
+/* Filtros Colapsables */
+[data-bs-toggle="collapse"][data-bs-target="#filtrosCollapse"] {
+    color: var(--primary-color);
+    font-size: 1.25rem;
+    transition: all var(--transition-fast);
+}
+
+[data-bs-toggle="collapse"][data-bs-target="#filtrosCollapse"]:hover {
+    color: var(--primary-dark);
+    transform: scale(1.1);
+}
+
+[data-bs-toggle="collapse"][data-bs-target="#filtrosCollapse"] i {
+    transition: transform var(--transition-base);
+}
+
+[data-bs-toggle="collapse"][data-bs-target="#filtrosCollapse"]:hover i {
+    transform: rotate(180deg);
 }
