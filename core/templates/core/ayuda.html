@@ -39,7 +39,12 @@
         <!-- Navegación con Tabs -->
         <ul class="nav nav-tabs mb-4" id="ayudaTabs" role="tablist">
             <li class="nav-item" role="presentation">
-                <button class="nav-link active" id="dashboard-tab" data-bs-toggle="tab" data-bs-target="#dashboard" type="button" role="tab">
+                <button class="nav-link active" id="equipo-tab" data-bs-toggle="tab" data-bs-target="#equipo" type="button" role="tab">
+                    <i class="bi bi-people"></i> Gestión de Equipo
+                </button>
+            </li>
+            <li class="nav-item" role="presentation">
+                <button class="nav-link" id="dashboard-tab" data-bs-toggle="tab" data-bs-target="#dashboard" type="button" role="tab">
                     <i class="bi bi-graph-up"></i> Dashboard
                 </button>
             </li>
@@ -48,16 +53,227 @@
                     <i class="bi bi-arrow-left-right"></i> Movimientos
                 </button>
             </li>
-            <li class="nav-item" role="presentation">
-                <button class="nav-link" id="equipo-tab" data-bs-toggle="tab" data-bs-target="#equipo" type="button" role="tab">
-                    <i class="bi bi-people"></i> Gestión de Equipo
-                </button>
-            </li>
         </ul>
 
         <div class="tab-content" id="ayudaTabsContent">
+            <!-- TAB: Gestión de Equipo -->
+            <div class="tab-pane fade show active" id="equipo" role="tabpanel">
+                <div class="card shadow">
+                    <div class="card-header bg-warning text-dark">
+                        <h4 class="mb-0">
+                            <i class="bi bi-question-circle"></i> Gestión de Equipo
+                        </h4>
+                    </div>
+                    <div class="card-body">
+                        <p class="lead">Aprende cómo gestionar usuarios, roles y permisos en tu organización.</p>
+
+                        <div class="alert alert-info mt-3">
+                            <h6><i class="bi bi-info-circle"></i> ¿Cómo acceder?</h6>
+                            <p class="mb-0">
+                                En el menú lateral izquierdo, haz clic en <strong><i class="bi bi-people"></i> Usuarios</strong> para acceder a la gestión de equipo.
+                            </p>
+                        </div>
+
+                        <hr class="my-4">
+
+                        <!-- Roles y Permisos -->
+                        <div class="mb-4">
+                            <h5 class="text-primary"><i class="bi bi-shield-check"></i> Roles y Permisos</h5>
+                            <p class="mb-3">Cada rol tiene diferentes niveles de acceso y permisos:</p>
+
+                            <div class="row">
+                                <div class="col-md-6 mb-3">
+                                    <div class="card border-danger">
+                                        <div class="card-body">
+                                            <h6 class="text-danger"><i class="bi bi-star-fill"></i> ADMINISTRADOR</h6>
+                                            <ul class="small mb-0">
+                                                <li>Acceso total al sistema</li>
+                                                <li>Gestionar usuarios y roles</li>
+                                                <li>Crear, editar y anular movimientos</li>
+                                                <li>Gestionar categorías</li>
+                                                <li>Ver todos los reportes</li>
+                                            </ul>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="col-md-6 mb-3">
+                                    <div class="card border-primary">
+                                        <div class="card-body">
+                                            <h6 class="text-primary"><i class="bi bi-wallet2"></i> TESORERO</h6>
+                                            <ul class="small mb-0">
+                                                <li>Crear, editar y anular movimientos</li>
+                                                <li>Ver dashboard y reportes</li>
+                                                <li>Gestionar categorías</li>
+                                                <li>NO puede gestionar usuarios</li>
+                                            </ul>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="col-md-6 mb-3">
+                                    <div class="card border-info">
+                                        <div class="card-body">
+                                            <h6 class="text-info"><i class="bi bi-book"></i> PASTOR</h6>
+                                            <ul class="small mb-0">
+                                                <li>Ver dashboard y reportes</li>
+                                                <li>Ver listado de movimientos</li>
+                                                <li>NO puede crear ni editar movimientos</li>
+                                                <li>NO puede gestionar usuarios</li>
+                                            </ul>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="col-md-6 mb-3">
+                                    <div class="card border-secondary">
+                                        <div class="card-body">
+                                            <h6 class="text-secondary"><i class="bi bi-eye"></i> COLABORADOR</h6>
+                                            <ul class="small mb-0">
+                                                <li>Ver dashboard básico</li>
+                                                <li>Ver listado de movimientos</li>
+                                                <li>Acceso de solo lectura</li>
+                                                <li>NO puede crear, editar ni anular</li>
+                                            </ul>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <hr>
+
+                        <!-- Invitar Usuarios -->
+                        <div class="mb-4">
+                            <h5 class="text-success"><i class="bi bi-person-plus"></i> Invitar Usuarios</h5>
+                            <ol>
+                                <li class="mb-2">Ve a <strong>Usuarios → Gestionar Usuarios</strong></li>
+                                <li class="mb-2">En la sección "Generar Código de Invitación":
+                                    <ul class="mt-2">
+                                        <li><strong>Rol:</strong> Selecciona el rol que tendrá el nuevo usuario</li>
+                                        <li><strong>Días de Expiración:</strong> Cuántos días será válido el código (1-30)</li>
+                                        <li><strong>Usos Máximos:</strong> Cuántas veces se puede usar el código (1-10)</li>
+                                    </ul>
+                                </li>
+                                <li class="mb-2">Haz clic en <strong>Generar Código</strong></li>
+                                <li class="mb-2">Copia el código y compártelo con la persona a invitar</li>
+                                <li class="mb-2">La persona debe:
+                                    <ul class="mt-2">
+                                        <li>Ir a la página de registro</li>
+                                        <li>Completar sus datos</li>
+                                        <li>Ingresar el código de invitación</li>
+                                    </ul>
+                                </li>
+                            </ol>
+                            <div class="alert alert-info mt-3">
+                                <i class="bi bi-info-circle"></i> Los códigos tienen:
+                                <ul class="mb-0 mt-2">
+                                    <li>Una fecha de expiración</li>
+                                    <li>Un límite de usos</li>
+                                    <li>Pueden ser revocados en cualquier momento</li>
+                                </ul>
+                            </div>
+                        </div>
+
+                        <hr>
+
+                        <!-- Cambiar Rol -->
+                        <div class="mb-4">
+                            <h5 class="text-warning"><i class="bi bi-arrow-left-right"></i> Cambiar Rol de Usuario</h5>
+                            <ol>
+                                <li class="mb-2">Ve a <strong>Usuarios → Gestionar Usuarios</strong></li>
+                                <li class="mb-2">En la columna "Rol", selecciona el nuevo rol del desplegable</li>
+                                <li class="mb-2">El cambio se guarda automáticamente</li>
+                            </ol>
+                            <div class="alert alert-warning mt-3">
+                                <i class="bi bi-exclamation-triangle"></i> <strong>Restricciones:</strong>
+                                <ul class="mb-0 mt-2">
+                                    <li>No puedes cambiar tu propio rol</li>
+                                    <li>Debe haber al menos 1 Administrador en la iglesia</li>
+                                </ul>
+                            </div>
+                        </div>
+
+                        <hr>
+
+                        <!-- Desactivar/Activar Usuario -->
+                        <div class="mb-4">
+                            <h5 class="text-info"><i class="bi bi-pause-circle"></i> Desactivar/Activar Usuario</h5>
+                            <p class="mb-2">
+                                <strong>¿Cuándo desactivar?</strong> Cuando un usuario ya no forma parte del equipo pero tiene movimientos registrados (no se puede eliminar por auditoría).
+                            </p>
+                            <ol>
+                                <li class="mb-2">Ve a <strong>Usuarios → Gestionar Usuarios</strong></li>
+                                <li class="mb-2">Haz clic en el botón amarillo <i class="bi bi-pause-circle"></i> para desactivar</li>
+                                <li class="mb-2">Haz clic en el botón verde <i class="bi bi-check-circle"></i> para reactivar</li>
+                            </ol>
+                            <div class="alert alert-secondary mt-3">
+                                <i class="bi bi-info-circle"></i> Los usuarios desactivados:
+                                <ul class="mb-0 mt-2">
+                                    <li>No pueden iniciar sesión</li>
+                                    <li>Aparecen marcados como "Inactivo"</li>
+                                    <li>Sus movimientos históricos permanecen</li>
+                                    <li>Pueden ser reactivados en cualquier momento</li>
+                                </ul>
+                            </div>
+                        </div>
+
+                        <hr>
+
+                        <!-- Eliminar Usuario -->
+                        <div class="mb-4">
+                            <h5 class="text-danger"><i class="bi bi-trash"></i> Eliminar Usuario</h5>
+                            <ol>
+                                <li class="mb-2">Ve a <strong>Usuarios → Gestionar Usuarios</strong></li>
+                                <li class="mb-2">Haz clic en el botón rojo <i class="bi bi-trash"></i></li>
+                                <li class="mb-2">Confirma la eliminación en el modal</li>
+                            </ol>
+                            <div class="alert alert-danger mt-3">
+                                <i class="bi bi-x-circle"></i> <strong>Restricciones de Eliminación:</strong>
+                                <ul class="mb-0 mt-2">
+                                    <li>No puedes eliminar tu propia cuenta</li>
+                                    <li><strong>No puedes eliminar usuarios que han creado movimientos</strong></li>
+                                    <li>Usuarios con movimientos deben ser desactivados</li>
+                                </ul>
+                                <p class="mb-0 mt-2">
+                                    <strong>Razón:</strong> Por auditoría, necesitamos mantener el registro de quién creó cada movimiento.
+                                </p>
+                            </div>
+                        </div>
+
+                        <hr>
+
+                        <!-- Códigos de Invitación -->
+                        <div class="mb-4">
+                            <h5 class="text-secondary"><i class="bi bi-ticket-perforated"></i> Gestión de Códigos</h5>
+                            <p class="mb-2">Los códigos de invitación tienen tres estados:</p>
+                            <div class="row mt-3">
+                                <div class="col-md-4">
+                                    <div class="bg-warning bg-opacity-10 p-3 rounded text-center">
+                                        <h6 class="text-warning">ACTIVOS</h6>
+                                        <p class="small mb-0">Pueden ser usados. Se muestran en la tarjeta amarilla.</p>
+                                    </div>
+                                </div>
+                                <div class="col-md-4">
+                                    <div class="bg-info bg-opacity-10 p-3 rounded text-center">
+                                        <h6 class="text-info">USADOS</h6>
+                                        <p class="small mb-0">Ya fueron utilizados. Se muestran en la tabla azul.</p>
+                                    </div>
+                                </div>
+                                <div class="col-md-4">
+                                    <div class="bg-secondary bg-opacity-10 p-3 rounded text-center">
+                                        <h6 class="text-secondary">REVOCADOS</h6>
+                                        <p class="small mb-0">Cancelados manualmente. Ya no se pueden usar.</p>
+                                    </div>
+                                </div>
+                            </div>
+                            <p class="mt-3 text-muted small">
+                                <i class="bi bi-info-circle"></i> Puedes revocar un código activo en cualquier momento haciendo clic en "Revocar".
+                            </p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
             <!-- TAB: Dashboard -->
-            <div class="tab-pane fade show active" id="dashboard" role="tabpanel">
+            <div class="tab-pane fade" id="dashboard" role="tabpanel">
                 <div class="card shadow">
                     <div class="card-header bg-info text-white">
                         <h4 class="mb-0">
@@ -384,215 +600,6 @@
                             </div>
                             <p class="mt-3 text-muted small">
                                 <i class="bi bi-gear"></i> Las categorías se pueden gestionar desde <strong>Configuración → Categorías</strong>
-                            </p>
-                        </div>
-                    </div>
-                </div>
-            </div>
-
-            <!-- TAB: Gestión de Equipo -->
-            <div class="tab-pane fade" id="equipo" role="tabpanel">
-                <div class="card shadow">
-                    <div class="card-header bg-warning text-dark">
-                        <h4 class="mb-0">
-                            <i class="bi bi-question-circle"></i> Gestión de Equipo
-                        </h4>
-                    </div>
-                    <div class="card-body">
-                        <p class="lead">Aprende cómo gestionar usuarios, roles y permisos en tu organización.</p>
-
-                        <hr class="my-4">
-
-                        <!-- Roles y Permisos -->
-                        <div class="mb-4">
-                            <h5 class="text-primary"><i class="bi bi-shield-check"></i> Roles y Permisos</h5>
-                            <p class="mb-3">Cada rol tiene diferentes niveles de acceso y permisos:</p>
-
-                            <div class="row">
-                                <div class="col-md-6 mb-3">
-                                    <div class="card border-danger">
-                                        <div class="card-body">
-                                            <h6 class="text-danger"><i class="bi bi-star-fill"></i> ADMINISTRADOR</h6>
-                                            <ul class="small mb-0">
-                                                <li>Acceso total al sistema</li>
-                                                <li>Gestionar usuarios y roles</li>
-                                                <li>Crear, editar y anular movimientos</li>
-                                                <li>Gestionar categorías</li>
-                                                <li>Ver todos los reportes</li>
-                                            </ul>
-                                        </div>
-                                    </div>
-                                </div>
-                                <div class="col-md-6 mb-3">
-                                    <div class="card border-primary">
-                                        <div class="card-body">
-                                            <h6 class="text-primary"><i class="bi bi-wallet2"></i> TESORERO</h6>
-                                            <ul class="small mb-0">
-                                                <li>Crear, editar y anular movimientos</li>
-                                                <li>Ver dashboard y reportes</li>
-                                                <li>Gestionar categorías</li>
-                                                <li>NO puede gestionar usuarios</li>
-                                            </ul>
-                                        </div>
-                                    </div>
-                                </div>
-                                <div class="col-md-6 mb-3">
-                                    <div class="card border-info">
-                                        <div class="card-body">
-                                            <h6 class="text-info"><i class="bi bi-book"></i> PASTOR</h6>
-                                            <ul class="small mb-0">
-                                                <li>Ver dashboard y reportes</li>
-                                                <li>Ver listado de movimientos</li>
-                                                <li>NO puede crear ni editar movimientos</li>
-                                                <li>NO puede gestionar usuarios</li>
-                                            </ul>
-                                        </div>
-                                    </div>
-                                </div>
-                                <div class="col-md-6 mb-3">
-                                    <div class="card border-secondary">
-                                        <div class="card-body">
-                                            <h6 class="text-secondary"><i class="bi bi-eye"></i> COLABORADOR</h6>
-                                            <ul class="small mb-0">
-                                                <li>Ver dashboard básico</li>
-                                                <li>Ver listado de movimientos</li>
-                                                <li>Acceso de solo lectura</li>
-                                                <li>NO puede crear, editar ni anular</li>
-                                            </ul>
-                                        </div>
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
-
-                        <hr>
-
-                        <!-- Invitar Usuarios -->
-                        <div class="mb-4">
-                            <h5 class="text-success"><i class="bi bi-person-plus"></i> Invitar Usuarios</h5>
-                            <ol>
-                                <li class="mb-2">Ve a <strong>Usuarios → Gestionar Usuarios</strong></li>
-                                <li class="mb-2">En la sección "Generar Código de Invitación":
-                                    <ul class="mt-2">
-                                        <li><strong>Rol:</strong> Selecciona el rol que tendrá el nuevo usuario</li>
-                                        <li><strong>Días de Expiración:</strong> Cuántos días será válido el código (1-30)</li>
-                                        <li><strong>Usos Máximos:</strong> Cuántas veces se puede usar el código (1-10)</li>
-                                    </ul>
-                                </li>
-                                <li class="mb-2">Haz clic en <strong>Generar Código</strong></li>
-                                <li class="mb-2">Copia el código y compártelo con la persona a invitar</li>
-                                <li class="mb-2">La persona debe:
-                                    <ul class="mt-2">
-                                        <li>Ir a la página de registro</li>
-                                        <li>Completar sus datos</li>
-                                        <li>Ingresar el código de invitación</li>
-                                    </ul>
-                                </li>
-                            </ol>
-                            <div class="alert alert-info mt-3">
-                                <i class="bi bi-info-circle"></i> Los códigos tienen:
-                                <ul class="mb-0 mt-2">
-                                    <li>Una fecha de expiración</li>
-                                    <li>Un límite de usos</li>
-                                    <li>Pueden ser revocados en cualquier momento</li>
-                                </ul>
-                            </div>
-                        </div>
-
-                        <hr>
-
-                        <!-- Cambiar Rol -->
-                        <div class="mb-4">
-                            <h5 class="text-warning"><i class="bi bi-arrow-left-right"></i> Cambiar Rol de Usuario</h5>
-                            <ol>
-                                <li class="mb-2">Ve a <strong>Usuarios → Gestionar Usuarios</strong></li>
-                                <li class="mb-2">En la columna "Rol", selecciona el nuevo rol del desplegable</li>
-                                <li class="mb-2">El cambio se guarda automáticamente</li>
-                            </ol>
-                            <div class="alert alert-warning mt-3">
-                                <i class="bi bi-exclamation-triangle"></i> <strong>Restricciones:</strong>
-                                <ul class="mb-0 mt-2">
-                                    <li>No puedes cambiar tu propio rol</li>
-                                    <li>Debe haber al menos 1 Administrador en la iglesia</li>
-                                </ul>
-                            </div>
-                        </div>
-
-                        <hr>
-
-                        <!-- Desactivar/Activar Usuario -->
-                        <div class="mb-4">
-                            <h5 class="text-info"><i class="bi bi-pause-circle"></i> Desactivar/Activar Usuario</h5>
-                            <p class="mb-2">
-                                <strong>¿Cuándo desactivar?</strong> Cuando un usuario ya no forma parte del equipo pero tiene movimientos registrados (no se puede eliminar por auditoría).
-                            </p>
-                            <ol>
-                                <li class="mb-2">Ve a <strong>Usuarios → Gestionar Usuarios</strong></li>
-                                <li class="mb-2">Haz clic en el botón amarillo <i class="bi bi-pause-circle"></i> para desactivar</li>
-                                <li class="mb-2">Haz clic en el botón verde <i class="bi bi-check-circle"></i> para reactivar</li>
-                            </ol>
-                            <div class="alert alert-secondary mt-3">
-                                <i class="bi bi-info-circle"></i> Los usuarios desactivados:
-                                <ul class="mb-0 mt-2">
-                                    <li>No pueden iniciar sesión</li>
-                                    <li>Aparecen marcados como "Inactivo"</li>
-                                    <li>Sus movimientos históricos permanecen</li>
-                                    <li>Pueden ser reactivados en cualquier momento</li>
-                                </ul>
-                            </div>
-                        </div>
-
-                        <hr>
-
-                        <!-- Eliminar Usuario -->
-                        <div class="mb-4">
-                            <h5 class="text-danger"><i class="bi bi-trash"></i> Eliminar Usuario</h5>
-                            <ol>
-                                <li class="mb-2">Ve a <strong>Usuarios → Gestionar Usuarios</strong></li>
-                                <li class="mb-2">Haz clic en el botón rojo <i class="bi bi-trash"></i></li>
-                                <li class="mb-2">Confirma la eliminación en el modal</li>
-                            </ol>
-                            <div class="alert alert-danger mt-3">
-                                <i class="bi bi-x-circle"></i> <strong>Restricciones de Eliminación:</strong>
-                                <ul class="mb-0 mt-2">
-                                    <li>No puedes eliminar tu propia cuenta</li>
-                                    <li><strong>No puedes eliminar usuarios que han creado movimientos</strong></li>
-                                    <li>Usuarios con movimientos deben ser desactivados</li>
-                                </ul>
-                                <p class="mb-0 mt-2">
-                                    <strong>Razón:</strong> Por auditoría, necesitamos mantener el registro de quién creó cada movimiento.
-                                </p>
-                            </div>
-                        </div>
-
-                        <hr>
-
-                        <!-- Códigos de Invitación -->
-                        <div class="mb-4">
-                            <h5 class="text-secondary"><i class="bi bi-ticket-perforated"></i> Gestión de Códigos</h5>
-                            <p class="mb-2">Los códigos de invitación tienen tres estados:</p>
-                            <div class="row mt-3">
-                                <div class="col-md-4">
-                                    <div class="bg-warning bg-opacity-10 p-3 rounded text-center">
-                                        <h6 class="text-warning">ACTIVOS</h6>
-                                        <p class="small mb-0">Pueden ser usados. Se muestran en la tarjeta amarilla.</p>
-                                    </div>
-                                </div>
-                                <div class="col-md-4">
-                                    <div class="bg-info bg-opacity-10 p-3 rounded text-center">
-                                        <h6 class="text-info">USADOS</h6>
-                                        <p class="small mb-0">Ya fueron utilizados. Se muestran en la tabla azul.</p>
-                                    </div>
-                                </div>
-                                <div class="col-md-4">
-                                    <div class="bg-secondary bg-opacity-10 p-3 rounded text-center">
-                                        <h6 class="text-secondary">REVOCADOS</h6>
-                                        <p class="small mb-0">Cancelados manualmente. Ya no se pueden usar.</p>
-                                    </div>
-                                </div>
-                            </div>
-                            <p class="mt-3 text-muted small">
-                                <i class="bi bi-info-circle"></i> Puedes revocar un código activo en cualquier momento haciendo clic en "Revocar".
                             </p>
                         </div>
                     </div>
