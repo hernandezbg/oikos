@@ -7,14 +7,36 @@
 {% block content %}
 <div class="row">
     <div class="col-lg-10 mx-auto">
-        <div class="card shadow">
-            <div class="card-header bg-info text-white">
-                <h4 class="mb-0">
-                    <i class="bi bi-question-circle"></i> Explicación de Métricas del Dashboard
-                </h4>
-            </div>
-            <div class="card-body">
-                <p class="lead">Aquí encontrarás explicaciones breves y claras sobre cómo se calculan las métricas que ves en el Dashboard.</p>
+        <!-- Navegación con Tabs -->
+        <ul class="nav nav-tabs mb-4" id="ayudaTabs" role="tablist">
+            <li class="nav-item" role="presentation">
+                <button class="nav-link active" id="dashboard-tab" data-bs-toggle="tab" data-bs-target="#dashboard" type="button" role="tab">
+                    <i class="bi bi-graph-up"></i> Dashboard
+                </button>
+            </li>
+            <li class="nav-item" role="presentation">
+                <button class="nav-link" id="movimientos-tab" data-bs-toggle="tab" data-bs-target="#movimientos" type="button" role="tab">
+                    <i class="bi bi-arrow-left-right"></i> Movimientos
+                </button>
+            </li>
+            <li class="nav-item" role="presentation">
+                <button class="nav-link" id="equipo-tab" data-bs-toggle="tab" data-bs-target="#equipo" type="button" role="tab">
+                    <i class="bi bi-people"></i> Gestión de Equipo
+                </button>
+            </li>
+        </ul>
+
+        <div class="tab-content" id="ayudaTabsContent">
+            <!-- TAB: Dashboard -->
+            <div class="tab-pane fade show active" id="dashboard" role="tabpanel">
+                <div class="card shadow">
+                    <div class="card-header bg-info text-white">
+                        <h4 class="mb-0">
+                            <i class="bi bi-question-circle"></i> Explicación de Métricas del Dashboard
+                        </h4>
+                    </div>
+                    <div class="card-body">
+                        <p class="lead">Aquí encontrarás explicaciones breves y claras sobre cómo se calculan las métricas que ves en el Dashboard.</p>
 
                 <hr class="my-4">
 
@@ -132,6 +154,89 @@
 
                 <hr>
 
+                <!-- KPIs Adicionales ---->
+                <div class="mb-4">
+                    <h5 class="text-secondary"><i class="bi bi-speedometer2"></i> KPIs del Año</h5>
+                    <p class="mb-2">
+                        <strong>¿Qué son?</strong> Indicadores clave que te ayudan a entender el rendimiento financiero del año en curso.
+                    </p>
+
+                    <div class="row mt-3">
+                        <div class="col-md-6">
+                            <div class="bg-light p-3 rounded mb-3">
+                                <h6 class="text-info"><i class="bi bi-arrow-up-circle"></i> Promedio de Ingresos</h6>
+                                <p class="mb-0 small">Suma de todos los ingresos del año / Número de meses transcurridos</p>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="bg-light p-3 rounded mb-3">
+                                <h6 class="text-warning"><i class="bi bi-arrow-down-circle"></i> Promedio de Egresos</h6>
+                                <p class="mb-0 small">Suma de todos los egresos del año / Número de meses transcurridos</p>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="bg-light p-3 rounded mb-3">
+                                <h6 class="text-success"><i class="bi bi-check-circle"></i> Meses en Superávit</h6>
+                                <p class="mb-0 small">Número de meses donde Ingresos > Egresos</p>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="bg-light p-3 rounded mb-3">
+                                <h6 class="text-danger"><i class="bi bi-x-circle"></i> Meses en Déficit</h6>
+                                <p class="mb-0 small">Número de meses donde Egresos > Ingresos</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <hr>
+
+                <!-- Evolución Ingresos vs Egresos ---->
+                <div class="mb-4">
+                    <h5 class="text-success"><i class="bi bi-graph-up-arrow"></i> Evolución Ingresos vs Egresos (Año en Curso)</h5>
+                    <p class="mb-2">
+                        <strong>¿Qué es?</strong> Un gráfico de líneas que compara mes a mes los ingresos y egresos durante el año en curso.
+                    </p>
+                    <p class="mb-2">
+                        <strong>¿Cómo se calcula?</strong>
+                    </p>
+                    <div class="bg-light p-3 rounded">
+                        <p class="mb-2">Para cada mes del año:</p>
+                        <ul class="mb-0">
+                            <li><strong>Línea Verde (Ingresos):</strong> Suma de todos los ingresos del mes</li>
+                            <li><strong>Línea Roja (Egresos):</strong> Suma de todos los egresos del mes</li>
+                        </ul>
+                    </div>
+                    <p class="mt-2 text-muted small">
+                        <i class="bi bi-info-circle"></i> Te permite identificar tendencias: meses con más ingresos, patrones de gastos, y periodos donde los egresos superan los ingresos.
+                    </p>
+                </div>
+
+                <hr>
+
+                <!-- Balance Mensual ---->
+                <div class="mb-4">
+                    <h5 class="text-primary"><i class="bi bi-bar-chart"></i> Balance Mensual</h5>
+                    <p class="mb-2">
+                        <strong>¿Qué es?</strong> Un gráfico de barras que muestra el resultado financiero de cada mes (superávit o déficit).
+                    </p>
+                    <p class="mb-2">
+                        <strong>¿Cómo se calcula?</strong>
+                    </p>
+                    <div class="bg-light p-3 rounded">
+                        <code>Balance del Mes = Ingresos del Mes - Egresos del Mes</code>
+                        <ul class="mb-0 mt-2">
+                            <li><strong>Barra Verde:</strong> Superávit (Balance positivo)</li>
+                            <li><strong>Barra Roja:</strong> Déficit (Balance negativo)</li>
+                        </ul>
+                    </div>
+                    <p class="mt-2 text-muted small">
+                        <i class="bi bi-info-circle"></i> Un vistazo rápido te muestra en qué meses tu iglesia tuvo ganancias o pérdidas.
+                    </p>
+                </div>
+
+                <hr>
+
                 <div class="alert alert-success">
                     <h5><i class="bi bi-lightbulb"></i> Nota Importante</h5>
                     <p class="mb-0">
@@ -140,6 +245,332 @@
                 </div>
 
             </div>
+            </div>
+
+            <!-- TAB: Movimientos -->
+            <div class="tab-pane fade" id="movimientos" role="tabpanel">
+                <div class="card shadow">
+                    <div class="card-header bg-success text-white">
+                        <h4 class="mb-0">
+                            <i class="bi bi-question-circle"></i> Gestión de Movimientos
+                        </h4>
+                    </div>
+                    <div class="card-body">
+                        <p class="lead">Aprende cómo registrar y gestionar los movimientos financieros de tu iglesia.</p>
+
+                        <hr class="my-4">
+
+                        <!-- Crear Movimiento -->
+                        <div class="mb-4">
+                            <h5 class="text-primary"><i class="bi bi-plus-circle"></i> Crear un Nuevo Movimiento</h5>
+                            <ol>
+                                <li class="mb-2">Ve a <strong>Movimientos → Nuevo Movimiento</strong> en el menú principal</li>
+                                <li class="mb-2">Completa el formulario:
+                                    <ul class="mt-2">
+                                        <li><strong>Tipo:</strong> Selecciona INGRESO o EGRESO</li>
+                                        <li><strong>Fecha:</strong> Fecha en que ocurrió el movimiento</li>
+                                        <li><strong>Monto:</strong> Cantidad de dinero (solo números positivos)</li>
+                                        <li><strong>Categoría:</strong> Elige la categoría correspondiente</li>
+                                        <li><strong>Concepto:</strong> Descripción del movimiento</li>
+                                        <li><strong>Método de Pago:</strong> Efectivo, transferencia, cheque, etc.</li>
+                                        <li><strong>Referencia/Comprobante:</strong> Número de comprobante o referencia (opcional)</li>
+                                    </ul>
+                                </li>
+                                <li class="mb-2">Haz clic en <strong>Guardar</strong></li>
+                            </ol>
+                            <div class="alert alert-info mt-3">
+                                <i class="bi bi-info-circle"></i> El sistema registrará automáticamente quién creó el movimiento y la fecha/hora de creación.
+                            </div>
+                        </div>
+
+                        <hr>
+
+                        <!-- Editar Movimiento -->
+                        <div class="mb-4">
+                            <h5 class="text-warning"><i class="bi bi-pencil-square"></i> Editar un Movimiento</h5>
+                            <ol>
+                                <li class="mb-2">Ve a la lista de movimientos</li>
+                                <li class="mb-2">Haz clic en el botón <span class="badge bg-warning">Editar</span> del movimiento que deseas modificar</li>
+                                <li class="mb-2">Realiza los cambios necesarios</li>
+                                <li class="mb-2">Haz clic en <strong>Guardar Cambios</strong></li>
+                            </ol>
+                            <div class="alert alert-warning mt-3">
+                                <i class="bi bi-exclamation-triangle"></i> <strong>Permisos:</strong> Solo usuarios con rol ADMIN o TESORERO pueden editar movimientos.
+                            </div>
+                        </div>
+
+                        <hr>
+
+                        <!-- Anular Movimiento -->
+                        <div class="mb-4">
+                            <h5 class="text-danger"><i class="bi bi-x-circle"></i> Anular un Movimiento</h5>
+                            <p class="mb-2">
+                                <strong>¿Por qué anular en lugar de eliminar?</strong> Por razones de auditoría, los movimientos no se eliminan, se anulan. Esto mantiene un registro completo de todas las transacciones.
+                            </p>
+                            <ol>
+                                <li class="mb-2">Ve a la lista de movimientos</li>
+                                <li class="mb-2">Haz clic en el botón <span class="badge bg-danger">Anular</span></li>
+                                <li class="mb-2">Confirma la acción en el modal</li>
+                            </ol>
+                            <div class="alert alert-info mt-3">
+                                <i class="bi bi-info-circle"></i> Los movimientos anulados:
+                                <ul class="mb-0 mt-2">
+                                    <li>Se muestran con un badge "ANULADO"</li>
+                                    <li>NO se incluyen en los cálculos del dashboard</li>
+                                    <li>Permanecen en el historial para auditoría</li>
+                                    <li>No se pueden editar ni volver a activar</li>
+                                </ul>
+                            </div>
+                        </div>
+
+                        <hr>
+
+                        <!-- Tipos y Categorías -->
+                        <div class="mb-4">
+                            <h5 class="text-info"><i class="bi bi-tags"></i> Tipos y Categorías</h5>
+                            <div class="row">
+                                <div class="col-md-6">
+                                    <div class="bg-light p-3 rounded">
+                                        <h6 class="text-success"><i class="bi bi-arrow-down-circle"></i> INGRESO</h6>
+                                        <p class="mb-2 small">Dinero que entra a la iglesia:</p>
+                                        <ul class="small mb-0">
+                                            <li>Diezmos</li>
+                                            <li>Ofrendas</li>
+                                            <li>Donaciones</li>
+                                            <li>Eventos especiales</li>
+                                        </ul>
+                                    </div>
+                                </div>
+                                <div class="col-md-6">
+                                    <div class="bg-light p-3 rounded">
+                                        <h6 class="text-danger"><i class="bi bi-arrow-up-circle"></i> EGRESO</h6>
+                                        <p class="mb-2 small">Dinero que sale de la iglesia:</p>
+                                        <ul class="small mb-0">
+                                            <li>Servicios (luz, agua, internet)</li>
+                                            <li>Sueldos y honorarios</li>
+                                            <li>Mantenimiento</li>
+                                            <li>Proyectos y actividades</li>
+                                        </ul>
+                                    </div>
+                                </div>
+                            </div>
+                            <p class="mt-3 text-muted small">
+                                <i class="bi bi-gear"></i> Las categorías se pueden gestionar desde <strong>Configuración → Categorías</strong>
+                            </p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- TAB: Gestión de Equipo -->
+            <div class="tab-pane fade" id="equipo" role="tabpanel">
+                <div class="card shadow">
+                    <div class="card-header bg-warning text-dark">
+                        <h4 class="mb-0">
+                            <i class="bi bi-question-circle"></i> Gestión de Equipo
+                        </h4>
+                    </div>
+                    <div class="card-body">
+                        <p class="lead">Aprende cómo gestionar usuarios, roles y permisos en tu organización.</p>
+
+                        <hr class="my-4">
+
+                        <!-- Roles y Permisos -->
+                        <div class="mb-4">
+                            <h5 class="text-primary"><i class="bi bi-shield-check"></i> Roles y Permisos</h5>
+                            <p class="mb-3">Cada rol tiene diferentes niveles de acceso y permisos:</p>
+
+                            <div class="row">
+                                <div class="col-md-6 mb-3">
+                                    <div class="card border-danger">
+                                        <div class="card-body">
+                                            <h6 class="text-danger"><i class="bi bi-star-fill"></i> ADMINISTRADOR</h6>
+                                            <ul class="small mb-0">
+                                                <li>Acceso total al sistema</li>
+                                                <li>Gestionar usuarios y roles</li>
+                                                <li>Crear, editar y anular movimientos</li>
+                                                <li>Gestionar categorías</li>
+                                                <li>Ver todos los reportes</li>
+                                            </ul>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="col-md-6 mb-3">
+                                    <div class="card border-primary">
+                                        <div class="card-body">
+                                            <h6 class="text-primary"><i class="bi bi-wallet2"></i> TESORERO</h6>
+                                            <ul class="small mb-0">
+                                                <li>Crear, editar y anular movimientos</li>
+                                                <li>Ver dashboard y reportes</li>
+                                                <li>Gestionar categorías</li>
+                                                <li>NO puede gestionar usuarios</li>
+                                            </ul>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="col-md-6 mb-3">
+                                    <div class="card border-info">
+                                        <div class="card-body">
+                                            <h6 class="text-info"><i class="bi bi-book"></i> PASTOR</h6>
+                                            <ul class="small mb-0">
+                                                <li>Ver dashboard y reportes</li>
+                                                <li>Ver listado de movimientos</li>
+                                                <li>NO puede crear ni editar movimientos</li>
+                                                <li>NO puede gestionar usuarios</li>
+                                            </ul>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="col-md-6 mb-3">
+                                    <div class="card border-secondary">
+                                        <div class="card-body">
+                                            <h6 class="text-secondary"><i class="bi bi-eye"></i> COLABORADOR</h6>
+                                            <ul class="small mb-0">
+                                                <li>Ver dashboard básico</li>
+                                                <li>Ver listado de movimientos</li>
+                                                <li>Acceso de solo lectura</li>
+                                                <li>NO puede crear, editar ni anular</li>
+                                            </ul>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <hr>
+
+                        <!-- Invitar Usuarios -->
+                        <div class="mb-4">
+                            <h5 class="text-success"><i class="bi bi-person-plus"></i> Invitar Usuarios</h5>
+                            <ol>
+                                <li class="mb-2">Ve a <strong>Usuarios → Gestionar Usuarios</strong></li>
+                                <li class="mb-2">En la sección "Generar Código de Invitación":
+                                    <ul class="mt-2">
+                                        <li><strong>Rol:</strong> Selecciona el rol que tendrá el nuevo usuario</li>
+                                        <li><strong>Días de Expiración:</strong> Cuántos días será válido el código (1-30)</li>
+                                        <li><strong>Usos Máximos:</strong> Cuántas veces se puede usar el código (1-10)</li>
+                                    </ul>
+                                </li>
+                                <li class="mb-2">Haz clic en <strong>Generar Código</strong></li>
+                                <li class="mb-2">Copia el código y compártelo con la persona a invitar</li>
+                                <li class="mb-2">La persona debe:
+                                    <ul class="mt-2">
+                                        <li>Ir a la página de registro</li>
+                                        <li>Completar sus datos</li>
+                                        <li>Ingresar el código de invitación</li>
+                                    </ul>
+                                </li>
+                            </ol>
+                            <div class="alert alert-info mt-3">
+                                <i class="bi bi-info-circle"></i> Los códigos tienen:
+                                <ul class="mb-0 mt-2">
+                                    <li>Una fecha de expiración</li>
+                                    <li>Un límite de usos</li>
+                                    <li>Pueden ser revocados en cualquier momento</li>
+                                </ul>
+                            </div>
+                        </div>
+
+                        <hr>
+
+                        <!-- Cambiar Rol -->
+                        <div class="mb-4">
+                            <h5 class="text-warning"><i class="bi bi-arrow-left-right"></i> Cambiar Rol de Usuario</h5>
+                            <ol>
+                                <li class="mb-2">Ve a <strong>Usuarios → Gestionar Usuarios</strong></li>
+                                <li class="mb-2">En la columna "Rol", selecciona el nuevo rol del desplegable</li>
+                                <li class="mb-2">El cambio se guarda automáticamente</li>
+                            </ol>
+                            <div class="alert alert-warning mt-3">
+                                <i class="bi bi-exclamation-triangle"></i> <strong>Restricciones:</strong>
+                                <ul class="mb-0 mt-2">
+                                    <li>No puedes cambiar tu propio rol</li>
+                                    <li>Debe haber al menos 1 Administrador en la iglesia</li>
+                                </ul>
+                            </div>
+                        </div>
+
+                        <hr>
+
+                        <!-- Desactivar/Activar Usuario -->
+                        <div class="mb-4">
+                            <h5 class="text-info"><i class="bi bi-pause-circle"></i> Desactivar/Activar Usuario</h5>
+                            <p class="mb-2">
+                                <strong>¿Cuándo desactivar?</strong> Cuando un usuario ya no forma parte del equipo pero tiene movimientos registrados (no se puede eliminar por auditoría).
+                            </p>
+                            <ol>
+                                <li class="mb-2">Ve a <strong>Usuarios → Gestionar Usuarios</strong></li>
+                                <li class="mb-2">Haz clic en el botón amarillo <i class="bi bi-pause-circle"></i> para desactivar</li>
+                                <li class="mb-2">Haz clic en el botón verde <i class="bi bi-check-circle"></i> para reactivar</li>
+                            </ol>
+                            <div class="alert alert-secondary mt-3">
+                                <i class="bi bi-info-circle"></i> Los usuarios desactivados:
+                                <ul class="mb-0 mt-2">
+                                    <li>No pueden iniciar sesión</li>
+                                    <li>Aparecen marcados como "Inactivo"</li>
+                                    <li>Sus movimientos históricos permanecen</li>
+                                    <li>Pueden ser reactivados en cualquier momento</li>
+                                </ul>
+                            </div>
+                        </div>
+
+                        <hr>
+
+                        <!-- Eliminar Usuario -->
+                        <div class="mb-4">
+                            <h5 class="text-danger"><i class="bi bi-trash"></i> Eliminar Usuario</h5>
+                            <ol>
+                                <li class="mb-2">Ve a <strong>Usuarios → Gestionar Usuarios</strong></li>
+                                <li class="mb-2">Haz clic en el botón rojo <i class="bi bi-trash"></i></li>
+                                <li class="mb-2">Confirma la eliminación en el modal</li>
+                            </ol>
+                            <div class="alert alert-danger mt-3">
+                                <i class="bi bi-x-circle"></i> <strong>Restricciones de Eliminación:</strong>
+                                <ul class="mb-0 mt-2">
+                                    <li>No puedes eliminar tu propia cuenta</li>
+                                    <li><strong>No puedes eliminar usuarios que han creado movimientos</strong></li>
+                                    <li>Usuarios con movimientos deben ser desactivados</li>
+                                </ul>
+                                <p class="mb-0 mt-2">
+                                    <strong>Razón:</strong> Por auditoría, necesitamos mantener el registro de quién creó cada movimiento.
+                                </p>
+                            </div>
+                        </div>
+
+                        <hr>
+
+                        <!-- Códigos de Invitación -->
+                        <div class="mb-4">
+                            <h5 class="text-secondary"><i class="bi bi-ticket-perforated"></i> Gestión de Códigos</h5>
+                            <p class="mb-2">Los códigos de invitación tienen tres estados:</p>
+                            <div class="row mt-3">
+                                <div class="col-md-4">
+                                    <div class="bg-warning bg-opacity-10 p-3 rounded text-center">
+                                        <h6 class="text-warning">ACTIVOS</h6>
+                                        <p class="small mb-0">Pueden ser usados. Se muestran en la tarjeta amarilla.</p>
+                                    </div>
+                                </div>
+                                <div class="col-md-4">
+                                    <div class="bg-info bg-opacity-10 p-3 rounded text-center">
+                                        <h6 class="text-info">USADOS</h6>
+                                        <p class="small mb-0">Ya fueron utilizados. Se muestran en la tabla azul.</p>
+                                    </div>
+                                </div>
+                                <div class="col-md-4">
+                                    <div class="bg-secondary bg-opacity-10 p-3 rounded text-center">
+                                        <h6 class="text-secondary">REVOCADOS</h6>
+                                        <p class="small mb-0">Cancelados manualmente. Ya no se pueden usar.</p>
+                                    </div>
+                                </div>
+                            </div>
+                            <p class="mt-3 text-muted small">
+                                <i class="bi bi-info-circle"></i> Puedes revocar un código activo en cualquier momento haciendo clic en "Revocar".
+                            </p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
         </div>
     </div>
 </div>
