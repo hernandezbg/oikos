@@ -359,10 +359,10 @@ def generar_reporte_pdf(iglesia, año_mes):
     return buffer
 
 
-def get_dashboard_data(iglesia, meses=6, mes_distribucion=None):
+def get_dashboard_data(iglesia, meses=None, mes_distribucion=None):
     """
     Obtiene los datos para los gráficos del dashboard
-    Retorna los últimos N meses de datos
+    Retorna todos los meses del año en curso (desde enero hasta el mes actual)
     mes_distribucion: mes para el gráfico de distribución (formato YYYY-MM), por defecto mes actual
     """
     from core.models import SaldoMensual, Movimiento
@@ -370,15 +370,18 @@ def get_dashboard_data(iglesia, meses=6, mes_distribucion=None):
     from datetime import datetime, timedelta
     from dateutil.relativedelta import relativedelta
 
-    # Calcular fecha de inicio (N meses atrás)
+    # Calcular desde enero del año en curso hasta el mes actual
     fecha_actual = datetime.now()
-    fecha_inicio = fecha_actual - relativedelta(months=meses-1)
+    fecha_inicio = datetime(fecha_actual.year, 1, 1)  # 1 de enero del año actual
+
+    # Calcular cantidad de meses desde enero hasta ahora
+    meses_transcurridos = fecha_actual.month
 
     # Generar lista de meses
     meses_labels = []
     saldos_data = []
 
-    for i in range(meses):
+    for i in range(meses_transcurridos):
         fecha = fecha_inicio + relativedelta(months=i)
         año_mes = fecha.strftime('%Y-%m')
         mes_label = fecha.strftime('%b %Y')
