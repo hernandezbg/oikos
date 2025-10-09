@@ -906,6 +906,36 @@ def politica_cookies_view(request):
     return render(request, 'core/politica_cookies.html')
 
 
+def terminos_condiciones_view(request):
+    """
+    Vista para mostrar los términos y condiciones
+    """
+    return render(request, 'core/terminos_condiciones.html')
+
+
+@login_required
+def aceptar_terminos_view(request):
+    """
+    Vista para procesar la aceptación de términos y condiciones
+    """
+    if request.method == 'POST':
+        from django.utils import timezone
+
+        # Registrar aceptación
+        request.user.terminos_aceptados = True
+        request.user.fecha_aceptacion_terminos = timezone.now()
+        request.user.save()
+
+        messages.success(request, 'Has aceptado los términos y condiciones exitosamente.')
+
+        # Redirigir a donde venía o al dashboard
+        next_url = request.POST.get('next', 'dashboard')
+        return redirect(next_url)
+
+    # Si no es POST, redirigir al dashboard
+    return redirect('dashboard')
+
+
 # ============================================================================
 # VISTAS DE CATEGORÍAS DE INGRESO
 # ============================================================================

@@ -19,6 +19,8 @@ from core.views import (
     anular_movimiento_view,
     ayuda_view,
     politica_cookies_view,
+    terminos_condiciones_view,
+    aceptar_terminos_view,
     # Categorías de Ingreso
     CategoriaIngresoListView,
     CategoriaIngresoCreateView,
@@ -58,6 +60,9 @@ urlpatterns = [
     path('ayuda/', ayuda_view, name='ayuda'),
     # Política de Cookies
     path('politica-cookies/', politica_cookies_view, name='politica_cookies'),
+    # Términos y Condiciones
+    path('terminos-condiciones/', terminos_condiciones_view, name='terminos_condiciones'),
+    path('aceptar-terminos/', aceptar_terminos_view, name='aceptar_terminos'),
     # API y exportación
     path('api/dashboard-data/', dashboard_data_api, name='dashboard_data_api'),
     path('exportar/excel/', exportar_excel_view, name='exportar_excel'),

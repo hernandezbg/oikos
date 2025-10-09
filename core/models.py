@@ -35,6 +35,10 @@ class Usuario(AbstractUser):
     rol = models.CharField(max_length=20, choices=ROLES, default='COLABORADOR')
     puede_aprobar = models.BooleanField(default=False)
 
+    # Términos y Condiciones
+    terminos_aceptados = models.BooleanField(default=False, help_text="Indica si el usuario aceptó los términos y condiciones")
+    fecha_aceptacion_terminos = models.DateTimeField(null=True, blank=True, help_text="Fecha y hora en que aceptó los términos")
+
     class Meta:
         verbose_name = 'Usuario'
         verbose_name_plural = 'Usuarios'

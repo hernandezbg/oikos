@@ -230,6 +230,93 @@
     </div>
     {% endif %}
 
+    <!-- Modal de Términos y Condiciones (solo para usuarios autenticados que no aceptaron) -->
+    {% if user.is_authenticated and not user.terminos_aceptados %}
+    <div class="modal fade" id="modalTerminos" data-bs-backdrop="static" data-bs-keyboard="false" tabindex="-1" aria-labelledby="modalTerminosLabel" aria-hidden="true">
+        <div class="modal-dialog modal-lg modal-dialog-scrollable">
+            <div class="modal-content">
+                <div class="modal-header bg-primary text-white">
+                    <h5 class="modal-title" id="modalTerminosLabel">
+                        <i class="bi bi-file-text"></i> Términos y Condiciones de Uso
+                    </h5>
+                </div>
+                <div class="modal-body" style="max-height: 70vh; overflow-y: auto;">
+                    <div class="alert alert-info alert-permanent">
+                        <i class="bi bi-info-circle"></i> <strong>Importante:</strong> Para continuar usando OIKOS, debes leer y aceptar los siguientes términos y condiciones.
+                    </div>
+
+                    <div class="px-2">
+                        <h6 class="text-primary"><i class="bi bi-check-circle"></i> 1. Aceptación de los Términos</h6>
+                        <p class="small">Al registrarse y utilizar OIKOS (en adelante, "el Sistema"), usted acepta estar sujeto a estos Términos y Condiciones de Uso. Si no está de acuerdo con alguna parte de estos términos, no debe utilizar el Sistema.</p>
+
+                        <h6 class="text-primary mt-3"><i class="bi bi-gear"></i> 2. Descripción del Servicio</h6>
+                        <p class="small">OIKOS es una plataforma de gestión financiera diseñada específicamente para iglesias y organizaciones religiosas. El Sistema permite:</p>
+                        <ul class="small">
+                            <li>Registrar ingresos y egresos financieros</li>
+                            <li>Generar reportes y estadísticas</li>
+                            <li>Gestionar categorías de movimientos</li>
+                            <li>Administrar usuarios y roles</li>
+                            <li>Visualizar dashboards y análisis financieros</li>
+                        </ul>
+
+                        <h6 class="text-primary mt-3"><i class="bi bi-person-plus"></i> 3. Registro y Cuenta de Usuario</h6>
+                        <p class="small mb-1"><strong>3.1. Creación de Cuenta:</strong> El primer usuario en registrarse crea la iglesia y se convierte automáticamente en Administrador.</p>
+                        <p class="small mb-1"><strong>3.2. Información Veraz:</strong> Usted se compromete a proporcionar información precisa, actual y completa durante el proceso de registro.</p>
+                        <p class="small mb-1"><strong>3.3. Seguridad de Cuenta:</strong> Es responsable de mantener la confidencialidad de su contraseña y de todas las actividades que ocurran bajo su cuenta.</p>
+
+                        <h6 class="text-primary mt-3"><i class="bi bi-shield-check"></i> 4. Roles y Permisos</h6>
+                        <p class="small">El Sistema maneja diferentes roles con distintos niveles de acceso: Administrador (control total), Tesorero (gestión financiera), Pastor (supervisión) y Colaborador (solo lectura).</p>
+
+                        <h6 class="text-primary mt-3"><i class="bi bi-exclamation-triangle"></i> 5. Uso Aceptable</h6>
+                        <p class="small">Al utilizar OIKOS, usted se compromete a:</p>
+                        <ul class="small">
+                            <li>Utilizar el Sistema únicamente para gestión financiera legítima de su iglesia</li>
+                            <li>No intentar acceder a datos de otras iglesias</li>
+                            <li>No manipular, alterar o falsificar registros financieros</li>
+                            <li>No compartir sus credenciales de acceso con terceros no autorizados</li>
+                            <li>Cumplir con todas las leyes y regulaciones aplicables</li>
+                        </ul>
+
+                        <h6 class="text-primary mt-3"><i class="bi bi-lock"></i> 6. Privacidad y Protección de Datos</h6>
+                        <p class="small mb-1"><strong>6.1. Datos Financieros:</strong> Los datos financieros registrados en el Sistema son propiedad de la iglesia y están protegidos.</p>
+                        <p class="small mb-1"><strong>6.2. Aislamiento de Datos:</strong> Cada iglesia tiene acceso exclusivo a sus propios datos. No se comparte información entre iglesias.</p>
+                        <p class="small mb-1"><strong>6.3. Responsabilidad:</strong> La iglesia es responsable de la veracidad y legalidad de los datos registrados.</p>
+
+                        <h6 class="text-primary mt-3"><i class="bi bi-clock-history"></i> 7. Auditoría y Trazabilidad</h6>
+                        <p class="small">El Sistema mantiene un registro completo de quién creó cada movimiento financiero, quién aprobó o anuló movimientos, y las fechas de todas las operaciones. Esta información es inmutable y no puede ser eliminada para garantizar la transparencia y auditoría.</p>
+
+                        <h6 class="text-primary mt-3"><i class="bi bi-x-circle"></i> 8. Anulación de Movimientos</h6>
+                        <p class="small">Los movimientos financieros NO se eliminan, se anulan. Esto garantiza trazabilidad completa, historial inmutable para auditorías y transparencia en la gestión financiera.</p>
+
+                        <h6 class="text-primary mt-3"><i class="bi bi-info-circle"></i> 9. Limitación de Responsabilidad</h6>
+                        <p class="small">OIKOS se proporciona "tal cual" sin garantías de ningún tipo. No nos hacemos responsables por pérdida de datos debido a errores del usuario, decisiones financieras tomadas basándose en reportes del Sistema, interrupciones del servicio o daños indirectos.</p>
+
+                        <h6 class="text-primary mt-3"><i class="bi bi-bank"></i> 10. Ley Aplicable</h6>
+                        <p class="small">Estos términos se rigen por las leyes de la República Argentina. Cualquier disputa será resuelta en los tribunales competentes de Argentina.</p>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <!-- Formulario oculto para logout -->
+                    <form method="post" action="{% url 'logout' %}" id="formRechazarTerminos" style="display: none;">
+                        {% csrf_token %}
+                    </form>
+
+                    <button type="button" class="btn btn-secondary" id="btnRechazarTerminos">
+                        <i class="bi bi-x-circle"></i> Rechazar y Salir
+                    </button>
+                    <form method="post" action="{% url 'aceptar_terminos' %}" class="d-inline">
+                        {% csrf_token %}
+                        <input type="hidden" name="next" value="{{ request.path }}">
+                        <button type="submit" class="btn btn-success">
+                            <i class="bi bi-check-circle"></i> Acepto los Términos y Condiciones
+                        </button>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+    {% endif %}
+
     <!-- Banner de Cookies -->
     <div id="cookieBanner" class="cookie-banner">
         <div class="cookie-content">
@@ -288,6 +375,26 @@
             });
         });
     </script>
+
+    <!-- Modal de Términos y Condiciones JS -->
+    {% if user.is_authenticated and not user.terminos_aceptados %}
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            // Mostrar el modal automáticamente
+            const modalTerminos = new bootstrap.Modal(document.getElementById('modalTerminos'));
+            modalTerminos.show();
+
+            // Manejar botón de rechazo
+            document.getElementById('btnRechazarTerminos').addEventListener('click', function() {
+                // Confirmar rechazo
+                if (confirm('¿Estás seguro? Si rechazas los términos, se cerrará tu sesión.')) {
+                    // Hacer logout mediante POST
+                    document.getElementById('formRechazarTerminos').submit();
+                }
+            });
+        });
+    </script>
+    {% endif %}
 
     {% block extra_js %}{% endblock %}
 </body>

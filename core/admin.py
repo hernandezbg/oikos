@@ -30,13 +30,17 @@ class IglesiaAdmin(admin.ModelAdmin):
 
 @admin.register(Usuario)
 class UsuarioAdmin(UserAdmin):
-    list_display = ('username', 'email', 'get_full_name', 'iglesia', 'rol', 'puede_aprobar', 'is_active')
-    list_filter = ('iglesia', 'rol', 'puede_aprobar', 'is_active', 'is_staff')
+    list_display = ('username', 'email', 'get_full_name', 'iglesia', 'rol', 'puede_aprobar', 'terminos_aceptados', 'is_active')
+    list_filter = ('iglesia', 'rol', 'puede_aprobar', 'terminos_aceptados', 'is_active', 'is_staff')
     search_fields = ('username', 'email', 'first_name', 'last_name')
 
     fieldsets = UserAdmin.fieldsets + (
         ('Información de Iglesia', {
             'fields': ('iglesia', 'celular', 'rol', 'puede_aprobar')
+        }),
+        ('Términos y Condiciones', {
+            'fields': ('terminos_aceptados', 'fecha_aceptacion_terminos'),
+            'classes': ('collapse',)
         }),
     )
 
@@ -45,6 +49,8 @@ class UsuarioAdmin(UserAdmin):
             'fields': ('iglesia', 'celular', 'rol', 'puede_aprobar')
         }),
     )
+
+    readonly_fields = UserAdmin.readonly_fields + ('fecha_aceptacion_terminos',)
 
 
 @admin.register(CategoriaIngreso)

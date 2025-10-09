@@ -1,0 +1,234 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Términos y Condiciones - {{ APP_NAME }}{% endblock %}
+{% block page_title %}Términos y Condiciones{% endblock %}
+
+{% block content %}
+<div class="row">
+    <div class="col-lg-10 mx-auto">
+        <div class="card shadow">
+            <div class="card-header bg-primary text-white">
+                <h4 class="mb-0">
+                    <i class="bi bi-file-text"></i> Términos y Condiciones de Uso
+                </h4>
+            </div>
+            <div class="card-body">
+                <p class="lead">
+                    Última actualización: <strong>{{ fecha_actualizacion|default:"10 de Octubre de 2025" }}</strong>
+                </p>
+
+                <div class="alert alert-info alert-permanent">
+                    <i class="bi bi-info-circle"></i> <strong>Importante:</strong> Al utilizar OIKOS, aceptas los siguientes términos y condiciones. Te recomendamos leerlos detenidamente.
+                </div>
+
+                <hr class="my-4">
+
+                <!-- 1. Aceptación de términos -->
+                <section class="mb-4">
+                    <h5 class="text-primary"><i class="bi bi-check-circle"></i> 1. Aceptación de los Términos</h5>
+                    <p>
+                        Al registrarse y utilizar OIKOS (en adelante, "el Sistema"), usted acepta estar sujeto a estos Términos y Condiciones de Uso.
+                        Si no está de acuerdo con alguna parte de estos términos, no debe utilizar el Sistema.
+                    </p>
+                </section>
+
+                <!-- 2. Descripción del servicio -->
+                <section class="mb-4">
+                    <h5 class="text-primary"><i class="bi bi-gear"></i> 2. Descripción del Servicio</h5>
+                    <p>
+                        OIKOS es una plataforma de gestión financiera diseñada específicamente para iglesias y organizaciones religiosas.
+                        El Sistema permite:
+                    </p>
+                    <ul>
+                        <li>Registrar ingresos y egresos financieros</li>
+                        <li>Generar reportes y estadísticas</li>
+                        <li>Gestionar categorías de movimientos</li>
+                        <li>Administrar usuarios y roles</li>
+                        <li>Visualizar dashboards y análisis financieros</li>
+                    </ul>
+                </section>
+
+                <!-- 3. Registro y cuenta de usuario -->
+                <section class="mb-4">
+                    <h5 class="text-primary"><i class="bi bi-person-plus"></i> 3. Registro y Cuenta de Usuario</h5>
+                    <p><strong>3.1. Creación de Cuenta:</strong> El primer usuario en registrarse crea la iglesia y se convierte automáticamente en Administrador.</p>
+                    <p><strong>3.2. Información Veraz:</strong> Usted se compromete a proporcionar información precisa, actual y completa durante el proceso de registro.</p>
+                    <p><strong>3.3. Seguridad de Cuenta:</strong> Es responsable de mantener la confidencialidad de su contraseña y de todas las actividades que ocurran bajo su cuenta.</p>
+                    <p><strong>3.4. Notificación de Uso No Autorizado:</strong> Debe notificar inmediatamente al administrador de su iglesia sobre cualquier uso no autorizado de su cuenta.</p>
+                </section>
+
+                <!-- 4. Roles y permisos -->
+                <section class="mb-4">
+                    <h5 class="text-primary"><i class="bi bi-shield-check"></i> 4. Roles y Permisos</h5>
+                    <p>El Sistema maneja diferentes roles con distintos niveles de acceso:</p>
+                    <ul>
+                        <li><strong>Administrador:</strong> Control total del sistema, gestión de usuarios, todos los permisos</li>
+                        <li><strong>Tesorero:</strong> Gestión de movimientos financieros, sin acceso a gestión de usuarios</li>
+                        <li><strong>Pastor:</strong> Visualización de reportes y dashboard, sin permisos de edición</li>
+                        <li><strong>Colaborador:</strong> Acceso de solo lectura limitado</li>
+                    </ul>
+                </section>
+
+                <!-- 5. Uso aceptable -->
+                <section class="mb-4">
+                    <h5 class="text-primary"><i class="bi bi-exclamation-triangle"></i> 5. Uso Aceptable</h5>
+                    <p>Al utilizar OIKOS, usted se compromete a:</p>
+                    <ul>
+                        <li>Utilizar el Sistema únicamente para gestión financiera legítima de su iglesia</li>
+                        <li>No intentar acceder a datos de otras iglesias</li>
+                        <li>No manipular, alterar o falsificar registros financieros</li>
+                        <li>No compartir sus credenciales de acceso con terceros no autorizados</li>
+                        <li>Cumplir con todas las leyes y regulaciones aplicables</li>
+                    </ul>
+                </section>
+
+                <!-- 6. Privacidad y datos -->
+                <section class="mb-4">
+                    <h5 class="text-primary"><i class="bi bi-lock"></i> 6. Privacidad y Protección de Datos</h5>
+                    <p><strong>6.1. Datos Financieros:</strong> Los datos financieros registrados en el Sistema son propiedad de la iglesia y están protegidos.</p>
+                    <p><strong>6.2. Aislamiento de Datos:</strong> Cada iglesia tiene acceso exclusivo a sus propios datos. No se comparte información entre iglesias.</p>
+                    <p><strong>6.3. Seguridad:</strong> Implementamos medidas de seguridad para proteger sus datos, pero no podemos garantizar seguridad absoluta.</p>
+                    <p><strong>6.4. Responsabilidad:</strong> La iglesia es responsable de la veracidad y legalidad de los datos registrados.</p>
+                </section>
+
+                <!-- 7. Auditoría y trazabilidad -->
+                <section class="mb-4">
+                    <h5 class="text-primary"><i class="bi bi-clock-history"></i> 7. Auditoría y Trazabilidad</h5>
+                    <p>
+                        El Sistema mantiene un registro completo de:
+                    </p>
+                    <ul>
+                        <li>Quién creó cada movimiento financiero</li>
+                        <li>Quién aprobó o anuló movimientos</li>
+                        <li>Fechas y horas de todas las operaciones</li>
+                    </ul>
+                    <p>
+                        Esta información es inmutable y no puede ser eliminada para garantizar la transparencia y auditoría.
+                    </p>
+                </section>
+
+                <!-- 8. Anulación vs eliminación -->
+                <section class="mb-4">
+                    <h5 class="text-primary"><i class="bi bi-x-circle"></i> 8. Anulación de Movimientos</h5>
+                    <p>
+                        Los movimientos financieros NO se eliminan, se anulan. Esto garantiza:
+                    </p>
+                    <ul>
+                        <li>Trazabilidad completa de todas las transacciones</li>
+                        <li>Historial inmutable para auditorías</li>
+                        <li>Transparencia en la gestión financiera</li>
+                    </ul>
+                    <p>
+                        Los movimientos anulados permanecen visibles pero no afectan los cálculos financieros.
+                    </p>
+                </section>
+
+                <!-- 9. Limitación de responsabilidad -->
+                <section class="mb-4">
+                    <h5 class="text-primary"><i class="bi bi-info-circle"></i> 9. Limitación de Responsabilidad</h5>
+                    <p>
+                        OIKOS se proporciona "tal cual" sin garantías de ningún tipo. No nos hacemos responsables por:
+                    </p>
+                    <ul>
+                        <li>Pérdida de datos debido a errores del usuario</li>
+                        <li>Decisiones financieras tomadas basándose en reportes del Sistema</li>
+                        <li>Interrupciones del servicio por mantenimiento o causas fuera de nuestro control</li>
+                        <li>Daños indirectos o consecuentes del uso del Sistema</li>
+                    </ul>
+                </section>
+
+                <!-- 10. Modificaciones del servicio -->
+                <section class="mb-4">
+                    <h5 class="text-primary"><i class="bi bi-arrow-repeat"></i> 10. Modificaciones del Servicio</h5>
+                    <p>
+                        Nos reservamos el derecho de:
+                    </p>
+                    <ul>
+                        <li>Modificar o discontinuar el Sistema en cualquier momento</li>
+                        <li>Actualizar estos Términos y Condiciones</li>
+                        <li>Agregar o remover funcionalidades</li>
+                    </ul>
+                    <p>
+                        Las modificaciones importantes serán notificadas con antelación razonable.
+                    </p>
+                </section>
+
+                <!-- 11. Suspensión de cuenta -->
+                <section class="mb-4">
+                    <h5 class="text-primary"><i class="bi bi-pause-circle"></i> 11. Suspensión de Cuenta</h5>
+                    <p>
+                        Podemos suspender o desactivar su cuenta si:
+                    </p>
+                    <ul>
+                        <li>Viola estos Términos y Condiciones</li>
+                        <li>Intenta realizar actividades fraudulentas</li>
+                        <li>Compromete la seguridad del Sistema</li>
+                        <li>El administrador de su iglesia lo solicita</li>
+                    </ul>
+                </section>
+
+                <!-- 12. Propiedad intelectual -->
+                <section class="mb-4">
+                    <h5 class="text-primary"><i class="bi bi-c-circle"></i> 12. Propiedad Intelectual</h5>
+                    <p>
+                        Todos los derechos de propiedad intelectual del Sistema, incluyendo diseño, código,
+                        textos e imágenes, son propiedad de OIKOS o sus licenciantes.
+                    </p>
+                </section>
+
+                <!-- 13. Ley aplicable -->
+                <section class="mb-4">
+                    <h5 class="text-primary"><i class="bi bi-bank"></i> 13. Ley Aplicable</h5>
+                    <p>
+                        Estos términos se rigen por las leyes de la República Argentina.
+                        Cualquier disputa será resuelta en los tribunales competentes de Argentina.
+                    </p>
+                </section>
+
+                <!-- 14. Contacto -->
+                <section class="mb-4">
+                    <h5 class="text-primary"><i class="bi bi-envelope"></i> 14. Contacto</h5>
+                    <p>
+                        Para preguntas sobre estos Términos y Condiciones, puede contactar al administrador de su iglesia
+                        o al soporte técnico de OIKOS.
+                    </p>
+                </section>
+
+                <hr class="my-4">
+
+                <div class="alert alert-success alert-permanent">
+                    <h6><i class="bi bi-check-circle"></i> Aceptación</h6>
+                    <p class="mb-0">
+                        Al utilizar OIKOS, usted reconoce que ha leído, comprendido y acepta estos Términos y Condiciones en su totalidad.
+                    </p>
+                </div>
+
+                {% if user.is_authenticated %}
+                <div class="mt-4 p-3 bg-light rounded">
+                    <h6 class="text-muted">Información de su Aceptación</h6>
+                    {% if user.terminos_aceptados %}
+                        <p class="mb-0">
+                            <i class="bi bi-check-circle-fill text-success"></i>
+                            Usted aceptó estos términos el <strong>{{ user.fecha_aceptacion_terminos|date:"d/m/Y" }}</strong>
+                            a las <strong>{{ user.fecha_aceptacion_terminos|time:"H:i" }}</strong>
+                        </p>
+                    {% else %}
+                        <p class="mb-0 text-warning">
+                            <i class="bi bi-exclamation-triangle"></i>
+                            Aún no ha aceptado formalmente estos términos.
+                        </p>
+                    {% endif %}
+                </div>
+                {% endif %}
+
+                <div class="mt-4 text-center">
+                    <a href="{% url 'dashboard' %}" class="btn btn-primary">
+                        <i class="bi bi-arrow-left"></i> Volver al Dashboard
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
