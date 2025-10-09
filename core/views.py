@@ -970,6 +970,13 @@ class CategoriaIngresoCreateView(LoginRequiredMixin, CreateView):
     template_name = 'core/categoria_ingreso_list.html'
     success_url = reverse_lazy('categoria_ingreso_list')
 
+    def dispatch(self, request, *args, **kwargs):
+        # Solo ADMIN puede crear categorías
+        if request.user.rol != 'ADMIN':
+            messages.error(request, 'Solo los administradores pueden crear categorías.')
+            return redirect('categoria_ingreso_list')
+        return super().dispatch(request, *args, **kwargs)
+
     def get_form_kwargs(self):
         kwargs = super().get_form_kwargs()
         kwargs['iglesia'] = self.request.user.iglesia
@@ -998,6 +1005,13 @@ class CategoriaIngresoUpdateView(LoginRequiredMixin, UpdateView):
     template_name = 'core/categoria_ingreso_list.html'
     success_url = reverse_lazy('categoria_ingreso_list')
 
+    def dispatch(self, request, *args, **kwargs):
+        # Solo ADMIN puede modificar categorías
+        if request.user.rol != 'ADMIN':
+            messages.error(request, 'Solo los administradores pueden modificar categorías.')
+            return redirect('categoria_ingreso_list')
+        return super().dispatch(request, *args, **kwargs)
+
     def get_queryset(self):
         return CategoriaIngreso.objects.filter(iglesia=self.request.user.iglesia)
 
@@ -1025,6 +1039,11 @@ class CategoriaIngresoUpdateView(LoginRequiredMixin, UpdateView):
 @login_required
 def toggle_categoria_ingreso(request, pk):
     """Activa o desactiva una categoría de ingreso"""
+    # Solo ADMIN puede activar/desactivar categorías
+    if request.user.rol != 'ADMIN':
+        messages.error(request, 'Solo los administradores pueden activar/desactivar categorías.')
+        return redirect('categoria_ingreso_list')
+
     categoria = get_object_or_404(
         CategoriaIngreso,
         pk=pk,
@@ -1071,6 +1090,13 @@ class CategoriaEgresoCreateView(LoginRequiredMixin, CreateView):
     template_name = 'core/categoria_egreso_list.html'
     success_url = reverse_lazy('categoria_egreso_list')
 
+    def dispatch(self, request, *args, **kwargs):
+        # Solo ADMIN puede crear categorías
+        if request.user.rol != 'ADMIN':
+            messages.error(request, 'Solo los administradores pueden crear categorías.')
+            return redirect('categoria_egreso_list')
+        return super().dispatch(request, *args, **kwargs)
+
     def get_form_kwargs(self):
         kwargs = super().get_form_kwargs()
         kwargs['iglesia'] = self.request.user.iglesia
@@ -1099,6 +1125,13 @@ class CategoriaEgresoUpdateView(LoginRequiredMixin, UpdateView):
     template_name = 'core/categoria_egreso_list.html'
     success_url = reverse_lazy('categoria_egreso_list')
 
+    def dispatch(self, request, *args, **kwargs):
+        # Solo ADMIN puede modificar categorías
+        if request.user.rol != 'ADMIN':
+            messages.error(request, 'Solo los administradores pueden modificar categorías.')
+            return redirect('categoria_egreso_list')
+        return super().dispatch(request, *args, **kwargs)
+
     def get_queryset(self):
         return CategoriaEgreso.objects.filter(iglesia=self.request.user.iglesia)
 
@@ -1126,6 +1159,11 @@ class CategoriaEgresoUpdateView(LoginRequiredMixin, UpdateView):
 @login_required
 def toggle_categoria_egreso(request, pk):
     """Activa o desactiva una categoría de egreso"""
+    # Solo ADMIN puede activar/desactivar categorías
+    if request.user.rol != 'ADMIN':
+        messages.error(request, 'Solo los administradores pueden activar/desactivar categorías.')
+        return redirect('categoria_egreso_list')
+
     categoria = get_object_or_404(
         CategoriaEgreso,
         pk=pk,
