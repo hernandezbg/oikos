@@ -9,6 +9,23 @@ from reportlab.platypus import SimpleDocTemplate, Table, TableStyle, Paragraph, 
 from reportlab.lib.enums import TA_CENTER, TA_RIGHT
 from io import BytesIO
 
+# Nombres de meses en español
+MESES_ES = ['', 'Enero', 'Febrero', 'Marzo', 'Abril', 'Mayo', 'Junio',
+            'Julio', 'Agosto', 'Septiembre', 'Octubre', 'Noviembre', 'Diciembre']
+
+MESES_ES_CORTO = ['', 'Ene', 'Feb', 'Mar', 'Abr', 'May', 'Jun',
+                   'Jul', 'Ago', 'Sep', 'Oct', 'Nov', 'Dic']
+
+
+def formato_mes(fecha, corto=False):
+    """
+    Formatea una fecha mostrando el mes en español
+    fecha: objeto datetime
+    corto: True para formato corto (Ene 2025), False para formato largo (Enero 2025)
+    """
+    meses = MESES_ES_CORTO if corto else MESES_ES
+    return f"{meses[fecha.month]} {fecha.year}"
+
 
 def formato_pesos(monto):
     """
@@ -154,9 +171,7 @@ def generar_reporte_pdf(iglesia, año_mes):
 
     # Información de la iglesia
     año, mes = año_mes.split('-')
-    meses_es = ['', 'Enero', 'Febrero', 'Marzo', 'Abril', 'Mayo', 'Junio',
-                'Julio', 'Agosto', 'Septiembre', 'Octubre', 'Noviembre', 'Diciembre']
-    mes_nombre = meses_es[int(mes)]
+    mes_nombre = MESES_ES[int(mes)]
 
     info_iglesia = Paragraph(
         f"<b>{iglesia.nombre}</b><br/>"
@@ -392,7 +407,7 @@ def get_dashboard_data(iglesia, meses=None, mes_distribucion=None):
     for i in range(meses_transcurridos):
         fecha = fecha_inicio + relativedelta(months=i)
         año_mes = fecha.strftime('%Y-%m')
-        mes_label = fecha.strftime('%b %Y')
+        mes_label = formato_mes(fecha, corto=True)  # Formato corto en español
 
         # Recalcular saldo del mes (siempre, para asegurar datos correctos)
         saldo = calcular_saldo_mes(iglesia, año_mes)

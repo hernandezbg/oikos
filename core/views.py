@@ -14,7 +14,7 @@ from decimal import Decimal
 from core.models import Movimiento, SaldoMensual, CategoriaIngreso, CategoriaEgreso, Iglesia
 from core.forms import MovimientoForm, FiltroMovimientosForm, RegistroForm, CategoriaIngresoForm, CategoriaEgresoForm
 from core.forms_google import RegistroIglesiaGoogleForm
-from core.utils import formato_pesos, calcular_saldo_mes, generar_reporte_pdf, get_dashboard_data
+from core.utils import formato_pesos, calcular_saldo_mes, generar_reporte_pdf, get_dashboard_data, formato_mes
 from django.contrib import messages
 from django.contrib.auth import login
 from django.contrib.auth.decorators import login_required
@@ -199,8 +199,9 @@ class DashboardView(LoginRequiredMixin, TemplateView):
         context = super().get_context_data(**kwargs)
 
         iglesia = self.request.user.iglesia
-        # Permitir seleccionar mes desde GET, por defecto el mes actual
-        mes_seleccionado = self.request.GET.get('mes', timezone.now().strftime('%Y-%m'))
+        # Permitir seleccionar mes desde GET, por defecto el mes anterior al actual
+        mes_anterior = (timezone.now() - relativedelta(months=1)).strftime('%Y-%m')
+        mes_seleccionado = self.request.GET.get('mes', mes_anterior)
 
         # El saldo actual es el TOTAL acumulado de todos los movimientos hasta hoy (excluye anulados)
         from django.db.models import Sum
@@ -263,10 +264,9 @@ class DashboardView(LoginRequiredMixin, TemplateView):
         else:
             saldo_clase = 'saldo-positivo'
 
-        # Formatear nombre del mes seleccionado
-        from datetime import datetime
+        # Formatear nombre del mes seleccionado en español
         fecha_sel = datetime.strptime(mes_seleccionado, '%Y-%m')
-        mes_nombre = fecha_sel.strftime('%B %Y').capitalize()
+        mes_nombre = formato_mes(fecha_sel, corto=False)
 
         context.update({
             'iglesia': iglesia,
