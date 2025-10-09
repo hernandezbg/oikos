@@ -8,6 +8,7 @@ from core.views import (
     MovimientoListView,
     reporte_mensual_view,
     generar_reporte_pdf_view,
+    generar_reporte_movimientos_completo_view,
     dashboard_data_api,
     exportar_excel_view,
     registro_view,
@@ -50,6 +51,7 @@ urlpatterns = [
     path('movimientos/<int:pk>/anular/', anular_movimiento_view, name='anular_movimiento'),
     path('reportes/mensual/', reporte_mensual_view, name='reporte_mensual'),
     path('reportes/generar-pdf/', generar_reporte_pdf_view, name='generar_reporte_pdf'),
+    path('reportes/movimientos-completo/', generar_reporte_movimientos_completo_view, name='reporte_movimientos_completo'),
     # Gestión de usuarios (solo ADMIN)
     path('usuarios/gestionar/', gestionar_usuarios_view, name='gestionar_usuarios'),
     # Ayuda

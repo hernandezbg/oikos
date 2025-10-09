@@ -499,6 +499,50 @@ def generar_reporte_pdf_view(request):
 
 
 @login_required
+def generar_reporte_movimientos_completo_view(request):
+    """
+    Vista para generar y descargar reporte PDF completo de todos los movimientos con saldo acumulado
+    """
+    from core.utils import generar_reporte_movimientos_completo_pdf
+    from datetime import datetime
+
+    iglesia = request.user.iglesia
+
+    # Obtener parámetros de fecha (opcionales)
+    fecha_desde_str = request.GET.get('fecha_desde')
+    fecha_hasta_str = request.GET.get('fecha_hasta')
+
+    fecha_desde = None
+    fecha_hasta = None
+
+    if fecha_desde_str:
+        try:
+            fecha_desde = datetime.strptime(fecha_desde_str, '%Y-%m-%d').date()
+        except ValueError:
+            pass
+
+    if fecha_hasta_str:
+        try:
+            fecha_hasta = datetime.strptime(fecha_hasta_str, '%Y-%m-%d').date()
+        except ValueError:
+            pass
+
+    # Generar PDF
+    pdf_buffer = generar_reporte_movimientos_completo_pdf(iglesia, fecha_desde, fecha_hasta)
+
+    # Retornar como descarga
+    filename = f"movimientos_{iglesia.nombre.replace(' ', '_')}"
+    if fecha_desde and fecha_hasta:
+        filename += f"_{fecha_desde.strftime('%Y%m%d')}-{fecha_hasta.strftime('%Y%m%d')}"
+    filename += ".pdf"
+
+    response = HttpResponse(pdf_buffer, content_type='application/pdf')
+    response['Content-Disposition'] = f'attachment; filename="{filename}"'
+
+    return response
+
+
+@login_required
 def dashboard_data_api(request):
     """
     API para obtener datos de gráficos del dashboard

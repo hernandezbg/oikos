@@ -44,6 +44,7 @@ def calcular_saldo_mes(iglesia, año_mes):
     año_mes: formato 'YYYY-MM'
     """
     from core.models import Movimiento, SaldoMensual
+    from datetime import datetime
 
     # Obtener o crear el saldo mensual
     saldo, created = SaldoMensual.objects.get_or_create(
@@ -57,24 +58,28 @@ def calcular_saldo_mes(iglesia, año_mes):
         }
     )
 
-    # Calcular saldo inicial (saldo final del mes anterior)
+    # Calcular saldo inicial basado en TODOS los movimientos anteriores a este mes
     año, mes = año_mes.split('-')
-    mes_anterior = int(mes) - 1
-    año_anterior = int(año)
+    fecha_limite = datetime(int(año), int(mes), 1).date()
 
-    if mes_anterior == 0:
-        mes_anterior = 12
-        año_anterior -= 1
+    # Calcular saldo acumulado de todos los movimientos ANTES de este mes
+    movimientos_anteriores = Movimiento.objects.filter(
+        iglesia=iglesia,
+        fecha__lt=fecha_limite,
+        anulado=False
+    )
 
-    año_mes_anterior = f"{año_anterior}-{str(mes_anterior).zfill(2)}"
+    ingresos_anteriores = movimientos_anteriores.filter(tipo='INGRESO').aggregate(
+        total=Sum('monto')
+    )['total'] or Decimal('0.00')
 
-    try:
-        saldo_mes_anterior = SaldoMensual.objects.get(iglesia=iglesia, año_mes=año_mes_anterior)
-        saldo.saldo_inicial = saldo_mes_anterior.saldo_final
-    except SaldoMensual.DoesNotExist:
-        saldo.saldo_inicial = 0
+    egresos_anteriores = movimientos_anteriores.filter(tipo='EGRESO').aggregate(
+        total=Sum('monto')
+    )['total'] or Decimal('0.00')
 
-    # Calcular totales del mes (excluye movimientos anulados)
+    saldo.saldo_inicial = ingresos_anteriores - egresos_anteriores
+
+    # Calcular totales del mes actual (excluye movimientos anulados)
     movimientos_mes = Movimiento.objects.filter(
         iglesia=iglesia,
         fecha__year=int(año),
@@ -386,11 +391,8 @@ def get_dashboard_data(iglesia, meses=None, mes_distribucion=None):
         año_mes = fecha.strftime('%Y-%m')
         mes_label = fecha.strftime('%b %Y')
 
-        # Obtener o calcular saldo del mes
-        try:
-            saldo = SaldoMensual.objects.get(iglesia=iglesia, año_mes=año_mes)
-        except SaldoMensual.DoesNotExist:
-            saldo = calcular_saldo_mes(iglesia, año_mes)
+        # Recalcular saldo del mes (siempre, para asegurar datos correctos)
+        saldo = calcular_saldo_mes(iglesia, año_mes)
 
         meses_labels.append(mes_label)
         saldos_data.append(float(saldo.saldo_final))
@@ -418,3 +420,181 @@ def get_dashboard_data(iglesia, meses=None, mes_distribucion=None):
         'categorias_labels': categorias_labels,
         'categorias_data': categorias_data,
     }
+
+
+def generar_reporte_movimientos_completo_pdf(iglesia, fecha_desde=None, fecha_hasta=None):
+    """
+    Genera un PDF con todos los movimientos y saldo acumulado
+    Similar a un extracto bancario
+    """
+    from core.models import Movimiento
+    
+    buffer = BytesIO()
+    doc = SimpleDocTemplate(buffer, pagesize=letter, topMargin=0.5*inch, bottomMargin=0.75*inch)
+    elements = []
+    
+    styles = getSampleStyleSheet()
+    
+    # Estilos personalizados
+    title_style = ParagraphStyle(
+        'CustomTitle',
+        parent=styles['Heading1'],
+        fontSize=24,
+        textColor=colors.HexColor('#6366f1'),
+        spaceAfter=10,
+        alignment=TA_CENTER,
+        fontName='Helvetica-Bold'
+    )
+    
+    subtitle_style = ParagraphStyle(
+        'CustomSubtitle',
+        parent=styles['Normal'],
+        fontSize=14,
+        textColor=colors.HexColor('#4f46e5'),
+        spaceAfter=5,
+        alignment=TA_CENTER,
+        fontName='Helvetica-Bold'
+    )
+    
+    info_style = ParagraphStyle(
+        'InfoStyle',
+        parent=styles['Normal'],
+        fontSize=10,
+        textColor=colors.HexColor('#6b7280'),
+        alignment=TA_CENTER
+    )
+    
+    # Encabezado
+    title = Paragraph("OIKOS - Sistema de Gestión Financiera", title_style)
+    elements.append(title)
+    
+    subtitle = Paragraph("Reporte de Movimientos Completo", subtitle_style)
+    elements.append(subtitle)
+    
+    # Información de la iglesia
+    periodo_texto = ""
+    if fecha_desde and fecha_hasta:
+        periodo_texto = f"Período: {fecha_desde.strftime('%d/%m/%Y')} al {fecha_hasta.strftime('%d/%m/%Y')}"
+    elif fecha_desde:
+        periodo_texto = f"Desde: {fecha_desde.strftime('%d/%m/%Y')}"
+    elif fecha_hasta:
+        periodo_texto = f"Hasta: {fecha_hasta.strftime('%d/%m/%Y')}"
+    else:
+        periodo_texto = "Todos los movimientos"
+    
+    info_iglesia = Paragraph(
+        f"<b>{iglesia.nombre}</b><br/>"
+        f"{iglesia.direccion if iglesia.direccion else ''}<br/>"
+        f"{periodo_texto}",
+        info_style
+    )
+    elements.append(info_iglesia)
+    
+    # Fecha de generación
+    fecha_generacion = datetime.now().strftime('%d/%m/%Y %H:%M')
+    info_generacion = Paragraph(
+        f"<i>Generado: {fecha_generacion}</i>",
+        ParagraphStyle('small', parent=info_style, fontSize=8, textColor=colors.HexColor('#9ca3af'))
+    )
+    elements.append(info_generacion)
+    elements.append(Spacer(1, 20))
+    
+    # Obtener movimientos ordenados por fecha
+    movimientos = Movimiento.objects.filter(iglesia=iglesia, anulado=False)
+    
+    if fecha_desde:
+        movimientos = movimientos.filter(fecha__gte=fecha_desde)
+    if fecha_hasta:
+        movimientos = movimientos.filter(fecha__lte=fecha_hasta)
+    
+    movimientos = movimientos.order_by('fecha', 'id')
+    
+    # Tabla de movimientos
+    data = [['Fecha', 'Tipo', 'Categoría', 'Concepto', 'Monto', 'Saldo']]
+    
+    saldo_acumulado = Decimal('0.00')
+    
+    for mov in movimientos:
+        # Calcular saldo acumulado
+        if mov.tipo == 'INGRESO':
+            saldo_acumulado += mov.monto
+        else:  # EGRESO
+            saldo_acumulado -= mov.monto
+        
+        # Obtener categoría
+        categoria = mov.categoria_ingreso.nombre if mov.categoria_ingreso else mov.categoria_egreso.nombre
+        
+        # Formatear monto con signo
+        monto_formateado = formato_pesos(mov.monto) if mov.tipo == 'INGRESO' else f"-{formato_pesos(mov.monto)}"
+        
+        # Truncar concepto si es muy largo
+        concepto = mov.concepto[:40] + '...' if len(mov.concepto) > 40 else mov.concepto
+        
+        data.append([
+            mov.fecha.strftime('%d/%m/%Y'),
+            mov.get_tipo_display(),
+            categoria,
+            concepto,
+            monto_formateado,
+            formato_pesos(saldo_acumulado)
+        ])
+    
+    # Si no hay movimientos
+    if len(data) == 1:
+        data.append(['', '', 'No hay movimientos registrados', '', '', ''])
+    
+    # Crear tabla
+    tabla = Table(data, colWidths=[0.9*inch, 0.8*inch, 1.2*inch, 2.2*inch, 1.0*inch, 1.0*inch])
+    
+    # Estilo de la tabla
+    tabla.setStyle(TableStyle([
+        # Header
+        ('BACKGROUND', (0, 0), (-1, 0), colors.HexColor('#6366f1')),
+        ('TEXTCOLOR', (0, 0), (-1, 0), colors.whitesmoke),
+        ('ALIGN', (0, 0), (-1, 0), 'CENTER'),
+        ('FONTNAME', (0, 0), (-1, 0), 'Helvetica-Bold'),
+        ('FONTSIZE', (0, 0), (-1, 0), 10),
+        ('BOTTOMPADDING', (0, 0), (-1, 0), 12),
+        ('TOPPADDING', (0, 0), (-1, 0), 12),
+        
+        # Body
+        ('FONTNAME', (0, 1), (-1, -1), 'Helvetica'),
+        ('FONTSIZE', (0, 1), (-1, -1), 8),
+        ('ALIGN', (0, 1), (0, -1), 'CENTER'),  # Fecha centrada
+        ('ALIGN', (1, 1), (1, -1), 'CENTER'),  # Tipo centrado
+        ('ALIGN', (4, 1), (4, -1), 'RIGHT'),   # Monto a la derecha
+        ('ALIGN', (5, 1), (5, -1), 'RIGHT'),   # Saldo a la derecha
+        ('VALIGN', (0, 1), (-1, -1), 'MIDDLE'),
+        ('TOPPADDING', (0, 1), (-1, -1), 6),
+        ('BOTTOMPADDING', (0, 1), (-1, -1), 6),
+        
+        # Líneas
+        ('GRID', (0, 0), (-1, -1), 0.5, colors.HexColor('#d1d5db')),
+        ('LINEBELOW', (0, 0), (-1, 0), 2, colors.HexColor('#4f46e5')),
+        
+        # Alternar colores de filas
+        ('ROWBACKGROUNDS', (0, 1), (-1, -1), [colors.white, colors.HexColor('#f9fafb')]),
+    ]))
+    
+    elements.append(tabla)
+    
+    # Resumen final
+    elements.append(Spacer(1, 20))
+    
+    resumen_style = ParagraphStyle(
+        'ResumenStyle',
+        parent=styles['Normal'],
+        fontSize=12,
+        fontName='Helvetica-Bold',
+        textColor=colors.HexColor('#1f2937'),
+        alignment=TA_RIGHT
+    )
+    
+    resumen = Paragraph(f"<b>SALDO FINAL: {formato_pesos(saldo_acumulado)}</b>", resumen_style)
+    elements.append(resumen)
+    
+    # Construir PDF
+    doc.build(elements)
+    
+    buffer.seek(0)
+    return buffer
