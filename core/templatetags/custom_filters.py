@@ -1,5 +1,6 @@
 from django import template
 from django.utils.safestring import mark_safe
+from django.http import QueryDict
 from core.utils import formato_pesos as formato_pesos_util
 
 register = template.Library()
@@ -26,3 +27,17 @@ def formato_monto_movimiento(movimiento):
     else:
         # Mostrar en verde
         return mark_safe(f'<span class="text-success fw-bold">{monto_formateado}</span>')
+
+
+@register.simple_tag
+def url_replace(request, **kwargs):
+    """
+    Template tag para construir URLs reemplazando parámetros GET.
+    Útil para paginación manteniendo filtros actuales.
+
+    Uso: {% url_replace request page=2 %}
+    """
+    query = request.GET.copy()
+    for key, value in kwargs.items():
+        query[key] = value
+    return query.urlencode()
