@@ -905,6 +905,14 @@ def ayuda_view(request):
     """
     return render(request, 'core/ayuda.html')
 
+
+@login_required
+def contadora_billetes_view(request):
+    """
+    Vista de la contadora de billetes para facilitar el conteo de efectivo
+    """
+    return render(request, 'core/contadora_billetes.html')
+
 def politica_cookies_view(request):
     """
     Vista para mostrar la política de cookies

@@ -18,6 +18,7 @@ from core.views import (
     gestionar_usuarios_view,
     anular_movimiento_view,
     ayuda_view,
+    contadora_billetes_view,
     politica_cookies_view,
     terminos_condiciones_view,
     aceptar_terminos_view,
@@ -58,6 +59,8 @@ urlpatterns = [
     path('usuarios/gestionar/', gestionar_usuarios_view, name='gestionar_usuarios'),
     # Ayuda
     path('ayuda/', ayuda_view, name='ayuda'),
+    # Contadora de Billetes
+    path('contadora-billetes/', contadora_billetes_view, name='contadora_billetes'),
     # Política de Cookies
     path('politica-cookies/', politica_cookies_view, name='politica_cookies'),
     # Términos y Condiciones
