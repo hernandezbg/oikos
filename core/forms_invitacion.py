@@ -39,7 +39,6 @@ class ValidarCodigoInvitacionForm(forms.Form):
         label='Código de Invitación',
         widget=forms.TextInput(attrs={
             'class': 'form-control form-control-lg text-uppercase text-center',
-            'placeholder': 'T4K8M9',
             'style': 'letter-spacing: 0.5rem; font-weight: bold; font-size: 1.5rem;',
             'autocomplete': 'off',
             'pattern': '[TCPtcp][2-9A-HJ-NP-Za-hj-np-z]{5}',
