@@ -18,15 +18,19 @@
                     <h5 class="mb-0">Filtros</h5>
                 </div>
                 <div>
+                    {% if user.puede_crear_movimientos %}
                     <button type="button" class="btn btn-primary btn-sm" data-bs-toggle="modal" data-bs-target="#nuevoMovimientoModal">
                         <i class="bi bi-plus-circle"></i> Nuevo
                     </button>
+                    {% endif %}
+                    {% if user.puede_generar_reportes %}
                     <a href="{% url 'exportar_excel' %}?{{ request.GET.urlencode }}" class="btn btn-success btn-sm">
                         <i class="bi bi-file-excel"></i> Excel
                     </a>
                     <a href="{% url 'reporte_movimientos_completo' %}" class="btn btn-danger btn-sm" title="Reporte PDF completo con saldo acumulado">
                         <i class="bi bi-file-pdf"></i> PDF Completo
                     </a>
+                    {% endif %}
                 </div>
             </div>
             <div class="collapse" id="filtrosCollapse">

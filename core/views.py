@@ -290,6 +290,12 @@ class MovimientoCreateView(LoginRequiredMixin, CreateView):
             if not request.user.is_staff and not request.user.is_superuser:
                 if not request.user.iglesia:
                     return redirect('seleccionar_tipo_registro')
+
+                # Verificar que el usuario tenga permiso para crear movimientos
+                if not request.user.puede_crear_movimientos:
+                    messages.error(request, 'No tiene permisos para crear movimientos')
+                    return redirect('movimiento_list')
+
         return super().dispatch(request, *args, **kwargs)
 
     def get_form_kwargs(self):
@@ -485,6 +491,11 @@ def generar_reporte_pdf_view(request):
             if not request.user.iglesia:
                 return redirect('seleccionar_tipo_registro')
 
+            # Verificar que el usuario tenga permiso para generar reportes
+            if not request.user.puede_generar_reportes:
+                messages.error(request, 'No tiene permisos para generar reportes')
+                return redirect('dashboard')
+
     iglesia = request.user.iglesia
     año_mes = request.GET.get('mes', timezone.now().strftime('%Y-%m'))
 
@@ -503,6 +514,12 @@ def generar_reporte_movimientos_completo_view(request):
     """
     Vista para generar y descargar reporte PDF completo de todos los movimientos con saldo acumulado
     """
+    # Verificar que el usuario tenga permiso para generar reportes
+    if not request.user.is_staff and not request.user.is_superuser:
+        if not request.user.puede_generar_reportes:
+            messages.error(request, 'No tiene permisos para generar reportes')
+            return redirect('dashboard')
+
     from core.utils import generar_reporte_movimientos_completo_pdf
     from datetime import datetime
 
@@ -571,6 +588,11 @@ def exportar_excel_view(request):
         if not request.user.is_staff and not request.user.is_superuser:
             if not request.user.iglesia:
                 return redirect('seleccionar_tipo_registro')
+
+            # Verificar que el usuario tenga permiso para generar reportes
+            if not request.user.puede_generar_reportes:
+                messages.error(request, 'No tiene permisos para generar reportes')
+                return redirect('dashboard')
 
     import openpyxl
     from openpyxl.styles import Font, Alignment, PatternFill
