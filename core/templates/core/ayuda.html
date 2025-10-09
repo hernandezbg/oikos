@@ -39,7 +39,12 @@
         <!-- Navegación con Tabs -->
         <ul class="nav nav-tabs mb-4" id="ayudaTabs" role="tablist">
             <li class="nav-item" role="presentation">
-                <button class="nav-link active" id="equipo-tab" data-bs-toggle="tab" data-bs-target="#equipo" type="button" role="tab">
+                <button class="nav-link active" id="iniciando-tab" data-bs-toggle="tab" data-bs-target="#iniciando" type="button" role="tab">
+                    <i class="bi bi-rocket-takeoff"></i> Iniciando
+                </button>
+            </li>
+            <li class="nav-item" role="presentation">
+                <button class="nav-link" id="equipo-tab" data-bs-toggle="tab" data-bs-target="#equipo" type="button" role="tab">
                     <i class="bi bi-people"></i> Gestión de Equipo
                 </button>
             </li>
@@ -56,8 +61,183 @@
         </ul>
 
         <div class="tab-content" id="ayudaTabsContent">
+            <!-- TAB: Iniciando -->
+            <div class="tab-pane fade show active" id="iniciando" role="tabpanel">
+                <div class="card shadow">
+                    <div class="card-header bg-success text-white">
+                        <h4 class="mb-0">
+                            <i class="bi bi-rocket-takeoff"></i> Primeros Pasos en OIKOS
+                        </h4>
+                    </div>
+                    <div class="card-body">
+                        <p class="lead">Guía rápida para comenzar a usar OIKOS en tu iglesia</p>
+
+                        <hr class="my-4">
+
+                        <!-- Proceso de Registro -->
+                        <h6 class="text-primary mb-3"><i class="bi bi-list-ol"></i> Proceso de Inicio</h6>
+
+                        <div class="row">
+                            <!-- Paso 1 -->
+                            <div class="col-md-4 mb-3">
+                                <div class="card border-primary h-100">
+                                    <div class="card-body p-3">
+                                        <div class="d-flex align-items-start mb-2">
+                                            <span class="badge bg-primary rounded-circle me-2" style="width: 32px; height: 32px; display: flex; align-items: center; justify-content: center; font-size: 16px;">1</span>
+                                            <h6 class="mb-0">Registrar Iglesia</h6>
+                                        </div>
+                                        <p class="small mb-2">La primera persona en registrarse crea la iglesia y automáticamente se convierte en <strong>ADMINISTRADOR</strong>.</p>
+                                        <div class="bg-info bg-opacity-10 p-2 rounded text-center">
+                                            <small class="text-info">
+                                                <i class="bi bi-star-fill"></i> Único Admin Inicial
+                                            </small>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- Paso 2 -->
+                            <div class="col-md-4 mb-3">
+                                <div class="card border-warning h-100">
+                                    <div class="card-body p-3">
+                                        <div class="d-flex align-items-start mb-2">
+                                            <span class="badge bg-warning text-dark rounded-circle me-2" style="width: 32px; height: 32px; display: flex; align-items: center; justify-content: center; font-size: 16px;">2</span>
+                                            <h6 class="mb-0">Invitar Usuarios</h6>
+                                        </div>
+                                        <p class="small mb-2">Como administrador, puedes generar códigos de invitación para agregar más personas a tu equipo.</p>
+                                        <div class="bg-warning bg-opacity-10 p-2 rounded text-center">
+                                            <small class="text-dark">
+                                                <i class="bi bi-people"></i> Arma tu Equipo
+                                            </small>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- Paso 3 -->
+                            <div class="col-md-4 mb-3">
+                                <div class="card border-success h-100">
+                                    <div class="card-body p-3">
+                                        <div class="d-flex align-items-start mb-2">
+                                            <span class="badge bg-success rounded-circle me-2" style="width: 32px; height: 32px; display: flex; align-items: center; justify-content: center; font-size: 16px;">3</span>
+                                            <h6 class="mb-0">¡Listo!</h6>
+                                        </div>
+                                        <p class="small mb-2">Comienza a registrar movimientos financieros de tu iglesia.</p>
+                                        <div class="bg-success bg-opacity-10 p-2 rounded text-center">
+                                            <small class="text-success">
+                                                <i class="bi bi-check-circle"></i> A Trabajar
+                                            </small>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <hr class="my-4">
+
+                        <!-- Roles Disponibles -->
+                        <h5 class="text-primary mb-4"><i class="bi bi-person-badge"></i> ¿Qué Roles Puedes Asignar?</h5>
+
+                        <div class="row">
+                            <!-- ADMINISTRADOR -->
+                            <div class="col-md-3 mb-3">
+                                <div class="card border-danger h-100">
+                                    <div class="card-header bg-danger text-white text-center">
+                                        <h6 class="mb-0"><i class="bi bi-star-fill"></i> ADMINISTRADOR</h6>
+                                    </div>
+                                    <div class="card-body">
+                                        <p class="small mb-2"><strong>Control Total</strong></p>
+                                        <ul class="small mb-0">
+                                            <li>Gestiona usuarios</li>
+                                            <li>Crea movimientos</li>
+                                            <li>Edita todo</li>
+                                            <li>Ve reportes</li>
+                                        </ul>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- TESORERO -->
+                            <div class="col-md-3 mb-3">
+                                <div class="card border-primary h-100">
+                                    <div class="card-header bg-primary text-white text-center">
+                                        <h6 class="mb-0"><i class="bi bi-wallet2"></i> TESORERO</h6>
+                                    </div>
+                                    <div class="card-body">
+                                        <p class="small mb-2"><strong>Gestión Financiera</strong></p>
+                                        <ul class="small mb-0">
+                                            <li>Crea movimientos</li>
+                                            <li>Edita movimientos</li>
+                                            <li>Ve reportes</li>
+                                            <li class="text-danger">NO gestiona usuarios</li>
+                                        </ul>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- PASTOR -->
+                            <div class="col-md-3 mb-3">
+                                <div class="card border-info h-100">
+                                    <div class="card-header bg-info text-white text-center">
+                                        <h6 class="mb-0"><i class="bi bi-book"></i> PASTOR</h6>
+                                    </div>
+                                    <div class="card-body">
+                                        <p class="small mb-2"><strong>Supervisión</strong></p>
+                                        <ul class="small mb-0">
+                                            <li>Ve dashboard</li>
+                                            <li>Ve movimientos</li>
+                                            <li>Descarga reportes</li>
+                                            <li class="text-danger">NO crea movimientos</li>
+                                        </ul>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- COLABORADOR -->
+                            <div class="col-md-3 mb-3">
+                                <div class="card border-secondary h-100">
+                                    <div class="card-header bg-secondary text-white text-center">
+                                        <h6 class="mb-0"><i class="bi bi-eye"></i> COLABORADOR</h6>
+                                    </div>
+                                    <div class="card-body">
+                                        <p class="small mb-2"><strong>Solo Lectura</strong></p>
+                                        <ul class="small mb-0">
+                                            <li>Ve dashboard básico</li>
+                                            <li>Ve movimientos</li>
+                                            <li class="text-danger">NO edita nada</li>
+                                            <li class="text-danger">Acceso limitado</li>
+                                        </ul>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <hr class="my-4">
+
+                        <!-- Resumen Rápido -->
+                        <div class="alert alert-success">
+                            <h5><i class="bi bi-lightbulb"></i> Resumen Rápido</h5>
+                            <ul class="mb-0">
+                                <li><strong>Primer usuario:</strong> Automáticamente es Administrador</li>
+                                <li><strong>Administrador:</strong> Puede hacer todo, incluyendo agregar más usuarios</li>
+                                <li><strong>Tesorero:</strong> Gestiona las finanzas (movimientos), pero NO usuarios</li>
+                                <li><strong>Pastor:</strong> Solo ve y supervisa (no modifica)</li>
+                                <li><strong>Colaborador:</strong> Acceso mínimo de solo lectura</li>
+                            </ul>
+                        </div>
+
+                        <div class="alert alert-info mt-3">
+                            <h6><i class="bi bi-info-circle"></i> Recomendación</h6>
+                            <p class="mb-0">
+                                Asigna rol <strong>TESORERO</strong> a quien maneje el dinero, <strong>PASTOR</strong> para supervisión, y <strong>COLABORADOR</strong> para transparencia con el equipo.
+                            </p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
             <!-- TAB: Gestión de Equipo -->
-            <div class="tab-pane fade show active" id="equipo" role="tabpanel">
+            <div class="tab-pane fade" id="equipo" role="tabpanel">
                 <div class="card shadow">
                     <div class="card-header bg-warning text-dark">
                         <h4 class="mb-0">
