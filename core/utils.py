@@ -385,6 +385,9 @@ def get_dashboard_data(iglesia, meses=None, mes_distribucion=None):
     # Generar lista de meses
     meses_labels = []
     saldos_data = []
+    ingresos_data = []
+    egresos_data = []
+    balance_data = []
 
     for i in range(meses_transcurridos):
         fecha = fecha_inicio + relativedelta(months=i)
@@ -396,6 +399,9 @@ def get_dashboard_data(iglesia, meses=None, mes_distribucion=None):
 
         meses_labels.append(mes_label)
         saldos_data.append(float(saldo.saldo_final))
+        ingresos_data.append(float(saldo.total_ingresos))
+        egresos_data.append(float(saldo.total_egresos))
+        balance_data.append(float(saldo.total_ingresos - saldo.total_egresos))
 
     # Distribución de gastos por categoría (mes seleccionado o mes actual)
     mes_para_distribucion = mes_distribucion if mes_distribucion else fecha_actual.strftime('%Y-%m')
@@ -414,11 +420,40 @@ def get_dashboard_data(iglesia, meses=None, mes_distribucion=None):
     categorias_labels = [item['categoria_egreso__nombre'] for item in egresos_por_categoria]
     categorias_data = [float(item['total']) for item in egresos_por_categoria]
 
+    # Distribución de ingresos por categoría (mes seleccionado)
+    ingresos_por_categoria = Movimiento.objects.filter(
+        iglesia=iglesia,
+        tipo='INGRESO',
+        fecha__year=int(año),
+        fecha__month=int(mes),
+        anulado=False
+    ).values('categoria_ingreso__nombre').annotate(
+        total=Sum('monto')
+    ).order_by('-total')
+
+    categorias_ingresos_labels = [item['categoria_ingreso__nombre'] for item in ingresos_por_categoria]
+    categorias_ingresos_data = [float(item['total']) for item in ingresos_por_categoria]
+
+    # Calcular KPIs
+    promedio_ingresos = sum(ingresos_data) / len(ingresos_data) if ingresos_data else 0
+    promedio_egresos = sum(egresos_data) / len(egresos_data) if egresos_data else 0
+    meses_superavit = sum(1 for b in balance_data if b > 0)
+    meses_deficit = sum(1 for b in balance_data if b < 0)
+
     return {
         'meses_labels': meses_labels,
         'saldos_data': saldos_data,
+        'ingresos_data': ingresos_data,
+        'egresos_data': egresos_data,
+        'balance_data': balance_data,
         'categorias_labels': categorias_labels,
         'categorias_data': categorias_data,
+        'categorias_ingresos_labels': categorias_ingresos_labels,
+        'categorias_ingresos_data': categorias_ingresos_data,
+        'promedio_ingresos': promedio_ingresos,
+        'promedio_egresos': promedio_egresos,
+        'meses_superavit': meses_superavit,
+        'meses_deficit': meses_deficit,
     }
 
 

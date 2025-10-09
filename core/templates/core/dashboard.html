@@ -87,9 +87,54 @@
     </div>
 </div>
 
-<!-- Gráficos -->
+<!-- KPIs Adicionales -->
 <div class="row mb-4">
-    <div class="col-md-8 mb-3">
+    <div class="col-md-3 mb-3">
+        <div class="card border-info">
+            <div class="card-body text-center">
+                <h6 class="text-muted mb-2">
+                    <i class="bi bi-arrow-up-circle"></i> Promedio Ingresos
+                </h6>
+                <h4 class="mb-0 text-info" id="promedioIngresos">-</h4>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-3 mb-3">
+        <div class="card border-warning">
+            <div class="card-body text-center">
+                <h6 class="text-muted mb-2">
+                    <i class="bi bi-arrow-down-circle"></i> Promedio Egresos
+                </h6>
+                <h4 class="mb-0 text-warning" id="promedioEgresos">-</h4>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-3 mb-3">
+        <div class="card border-success">
+            <div class="card-body text-center">
+                <h6 class="text-muted mb-2">
+                    <i class="bi bi-check-circle"></i> Meses Superávit
+                </h6>
+                <h4 class="mb-0 text-success" id="mesesSuperavit">-</h4>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-3 mb-3">
+        <div class="card border-danger">
+            <div class="card-body text-center">
+                <h6 class="text-muted mb-2">
+                    <i class="bi bi-x-circle"></i> Meses Déficit
+                </h6>
+                <h4 class="mb-0 text-danger" id="mesesDeficit">-</h4>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Gráficos -->
+<!-- Evolución de Saldos - Ancho completo -->
+<div class="row mb-4">
+    <div class="col-12 mb-3">
         <div class="card">
             <div class="card-header">
                 <h5 class="mb-0"><i class="bi bi-graph-up"></i> Evolución de Saldos (Año {{ now.year }})</h5>
@@ -101,13 +146,43 @@
             </div>
         </div>
     </div>
-    <div class="col-md-4 mb-3">
+</div>
+
+<!-- Evolución Ingresos vs Egresos - Ancho completo -->
+<div class="row mb-4">
+    <div class="col-12 mb-3">
         <div class="card">
             <div class="card-header">
-                <h5 class="mb-0"><i class="bi bi-pie-chart"></i> Distribución de Gastos</h5>
+                <h5 class="mb-0"><i class="bi bi-graph-up-arrow"></i> Evolución Ingresos vs Egresos (Año {{ now.year }})</h5>
+            </div>
+            <div class="card-body">
+                <div style="position: relative; height: 300px;">
+                    <canvas id="ingresosEgresosChart"></canvas>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Distribución de Gastos y Balance Mensual -->
+<div class="row mb-4">
+    <div class="col-md-6 mb-3">
+        <div class="card">
+            <div class="card-header">
+                <h5 class="mb-0"><i class="bi bi-pie-chart"></i> Distribución de Gastos del Mes</h5>
             </div>
             <div class="card-body">
                 <canvas id="gastosChart"></canvas>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-6 mb-3">
+        <div class="card">
+            <div class="card-header">
+                <h5 class="mb-0"><i class="bi bi-bar-chart"></i> Balance Mensual</h5>
+            </div>
+            <div class="card-body">
+                <canvas id="balanceChart"></canvas>
             </div>
         </div>
     </div>
@@ -279,6 +354,122 @@ fetch(apiUrl)
                                 const percentage = total > 0 ? ((value / total) * 100).toFixed(1) : 0;
                                 return `${label}: $${value.toLocaleString('es-AR')} (${percentage}%)`;
                             }
+                        }
+                    }
+                }
+            }
+        });
+
+        // Actualizar KPIs
+        document.getElementById('promedioIngresos').textContent = '$' + data.promedio_ingresos.toLocaleString('es-AR', {minimumFractionDigits: 2, maximumFractionDigits: 2});
+        document.getElementById('promedioEgresos').textContent = '$' + data.promedio_egresos.toLocaleString('es-AR', {minimumFractionDigits: 2, maximumFractionDigits: 2});
+        document.getElementById('mesesSuperavit').textContent = data.meses_superavit;
+        document.getElementById('mesesDeficit').textContent = data.meses_deficit;
+
+        // Gráfico de Ingresos vs Egresos
+        const ctxIngresosEgresos = document.getElementById('ingresosEgresosChart').getContext('2d');
+        new Chart(ctxIngresosEgresos, {
+            type: 'line',
+            data: {
+                labels: data.meses_labels,
+                datasets: [
+                    {
+                        label: 'Ingresos',
+                        data: data.ingresos_data,
+                        borderColor: 'rgb(40, 167, 69)',
+                        backgroundColor: 'rgba(40, 167, 69, 0.2)',
+                        tension: 0.3,
+                        fill: true
+                    },
+                    {
+                        label: 'Egresos',
+                        data: data.egresos_data,
+                        borderColor: 'rgb(220, 53, 69)',
+                        backgroundColor: 'rgba(220, 53, 69, 0.2)',
+                        tension: 0.3,
+                        fill: true
+                    }
+                ]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: {
+                    legend: {
+                        display: true,
+                        position: 'top'
+                    },
+                    tooltip: {
+                        callbacks: {
+                            label: function(context) {
+                                return context.dataset.label + ': $' + context.parsed.y.toLocaleString('es-AR');
+                            }
+                        }
+                    }
+                },
+                scales: {
+                    y: {
+                        beginAtZero: true,
+                        ticks: {
+                            callback: function(value) {
+                                return '$' + value.toLocaleString('es-AR');
+                            }
+                        }
+                    },
+                    x: {
+                        ticks: {
+                            maxRotation: 45,
+                            minRotation: 0
+                        }
+                    }
+                }
+            }
+        });
+
+        // Gráfico de Balance Mensual
+        const ctxBalance = document.getElementById('balanceChart').getContext('2d');
+        new Chart(ctxBalance, {
+            type: 'bar',
+            data: {
+                labels: data.meses_labels,
+                datasets: [{
+                    label: 'Balance',
+                    data: data.balance_data,
+                    backgroundColor: data.balance_data.map(val => val >= 0 ? 'rgba(40, 167, 69, 0.6)' : 'rgba(220, 53, 69, 0.6)'),
+                    borderColor: data.balance_data.map(val => val >= 0 ? 'rgb(40, 167, 69)' : 'rgb(220, 53, 69)'),
+                    borderWidth: 1
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: true,
+                plugins: {
+                    legend: {
+                        display: false
+                    },
+                    tooltip: {
+                        callbacks: {
+                            label: function(context) {
+                                const value = context.parsed.y;
+                                const type = value >= 0 ? 'Superávit' : 'Déficit';
+                                return type + ': $' + Math.abs(value).toLocaleString('es-AR');
+                            }
+                        }
+                    }
+                },
+                scales: {
+                    y: {
+                        beginAtZero: true,
+                        ticks: {
+                            callback: function(value) {
+                                return '$' + value.toLocaleString('es-AR');
+                            }
+                        }
+                    },
+                    x: {
+                        ticks: {
+                            maxRotation: 90,
+                            minRotation: 45
                         }
                     }
                 }

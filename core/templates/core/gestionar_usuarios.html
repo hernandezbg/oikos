@@ -27,27 +27,75 @@
                                 <th>Nombre</th>
                                 <th>Email</th>
                                 <th>Rol</th>
+                                <th>Estado</th>
                                 <th>Fecha Registro</th>
+                                <th width="200">Acciones</th>
                             </tr>
                         </thead>
                         <tbody>
                             {% for usuario in usuarios %}
-                            <tr>
+                            <tr {% if not usuario.is_active %}class="table-secondary"{% endif %}>
                                 <td>
                                     <i class="bi bi-person-circle text-primary"></i>
                                     {{ usuario.get_full_name|default:usuario.username }}
+                                    {% if usuario.id == request.user.id %}
+                                        <span class="badge bg-success ms-1">Tú</span>
+                                    {% endif %}
                                 </td>
                                 <td>{{ usuario.email }}</td>
                                 <td>
-                                    <span class="badge {% if usuario.rol == 'ADMIN' %}bg-danger{% elif usuario.rol == 'TESORERO' %}bg-primary{% elif usuario.rol == 'PASTOR' %}bg-info{% else %}bg-secondary{% endif %}">
-                                        {{ usuario.get_rol_display }}
-                                    </span>
+                                    <form method="post" class="d-inline">
+                                        {% csrf_token %}
+                                        <input type="hidden" name="cambiar_rol" value="1">
+                                        <input type="hidden" name="usuario_id" value="{{ usuario.id }}">
+                                        <select name="nuevo_rol" class="form-select form-select-sm d-inline-block w-auto"
+                                                onchange="this.form.submit()"
+                                                {% if usuario.id == request.user.id %}disabled{% endif %}>
+                                            <option value="ADMIN" {% if usuario.rol == 'ADMIN' %}selected{% endif %}>Administrador</option>
+                                            <option value="TESORERO" {% if usuario.rol == 'TESORERO' %}selected{% endif %}>Tesorero</option>
+                                            <option value="PASTOR" {% if usuario.rol == 'PASTOR' %}selected{% endif %}>Pastor</option>
+                                            <option value="COLABORADOR" {% if usuario.rol == 'COLABORADOR' %}selected{% endif %}>Colaborador</option>
+                                        </select>
+                                    </form>
+                                </td>
+                                <td>
+                                    {% if usuario.is_active %}
+                                        <span class="badge bg-success">Activo</span>
+                                    {% else %}
+                                        <span class="badge bg-secondary">Inactivo</span>
+                                    {% endif %}
                                 </td>
                                 <td>{{ usuario.date_joined|date:"d/m/Y H:i" }}</td>
+                                <td>
+                                    <div class="btn-group btn-group-sm" role="group">
+                                        <!-- Botón desactivar/activar -->
+                                        <form method="post" class="d-inline">
+                                            {% csrf_token %}
+                                            <input type="hidden" name="toggle_usuario" value="1">
+                                            <input type="hidden" name="usuario_id" value="{{ usuario.id }}">
+                                            <button type="submit"
+                                                    class="btn {% if usuario.is_active %}btn-warning{% else %}btn-success{% endif %}"
+                                                    {% if usuario.id == request.user.id %}disabled{% endif %}
+                                                    title="{% if usuario.is_active %}Desactivar{% else %}Activar{% endif %}">
+                                                <i class="bi {% if usuario.is_active %}bi-pause-circle{% else %}bi-check-circle{% endif %}"></i>
+                                            </button>
+                                        </form>
+
+                                        <!-- Botón eliminar -->
+                                        <button type="button"
+                                                class="btn btn-danger"
+                                                data-bs-toggle="modal"
+                                                data-bs-target="#confirmarEliminarModal{{ usuario.id }}"
+                                                {% if usuario.id == request.user.id or usuario.movimientos_creados.count > 0 %}disabled{% endif %}
+                                                title="{% if usuario.movimientos_creados.count > 0 %}No se puede eliminar: tiene movimientos registrados{% else %}Eliminar{% endif %}">
+                                            <i class="bi bi-trash"></i>
+                                        </button>
+                                    </div>
+                                </td>
                             </tr>
                             {% empty %}
                             <tr>
-                                <td colspan="4" class="text-center text-muted py-4">
+                                <td colspan="6" class="text-center text-muted py-4">
                                     <i class="bi bi-inbox"></i> No hay usuarios registrados
                                 </td>
                             </tr>
@@ -59,6 +107,47 @@
         </div>
     </div>
 </div>
+
+<!-- Modales de confirmación de eliminación -->
+{% for usuario in usuarios %}
+<div class="modal fade" id="confirmarEliminarModal{{ usuario.id }}" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header bg-danger text-white">
+                <h5 class="modal-title">Confirmar Eliminación</h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <p>¿Estás seguro de que deseas eliminar al usuario?</p>
+                <p class="mb-0"><strong>{{ usuario.get_full_name|default:usuario.username }}</strong><br>
+                <small class="text-muted">{{ usuario.email }}</small></p>
+
+                {% if usuario.movimientos_creados.count > 0 %}
+                <div class="alert alert-danger mt-3 mb-0">
+                    <i class="bi bi-x-circle"></i> <strong>No se puede eliminar:</strong> Este usuario ha creado {{ usuario.movimientos_creados.count }} movimiento(s).
+                    Por razones de auditoría, debe ser desactivado en lugar de eliminado.
+                </div>
+                {% else %}
+                <div class="alert alert-warning mt-3 mb-0">
+                    <i class="bi bi-exclamation-triangle"></i> Esta acción no se puede deshacer.
+                </div>
+                {% endif %}
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
+                {% if usuario.movimientos_creados.count == 0 %}
+                <form method="post" class="d-inline">
+                    {% csrf_token %}
+                    <input type="hidden" name="eliminar_usuario" value="1">
+                    <input type="hidden" name="usuario_id" value="{{ usuario.id }}">
+                    <button type="submit" class="btn btn-danger">Eliminar Usuario</button>
+                </form>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+</div>
+{% endfor %}
 
 <!-- Generar Código de Invitación -->
 <div class="row mb-4">

@@ -775,6 +775,89 @@ def gestionar_usuarios_view(request):
             messages.error(request, 'Código no encontrado.')
         return redirect('gestionar_usuarios')
 
+    # Procesar cambio de rol de usuario
+    if request.method == 'POST' and 'cambiar_rol' in request.POST:
+        usuario_id = request.POST.get('usuario_id')
+        nuevo_rol = request.POST.get('nuevo_rol')
+        try:
+            usuario = Usuario.objects.get(id=usuario_id, iglesia=iglesia)
+
+            # No permitir cambiar el rol del único ADMIN
+            if usuario.rol == 'ADMIN' and nuevo_rol != 'ADMIN':
+                admins_count = Usuario.objects.filter(iglesia=iglesia, rol='ADMIN').count()
+                if admins_count <= 1:
+                    messages.error(request, 'No se puede cambiar el rol del único administrador.')
+                    return redirect('gestionar_usuarios')
+
+            usuario.rol = nuevo_rol
+            usuario.save()
+            messages.success(request, f'Rol de {usuario.get_full_name() or usuario.username} cambiado a {usuario.get_rol_display()}.')
+        except Usuario.DoesNotExist:
+            messages.error(request, 'Usuario no encontrado.')
+        return redirect('gestionar_usuarios')
+
+    # Procesar desactivar/activar usuario
+    if request.method == 'POST' and 'toggle_usuario' in request.POST:
+        usuario_id = request.POST.get('usuario_id')
+        try:
+            usuario = Usuario.objects.get(id=usuario_id, iglesia=iglesia)
+
+            # No permitir desactivar al propio usuario
+            if usuario.id == request.user.id:
+                messages.error(request, 'No puedes desactivar tu propia cuenta.')
+                return redirect('gestionar_usuarios')
+
+            # No permitir desactivar al único ADMIN
+            if usuario.rol == 'ADMIN' and usuario.is_active:
+                admins_count = Usuario.objects.filter(iglesia=iglesia, rol='ADMIN', is_active=True).count()
+                if admins_count <= 1:
+                    messages.error(request, 'No se puede desactivar al único administrador activo.')
+                    return redirect('gestionar_usuarios')
+
+            usuario.is_active = not usuario.is_active
+            usuario.save()
+
+            estado = 'activado' if usuario.is_active else 'desactivado'
+            messages.success(request, f'Usuario {usuario.get_full_name() or usuario.username} {estado} exitosamente.')
+        except Usuario.DoesNotExist:
+            messages.error(request, 'Usuario no encontrado.')
+        return redirect('gestionar_usuarios')
+
+    # Procesar eliminar usuario
+    if request.method == 'POST' and 'eliminar_usuario' in request.POST:
+        usuario_id = request.POST.get('usuario_id')
+        try:
+            usuario = Usuario.objects.get(id=usuario_id, iglesia=iglesia)
+
+            # No permitir eliminar al propio usuario
+            if usuario.id == request.user.id:
+                messages.error(request, 'No puedes eliminar tu propia cuenta.')
+                return redirect('gestionar_usuarios')
+
+            # No permitir eliminar al único ADMIN
+            if usuario.rol == 'ADMIN':
+                admins_count = Usuario.objects.filter(iglesia=iglesia, rol='ADMIN').count()
+                if admins_count <= 1:
+                    messages.error(request, 'No se puede eliminar al único administrador.')
+                    return redirect('gestionar_usuarios')
+
+            # Verificar si el usuario ha creado movimientos
+            movimientos_count = usuario.movimientos_creados.count()
+            if movimientos_count > 0:
+                messages.error(
+                    request,
+                    f'No se puede eliminar al usuario porque ha creado {movimientos_count} movimiento(s). '
+                    f'Por razones de auditoría, los usuarios con movimientos registrados deben ser desactivados en lugar de eliminados.'
+                )
+                return redirect('gestionar_usuarios')
+
+            nombre_usuario = usuario.get_full_name() or usuario.username
+            usuario.delete()
+            messages.success(request, f'Usuario {nombre_usuario} eliminado exitosamente.')
+        except Usuario.DoesNotExist:
+            messages.error(request, 'Usuario no encontrado.')
+        return redirect('gestionar_usuarios')
+
     # Obtener datos para el template
     usuarios = Usuario.objects.filter(iglesia=iglesia).order_by('-date_joined')
 
