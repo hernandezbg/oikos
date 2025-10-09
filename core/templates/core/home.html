@@ -118,6 +118,108 @@
         </div>
     </section>
 
+    <!-- Screenshots Preview Section -->
+    <section class="py-5 bg-white">
+        <div class="container py-5">
+            <div class="text-center mb-5">
+                <span class="badge bg-primary-subtle text-primary px-3 py-2 mb-3">
+                    Vista Previa
+                </span>
+                <h2 class="display-5 fw-bold mb-3">Así se ve OIKOS</h2>
+                <p class="lead text-muted">Una interfaz moderna y fácil de usar</p>
+            </div>
+
+            <div class="screenshots-container">
+                <div class="screenshot screenshot-1">
+                    <img src="{% static 'images/Screenshot_1.png' %}" alt="Dashboard OIKOS" class="img-fluid rounded shadow-lg">
+                </div>
+                <div class="screenshot screenshot-2">
+                    <img src="{% static 'images/Screenshot_2.png' %}" alt="Movimientos OIKOS" class="img-fluid rounded shadow-lg">
+                </div>
+                <div class="screenshot screenshot-3">
+                    <img src="{% static 'images/Screenshot_3.png' %}" alt="Reportes OIKOS" class="img-fluid rounded shadow-lg">
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <style>
+        .screenshots-container {
+            position: relative;
+            height: 400px;
+            max-width: 900px;
+            margin: 0 auto;
+        }
+
+        .screenshot {
+            position: absolute;
+            transition: transform 0.3s ease, z-index 0s 0.3s;
+        }
+
+        .screenshot img {
+            width: 100%;
+            max-width: 500px;
+            height: auto;
+            border: 3px solid #e5e7eb;
+        }
+
+        .screenshot-1 {
+            left: 0;
+            top: 0;
+            z-index: 3;
+        }
+
+        .screenshot-2 {
+            left: 50%;
+            top: 50%;
+            transform: translate(-50%, -50%);
+            z-index: 2;
+        }
+
+        .screenshot-3 {
+            right: 0;
+            top: 0;
+            z-index: 1;
+        }
+
+        .screenshot:hover {
+            transform: scale(1.05) translateY(-10px);
+            z-index: 10 !important;
+            transition: transform 0.3s ease, z-index 0s;
+        }
+
+        .screenshot-2:hover {
+            transform: translate(-50%, -50%) scale(1.05) translateY(-10px);
+        }
+
+        @media (max-width: 768px) {
+            .screenshots-container {
+                height: 600px;
+            }
+
+            .screenshot {
+                width: 100%;
+                position: static;
+                margin-bottom: 1rem;
+            }
+
+            .screenshot-1, .screenshot-2, .screenshot-3 {
+                left: auto;
+                right: auto;
+                top: auto;
+                transform: none !important;
+            }
+
+            .screenshot:hover {
+                transform: scale(1.02) !important;
+            }
+
+            .screenshot-2:hover {
+                transform: scale(1.02) !important;
+            }
+        }
+    </style>
+
     <!-- Features Section -->
     <section id="caracteristicas" class="py-5 bg-light">
         <div class="container py-5">
@@ -168,38 +270,11 @@
                 </div>
                 <div class="col-md-6 col-lg-4">
                     <div class="feature-card">
-                        <div class="feature-icon bg-danger">
-                            <i class="bi bi-x-circle"></i>
-                        </div>
-                        <h4>Anulación de Movimientos</h4>
-                        <p class="text-muted">Anula movimientos con registro de motivo, fecha y responsable para auditoría completa.</p>
-                    </div>
-                </div>
-                <div class="col-md-6 col-lg-4">
-                    <div class="feature-card">
                         <div class="feature-icon bg-purple">
                             <i class="bi bi-graph-up"></i>
                         </div>
                         <h4>Gráficos y Dashboard</h4>
                         <p class="text-muted">Visualiza la salud financiera de tu iglesia con gráficos intuitivos.</p>
-                    </div>
-                </div>
-                <div class="col-md-6 col-lg-4">
-                    <div class="feature-card">
-                        <div class="feature-icon bg-teal">
-                            <i class="bi bi-phone"></i>
-                        </div>
-                        <h4>Diseño Responsive</h4>
-                        <p class="text-muted">Accede desde cualquier dispositivo: computadora, tablet o celular.</p>
-                    </div>
-                </div>
-                <div class="col-md-6 col-lg-4">
-                    <div class="feature-card">
-                        <div class="feature-icon bg-indigo">
-                            <i class="bi bi-shield-check"></i>
-                        </div>
-                        <h4>Seguridad y Privacidad</h4>
-                        <p class="text-muted">Tus datos están protegidos y solo accesibles por usuarios autorizados.</p>
                     </div>
                 </div>
                 <div class="col-md-6 col-lg-4">
@@ -270,7 +345,7 @@
                                 <div>
                                     <h5 class="text-white mb-2">Apoyo Misionero</h5>
                                     <p class="text-white-50 mb-0">
-                                        Los excedentes se destinan a proyectos misioneros y apoyo a misioneros alrededor del mundo.
+                                        Un porcentaje de cada contribución se destinará a proyectos misioneros y apoyo a misioneros alrededor del mundo.
                                     </p>
                                 </div>
                             </div>
@@ -341,13 +416,14 @@
                         <div class="donation-info p-4 bg-white rounded shadow-sm mb-4">
                             <h5 class="mb-3">Datos para Transferencia</h5>
                             <div class="text-start">
-                                <p class="mb-2"><strong>Alias CBU:</strong> <span class="text-primary">OIKOS.MINISTERIO</span></p>
-                                <p class="mb-2"><strong>CBU:</strong> <span class="text-primary">0000003100012345678901</span></p>
-                                <p class="mb-0"><strong>Titular:</strong> Ministerio OIKOS</p>
+                                <p class="mb-2"><strong>Alias:</strong> <span class="text-primary">OIKOS.ECONO</span></p>
+                                <p class="mb-2"><strong>CBU:</strong> <span class="text-primary">0110314230031422030815</span></p>
+                                <p class="mb-2"><strong>Titular:</strong> Bruno Hernández</p>
+                                <p class="mb-0"><strong>Banco:</strong> Banco Nación</p>
                             </div>
                         </div>
                         <p class="text-muted small">
-                            <i class="bi bi-info-circle"></i> Tu contribución ayuda a cubrir costos de servidores, desarrollo y mantenimiento. Los excedentes se destinan a proyectos misioneros.
+                            <i class="bi bi-info-circle"></i> Tu contribución ayuda a cubrir costos de servidores, desarrollo y mantenimiento. Un porcentaje se destinará a proyectos misioneros.
                         </p>
                     </div>
                 </div>
