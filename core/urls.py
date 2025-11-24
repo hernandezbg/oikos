@@ -33,6 +33,26 @@ from core.views import (
     CategoriaEgresoUpdateView,
     toggle_categoria_egreso,
 )
+from core.views_caja_chica import (
+    # Cajas Chicas
+    CajaChicaListView,
+    CajaChicaCreateView,
+    CajaChicaUpdateView,
+    toggle_caja_chica,
+    DashboardCajaChicaView,
+    dashboard_caja_data_api,
+    # Movimientos de Caja
+    MovimientoCajaChicaListView,
+    MovimientoCajaChicaCreateView,
+    MovimientoCajaChicaUpdateView,
+    anular_movimiento_caja_view,
+    # Transferencias
+    TransferenciaListView,
+    TransferenciaCreateView,
+    anular_transferencia_view,
+    # Códigos de invitación
+    generar_codigo_caja_view,
+)
 from django.contrib.auth.views import LogoutView
 
 urlpatterns = [
@@ -79,4 +99,30 @@ urlpatterns = [
     path('categorias/egresos/nueva/', CategoriaEgresoCreateView.as_view(), name='categoria_egreso_create'),
     path('categorias/egresos/<int:pk>/editar/', CategoriaEgresoUpdateView.as_view(), name='categoria_egreso_update'),
     path('categorias/egresos/<int:pk>/toggle/', toggle_categoria_egreso, name='toggle_categoria_egreso'),
+
+    # ======================================
+    # CAJAS CHICAS
+    # ======================================
+
+    # Gestión de Cajas Chicas (solo ADMIN)
+    path('cajas-chicas/', CajaChicaListView.as_view(), name='caja_chica_list'),
+    path('cajas-chicas/nueva/', CajaChicaCreateView.as_view(), name='caja_chica_create'),
+    path('cajas-chicas/<int:pk>/editar/', CajaChicaUpdateView.as_view(), name='caja_chica_update'),
+    path('cajas-chicas/<int:pk>/toggle/', toggle_caja_chica, name='toggle_caja_chica'),
+    path('cajas-chicas/<int:pk>/dashboard/', DashboardCajaChicaView.as_view(), name='dashboard_caja'),
+    path('api/dashboard-caja-data/<int:caja_pk>/', dashboard_caja_data_api, name='dashboard_caja_data_api'),
+
+    # Movimientos de Caja Chica
+    path('cajas-chicas/<int:caja_pk>/movimientos/', MovimientoCajaChicaListView.as_view(), name='movimiento_caja_list'),
+    path('cajas-chicas/<int:caja_pk>/movimientos/nuevo/', MovimientoCajaChicaCreateView.as_view(), name='movimiento_caja_create'),
+    path('cajas-chicas/<int:caja_pk>/movimientos/<int:pk>/editar/', MovimientoCajaChicaUpdateView.as_view(), name='movimiento_caja_update'),
+    path('cajas-chicas/<int:caja_pk>/movimientos/<int:pk>/anular/', anular_movimiento_caja_view, name='anular_movimiento_caja'),
+
+    # Transferencias entre Cajas (solo ADMIN)
+    path('transferencias/', TransferenciaListView.as_view(), name='transferencia_list'),
+    path('transferencias/nueva/', TransferenciaCreateView.as_view(), name='transferencia_create'),
+    path('transferencias/<int:pk>/anular/', anular_transferencia_view, name='anular_transferencia'),
+
+    # Códigos de Invitación para Cajas
+    path('cajas-chicas/generar-codigo/', generar_codigo_caja_view, name='generar_codigo_caja'),
 ]

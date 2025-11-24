@@ -1,0 +1,76 @@
+{% extends 'base.html' %}
+{% load static %}
+{% load crispy_forms_tags %}
+
+{% block title %}{% if object %}Editar{% else %}Nueva{% endif %} Caja Chica - {{ APP_NAME }}{% endblock %}
+{% block page_title %}{% if object %}Editar{% else %}Nueva{% endif %} Caja Chica{% endblock %}
+
+{% block content %}
+<div class="row">
+    <div class="col-md-8 offset-md-2">
+        <div class="card">
+            <div class="card-header">
+                <h5 class="mb-0">
+                    <i class="bi bi-box"></i>
+                    {% if object %}
+                    Editar Caja: {{ object.nombre }}
+                    {% else %}
+                    Crear Nueva Caja Chica
+                    {% endif %}
+                </h5>
+            </div>
+            <div class="card-body">
+                <form method="post">
+                    {% csrf_token %}
+
+                    <div class="mb-3">
+                        <label for="{{ form.nombre.id_for_label }}" class="form-label">{{ form.nombre.label }}</label>
+                        {{ form.nombre }}
+                        {% if form.nombre.errors %}
+                        <div class="text-danger">{{ form.nombre.errors }}</div>
+                        {% endif %}
+                        <small class="form-text text-muted">Ejemplo: Caja Jóvenes, Caja Ministerio Mujeres</small>
+                    </div>
+
+                    <div class="mb-3">
+                        <label for="{{ form.descripcion.id_for_label }}" class="form-label">{{ form.descripcion.label }}</label>
+                        {{ form.descripcion }}
+                        {% if form.descripcion.errors %}
+                        <div class="text-danger">{{ form.descripcion.errors }}</div>
+                        {% endif %}
+                    </div>
+
+                    <div class="mb-3">
+                        <label for="{{ form.saldo_inicial.id_for_label }}" class="form-label">{{ form.saldo_inicial.label }}</label>
+                        <div class="input-group">
+                            <span class="input-group-text">$</span>
+                            {{ form.saldo_inicial }}
+                        </div>
+                        {% if form.saldo_inicial.errors %}
+                        <div class="text-danger">{{ form.saldo_inicial.errors }}</div>
+                        {% endif %}
+                        <small class="form-text text-muted">
+                            Saldo con el que se crea la caja. Puede ser 0 si inicia vacía.
+                        </small>
+                    </div>
+
+                    {% if form.non_field_errors %}
+                    <div class="alert alert-danger">
+                        {{ form.non_field_errors }}
+                    </div>
+                    {% endif %}
+
+                    <div class="d-flex justify-content-between">
+                        <a href="{% url 'caja_chica_list' %}" class="btn btn-secondary">
+                            <i class="bi bi-arrow-left"></i> Volver
+                        </a>
+                        <button type="submit" class="btn btn-primary">
+                            <i class="bi bi-save"></i> Guardar Caja
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

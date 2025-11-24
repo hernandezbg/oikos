@@ -1,0 +1,115 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Nueva Transferencia - {{ APP_NAME }}{% endblock %}
+{% block page_title %}Nueva Transferencia entre Cajas{% endblock %}
+
+{% block content %}
+<div class="row mb-3">
+    <div class="col-12">
+        <div class="alert alert-warning">
+            <i class="bi bi-exclamation-triangle"></i> <strong>Importante:</strong>
+            La transferencia creará automáticamente dos movimientos:
+            un <strong>egreso</strong> en la caja origen y un <strong>ingreso</strong> en la caja destino.
+        </div>
+    </div>
+</div>
+
+<div class="row">
+    <div class="col-md-8 offset-md-2">
+        <div class="card">
+            <div class="card-header">
+                <h5 class="mb-0">
+                    <i class="bi bi-arrow-left-right"></i> Crear Transferencia
+                </h5>
+            </div>
+            <div class="card-body">
+                <form method="post" id="transferenciaForm">
+                    {% csrf_token %}
+
+                    <div class="mb-3">
+                        <label for="{{ form.caja_origen.id_for_label }}" class="form-label">{{ form.caja_origen.label }} *</label>
+                        {{ form.caja_origen }}
+                        {% if form.caja_origen.errors %}
+                        <div class="text-danger">{{ form.caja_origen.errors }}</div>
+                        {% endif %}
+                        <small class="form-text text-muted">Caja de donde saldrá el dinero</small>
+                    </div>
+
+                    <div class="text-center my-3">
+                        <i class="bi bi-arrow-down" style="font-size: 2rem; color: #6c757d;"></i>
+                    </div>
+
+                    <div class="mb-3">
+                        <label for="{{ form.caja_destino.id_for_label }}" class="form-label">{{ form.caja_destino.label }} *</label>
+                        {{ form.caja_destino }}
+                        {% if form.caja_destino.errors %}
+                        <div class="text-danger">{{ form.caja_destino.errors }}</div>
+                        {% endif %}
+                        <small class="form-text text-muted">Caja a donde llegará el dinero</small>
+                    </div>
+
+                    <hr class="my-4">
+
+                    <div class="mb-3">
+                        <label for="{{ form.monto.id_for_label }}" class="form-label">{{ form.monto.label }} *</label>
+                        <div class="input-group">
+                            <span class="input-group-text">$</span>
+                            {{ form.monto }}
+                        </div>
+                        {% if form.monto.errors %}
+                        <div class="text-danger">{{ form.monto.errors }}</div>
+                        {% endif %}
+                    </div>
+
+                    <div class="mb-3">
+                        <label for="{{ form.fecha.id_for_label }}" class="form-label">{{ form.fecha.label }} *</label>
+                        {{ form.fecha }}
+                        {% if form.fecha.errors %}
+                        <div class="text-danger">{{ form.fecha.errors }}</div>
+                        {% endif %}
+                    </div>
+
+                    <div class="mb-3">
+                        <label for="{{ form.concepto.id_for_label }}" class="form-label">{{ form.concepto.label }} *</label>
+                        {{ form.concepto }}
+                        {% if form.concepto.errors %}
+                        <div class="text-danger">{{ form.concepto.errors }}</div>
+                        {% endif %}
+                        <small class="form-text text-muted">Describe el motivo de la transferencia</small>
+                    </div>
+
+                    {% if form.non_field_errors %}
+                    <div class="alert alert-danger">
+                        {{ form.non_field_errors }}
+                    </div>
+                    {% endif %}
+
+                    <div class="d-flex justify-content-between">
+                        <a href="{% url 'transferencia_list' %}" class="btn btn-secondary">
+                            <i class="bi bi-arrow-left"></i> Cancelar
+                        </a>
+                        <button type="submit" class="btn btn-primary">
+                            <i class="bi bi-arrow-left-right"></i> Realizar Transferencia
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+// Validar que origen y destino no sean iguales
+document.getElementById('transferenciaForm').addEventListener('submit', function(e) {
+    const origen = document.getElementById('id_caja_origen').value;
+    const destino = document.getElementById('id_caja_destino').value;
+
+    if (origen === destino) {
+        e.preventDefault();
+        alert('La caja origen y destino no pueden ser la misma');
+        return false;
+    }
+});
+</script>
+{% endblock %}

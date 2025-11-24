@@ -20,6 +20,23 @@ from django.contrib.auth import login
 from django.contrib.auth.decorators import login_required
 
 
+class AccesoMovimientosRequiredMixin:
+    """
+    Mixin que verifica que el usuario tenga acceso a movimientos generales.
+    Los usuarios de solo caja no pueden acceder a estas vistas.
+    """
+    def dispatch(self, request, *args, **kwargs):
+        if request.user.is_authenticated:
+            if not request.user.is_staff and not request.user.is_superuser:
+                if not request.user.iglesia:
+                    return redirect('seleccionar_tipo_registro')
+                # Si es usuario solo de caja, no tiene acceso
+                if not request.user.tiene_acceso_movimientos:
+                    messages.warning(request, 'No tienes permisos para acceder a esta sección.')
+                    return redirect('dashboard')
+        return super().dispatch(request, *args, **kwargs)
+
+
 def home_view(request):
     """
     Vista de landing page - muestra home.html
@@ -141,40 +158,79 @@ def registro_iglesia_google_view(request):
 @login_required
 def registro_con_codigo_view(request):
     """
-    Vista para unirse a una iglesia usando un código de invitación
+    Vista para unirse a una iglesia O a una caja chica usando un código de invitación
     """
-    # Si ya tiene iglesia, redirigir al dashboard
-    if hasattr(request.user, 'iglesia') and request.user.iglesia:
-        return redirect('dashboard')
-
     from core.forms_invitacion import ValidarCodigoInvitacionForm
-    from core.models import CodigoInvitacion
+    from core.models import CodigoInvitacion, UsuarioCajaChica
 
     if request.method == 'POST':
         form = ValidarCodigoInvitacionForm(request.POST)
         if form.is_valid():
             codigo_obj = form.codigo_obj
 
-            # Asignar iglesia y rol al usuario
-            request.user.iglesia = codigo_obj.iglesia
-            request.user.rol = codigo_obj.rol
+            # CASO 1: Código para iglesia (comportamiento original)
+            if codigo_obj.caja_chica is None:
+                # Si ya tiene iglesia, no puede usar código de iglesia
+                if hasattr(request.user, 'iglesia') and request.user.iglesia:
+                    messages.error(request, 'Ya perteneces a una iglesia')
+                    return redirect('dashboard')
 
-            # Permisos según rol
-            if codigo_obj.rol in ['ADMIN', 'TESORERO']:
-                request.user.puede_aprobar = True
+                # Asignar iglesia y rol al usuario
+                request.user.iglesia = codigo_obj.iglesia
+                request.user.rol = codigo_obj.rol
+
+                # Permisos según rol
+                if codigo_obj.rol in ['ADMIN', 'TESORERO']:
+                    request.user.puede_aprobar = True
+                else:
+                    request.user.puede_aprobar = False
+
+                request.user.save()
+
+                # Marcar código como usado
+                codigo_obj.usar_codigo(request.user)
+
+                messages.success(
+                    request,
+                    f'¡Bienvenido a OIKOS! Te has unido a {codigo_obj.iglesia.nombre} como {codigo_obj.get_rol_display()}.'
+                )
+                return redirect('dashboard')
+
+            # CASO 2: Código para caja chica (NUEVO)
             else:
-                request.user.puede_aprobar = False
+                # Verificar que el usuario tenga iglesia asignada
+                if not request.user.iglesia:
+                    request.user.iglesia = codigo_obj.iglesia
+                    # No asignamos rol de iglesia, el usuario solo tendrá acceso a la caja
+                    # El rol por defecto es 'COLABORADOR' pero no tendrá permisos reales de iglesia
+                    request.user.save()
 
-            request.user.save()
+                # Verificar si ya está asignado a esta caja
+                if UsuarioCajaChica.objects.filter(
+                    usuario=request.user,
+                    caja_chica=codigo_obj.caja_chica
+                ).exists():
+                    messages.warning(request, 'Ya estás asignado a esta caja')
+                    return redirect('dashboard')
 
-            # Marcar código como usado
-            codigo_obj.usar_codigo(request.user)
+                # Crear asignación a la caja
+                UsuarioCajaChica.objects.create(
+                    usuario=request.user,
+                    caja_chica=codigo_obj.caja_chica,
+                    rol_caja=codigo_obj.rol,  # TESORERO_CAJA o COLABORADOR_CAJA
+                    puede_aprobar=(codigo_obj.rol == 'TESORERO_CAJA'),
+                    asignado_por=codigo_obj.creado_por
+                )
 
-            messages.success(
-                request,
-                f'¡Bienvenido a OIKOS! Te has unido a {codigo_obj.iglesia.nombre} como {codigo_obj.get_rol_display()}.'
-            )
-            return redirect('dashboard')
+                # Marcar código como usado
+                codigo_obj.usar_codigo(request.user)
+
+                messages.success(
+                    request,
+                    f'Te has unido a la caja "{codigo_obj.caja_chica.nombre}" '
+                    f'como {codigo_obj.get_rol_display()}.'
+                )
+                return redirect('dashboard')
     else:
         form = ValidarCodigoInvitacionForm()
 
@@ -281,27 +337,48 @@ class DashboardView(LoginRequiredMixin, TemplateView):
             'alertas': alertas,
         })
 
+        # Agregar información de cajas chicas
+        from core.models import CajaChica
+
+        # Si es usuario solo de caja (no tiene rol de iglesia), mostrar solo sus cajas
+        if self.request.user.es_usuario_solo_caja:
+            context['mostrar_movimientos'] = False
+            context['cajas_usuario'] = self.request.user.cajas_asignadas.select_related('caja_chica').all()
+            context['es_usuario_caja'] = True
+        else:
+            context['mostrar_movimientos'] = True
+            context['es_usuario_caja'] = False
+
+        # Si es ADMIN, mostrar todas las cajas de la iglesia
+        if self.request.user.rol == 'ADMIN':
+            cajas_chicas = CajaChica.objects.filter(
+                iglesia=iglesia,
+                activa=True
+            )[:5]  # Mostrar solo las primeras 5
+
+            # Agregar saldo actual de cada caja
+            for caja in cajas_chicas:
+                caja.saldo_actual = caja.calcular_saldo_actual()
+
+            context['cajas_chicas'] = cajas_chicas
+            context['puede_gestionar_cajas'] = True
+
         return context
 
 
-class MovimientoCreateView(LoginRequiredMixin, CreateView):
+class MovimientoCreateView(AccesoMovimientosRequiredMixin, LoginRequiredMixin, CreateView):
     model = Movimiento
     form_class = MovimientoForm
     template_name = 'core/movimiento_form.html'
     success_url = reverse_lazy('movimiento_list')
 
     def dispatch(self, request, *args, **kwargs):
-        # Si el usuario no tiene iglesia, redirigir a selección de tipo de registro
-        if request.user.is_authenticated:
-            if not request.user.is_staff and not request.user.is_superuser:
-                if not request.user.iglesia:
-                    return redirect('seleccionar_tipo_registro')
-
-                # Verificar que el usuario tenga permiso para crear movimientos
-                if not request.user.puede_crear_movimientos:
-                    messages.error(request, 'No tiene permisos para crear movimientos')
-                    return redirect('movimiento_list')
-
+        # El AccesoMovimientosRequiredMixin ya verifica iglesia y acceso a movimientos
+        # Verificar adicionalmente que el usuario tenga permiso para crear
+        if request.user.is_authenticated and not request.user.is_staff and not request.user.is_superuser:
+            if not request.user.puede_crear_movimientos:
+                messages.error(request, 'No tiene permisos para crear movimientos')
+                return redirect('movimiento_list')
         return super().dispatch(request, *args, **kwargs)
 
     def get_form_kwargs(self):
@@ -327,13 +404,14 @@ class MovimientoCreateView(LoginRequiredMixin, CreateView):
         return response
 
 
-class MovimientoUpdateView(LoginRequiredMixin, UpdateView):
+class MovimientoUpdateView(AccesoMovimientosRequiredMixin, LoginRequiredMixin, UpdateView):
     model = Movimiento
     form_class = MovimientoForm
     template_name = 'core/movimiento_list.html'
     success_url = reverse_lazy('movimiento_list')
 
     def dispatch(self, request, *args, **kwargs):
+        # El AccesoMovimientosRequiredMixin ya verifica acceso básico
         # Verificar que el usuario sea ADMIN o TESORERO
         if not request.user.rol in ['ADMIN', 'TESORERO']:
             messages.error(request, 'No tiene permisos para editar movimientos')
@@ -394,19 +472,11 @@ class MovimientoUpdateView(LoginRequiredMixin, UpdateView):
         return redirect('movimiento_list')
 
 
-class MovimientoListView(LoginRequiredMixin, ListView):
+class MovimientoListView(AccesoMovimientosRequiredMixin, LoginRequiredMixin, ListView):
     model = Movimiento
     template_name = 'core/movimiento_list.html'
     context_object_name = 'movimientos'
     paginate_by = 20
-
-    def dispatch(self, request, *args, **kwargs):
-        # Si el usuario no tiene iglesia, redirigir a selección de tipo de registro
-        if request.user.is_authenticated:
-            if not request.user.is_staff and not request.user.is_superuser:
-                if not request.user.iglesia:
-                    return redirect('seleccionar_tipo_registro')
-        return super().dispatch(request, *args, **kwargs)
 
     def get_queryset(self):
         queryset = Movimiento.objects.filter(
@@ -954,7 +1024,7 @@ def aceptar_terminos_view(request):
 # VISTAS DE CATEGORÍAS DE INGRESO
 # ============================================================================
 
-class CategoriaIngresoListView(LoginRequiredMixin, ListView):
+class CategoriaIngresoListView(AccesoMovimientosRequiredMixin, LoginRequiredMixin, ListView):
     model = CategoriaIngreso
     template_name = 'core/categoria_ingreso_list.html'
     context_object_name = 'categorias'
@@ -972,13 +1042,14 @@ class CategoriaIngresoListView(LoginRequiredMixin, ListView):
         return context
 
 
-class CategoriaIngresoCreateView(LoginRequiredMixin, CreateView):
+class CategoriaIngresoCreateView(AccesoMovimientosRequiredMixin, LoginRequiredMixin, CreateView):
     model = CategoriaIngreso
     form_class = CategoriaIngresoForm
     template_name = 'core/categoria_ingreso_list.html'
     success_url = reverse_lazy('categoria_ingreso_list')
 
     def dispatch(self, request, *args, **kwargs):
+        # El AccesoMovimientosRequiredMixin ya verifica acceso básico
         # Solo ADMIN puede crear categorías
         if request.user.rol != 'ADMIN':
             messages.error(request, 'Solo los administradores pueden crear categorías.')
@@ -1007,13 +1078,14 @@ class CategoriaIngresoCreateView(LoginRequiredMixin, CreateView):
         return redirect('categoria_ingreso_list')
 
 
-class CategoriaIngresoUpdateView(LoginRequiredMixin, UpdateView):
+class CategoriaIngresoUpdateView(AccesoMovimientosRequiredMixin, LoginRequiredMixin, UpdateView):
     model = CategoriaIngreso
     form_class = CategoriaIngresoForm
     template_name = 'core/categoria_ingreso_list.html'
     success_url = reverse_lazy('categoria_ingreso_list')
 
     def dispatch(self, request, *args, **kwargs):
+        # El AccesoMovimientosRequiredMixin ya verifica acceso básico
         # Solo ADMIN puede modificar categorías
         if request.user.rol != 'ADMIN':
             messages.error(request, 'Solo los administradores pueden modificar categorías.')
@@ -1074,7 +1146,7 @@ def toggle_categoria_ingreso(request, pk):
 # VISTAS DE CATEGORÍAS DE EGRESO
 # ============================================================================
 
-class CategoriaEgresoListView(LoginRequiredMixin, ListView):
+class CategoriaEgresoListView(AccesoMovimientosRequiredMixin, LoginRequiredMixin, ListView):
     model = CategoriaEgreso
     template_name = 'core/categoria_egreso_list.html'
     context_object_name = 'categorias'
@@ -1092,7 +1164,7 @@ class CategoriaEgresoListView(LoginRequiredMixin, ListView):
         return context
 
 
-class CategoriaEgresoCreateView(LoginRequiredMixin, CreateView):
+class CategoriaEgresoCreateView(AccesoMovimientosRequiredMixin, LoginRequiredMixin, CreateView):
     model = CategoriaEgreso
     form_class = CategoriaEgresoForm
     template_name = 'core/categoria_egreso_list.html'
@@ -1127,7 +1199,7 @@ class CategoriaEgresoCreateView(LoginRequiredMixin, CreateView):
         return redirect('categoria_egreso_list')
 
 
-class CategoriaEgresoUpdateView(LoginRequiredMixin, UpdateView):
+class CategoriaEgresoUpdateView(AccesoMovimientosRequiredMixin, LoginRequiredMixin, UpdateView):
     model = CategoriaEgreso
     form_class = CategoriaEgresoForm
     template_name = 'core/categoria_egreso_list.html'

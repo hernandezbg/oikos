@@ -1,0 +1,106 @@
+{% extends 'base.html' %}
+{% load static %}
+{% load custom_filters %}
+
+{% block title %}Cajas Chicas - {{ APP_NAME }}{% endblock %}
+{% block page_title %}Gestión de Cajas Chicas{% endblock %}
+
+{% block content %}
+<div class="row mb-3">
+    <div class="col-12">
+        <div class="alert alert-info">
+            <i class="bi bi-info-circle"></i> Las cajas chicas son fondos independientes que puedes gestionar por separado.
+            Puedes asignar usuarios específicos a cada caja.
+        </div>
+    </div>
+</div>
+
+<div class="row mb-3">
+    <div class="col-12">
+        <div class="card">
+            <div class="card-header d-flex justify-content-between align-items-center">
+                <h5 class="mb-0"><i class="bi bi-box"></i> Mis Cajas Chicas</h5>
+                <div>
+                    <a href="{% url 'caja_chica_create' %}" class="btn btn-primary btn-sm">
+                        <i class="bi bi-plus-circle"></i> Nueva Caja
+                    </a>
+                    <a href="{% url 'generar_codigo_caja' %}" class="btn btn-success btn-sm">
+                        <i class="bi bi-key"></i> Generar Código
+                    </a>
+                    <a href="{% url 'transferencia_list' %}" class="btn btn-info btn-sm">
+                        <i class="bi bi-arrow-left-right"></i> Transferencias
+                    </a>
+                </div>
+            </div>
+            <div class="card-body">
+                {% if cajas %}
+                <div class="table-responsive">
+                    <table class="table table-hover">
+                        <thead>
+                            <tr>
+                                <th>Nombre</th>
+                                <th>Descripción</th>
+                                <th>Saldo Inicial</th>
+                                <th>Saldo Actual</th>
+                                <th>Usuarios</th>
+                                <th>Estado</th>
+                                <th>Acciones</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for caja in cajas %}
+                            <tr>
+                                <td>
+                                    <strong>{{ caja.nombre }}</strong>
+                                </td>
+                                <td>{{ caja.descripcion|truncatewords:10|default:"Sin descripción" }}</td>
+                                <td>{{ caja.saldo_inicial|formato_pesos }}</td>
+                                <td>
+                                    <strong class="{% if caja.saldo_actual < 0 %}text-danger{% else %}text-success{% endif %}">
+                                        {{ caja.saldo_actual|formato_pesos }}
+                                    </strong>
+                                </td>
+                                <td>
+                                    <span class="badge bg-secondary">{{ caja.total_usuarios }} usuario{% if caja.total_usuarios != 1 %}s{% endif %}</span>
+                                </td>
+                                <td>
+                                    {% if caja.activa %}
+                                    <span class="badge bg-success">Activa</span>
+                                    {% else %}
+                                    <span class="badge bg-secondary">Inactiva</span>
+                                    {% endif %}
+                                </td>
+                                <td>
+                                    <a href="{% url 'dashboard_caja' caja.pk %}" class="btn btn-sm btn-info" title="Ver Dashboard">
+                                        <i class="bi bi-speedometer2"></i>
+                                    </a>
+                                    <a href="{% url 'movimiento_caja_list' caja.pk %}" class="btn btn-sm btn-primary" title="Ver Movimientos">
+                                        <i class="bi bi-list-ul"></i>
+                                    </a>
+                                    <a href="{% url 'caja_chica_update' caja.pk %}" class="btn btn-sm btn-warning" title="Editar">
+                                        <i class="bi bi-pencil"></i>
+                                    </a>
+                                    <form method="post" action="{% url 'toggle_caja_chica' caja.pk %}" style="display: inline;">
+                                        {% csrf_token %}
+                                        <button type="submit" class="btn btn-sm {% if caja.activa %}btn-secondary{% else %}btn-success{% endif %}"
+                                                title="{% if caja.activa %}Desactivar{% else %}Activar{% endif %}">
+                                            <i class="bi bi-{% if caja.activa %}x-circle{% else %}check-circle{% endif %}"></i>
+                                        </button>
+                                    </form>
+                                </td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+                {% else %}
+                <div class="alert alert-warning">
+                    <i class="bi bi-exclamation-triangle"></i> No hay cajas chicas creadas.
+                    <a href="{% url 'caja_chica_create' %}" class="alert-link">Crear primera caja</a>
+                </div>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

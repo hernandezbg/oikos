@@ -1,0 +1,916 @@
+{% extends 'base.html' %}
+{% load static %}
+{% load custom_filters %}
+{% load l10n %}
+
+{% block title %}Movimientos - {{ caja.nombre }} - {{ APP_NAME }}{% endblock %}
+{% block page_title %}Movimientos de {{ caja.nombre }}{% endblock %}
+
+{% block content %}
+<!-- Breadcrumb -->
+<nav aria-label="breadcrumb" class="mb-3">
+    <ol class="breadcrumb">
+        {% if user.rol == 'ADMIN' %}
+        <li class="breadcrumb-item"><a href="{% url 'caja_chica_list' %}">Cajas Chicas</a></li>
+        {% endif %}
+        <li class="breadcrumb-item"><a href="{% url 'dashboard_caja' caja.pk %}">{{ caja.nombre }}</a></li>
+        <li class="breadcrumb-item active">Movimientos</li>
+    </ol>
+</nav>
+
+<!-- Resumen de la Caja -->
+<div class="row mb-3">
+    <div class="col-md-4">
+        <div class="card {% if saldo_actual < 0 %}bg-danger{% elif saldo_actual < 100000 %}bg-warning{% else %}bg-primary{% endif %} text-white">
+            <div class="card-body">
+                <h6 class="card-title">Saldo Actual</h6>
+                <h3 class="mb-0">{{ saldo_actual|formato_pesos }}</h3>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-4">
+        <div class="card bg-success text-white">
+            <div class="card-body">
+                <h6 class="card-title">Total Ingresos</h6>
+                <h3 class="mb-0">{{ total_ingresos|formato_pesos }}</h3>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-4">
+        <div class="card bg-danger text-white">
+            <div class="card-body">
+                <h6 class="card-title">Total Egresos</h6>
+                <h3 class="mb-0">{{ total_egresos|formato_pesos }}</h3>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Filtros y Acciones -->
+<div class="row mb-3">
+    <div class="col-12">
+        <div class="card">
+            <div class="card-header d-flex justify-content-between align-items-center">
+                <h5 class="mb-0"><i class="bi bi-filter"></i> Filtros</h5>
+                <div>
+                    <a href="{% url 'dashboard_caja' caja.pk %}" class="btn btn-info btn-sm">
+                        <i class="bi bi-speedometer2"></i> Dashboard
+                    </a>
+                    {% if puede_crear %}
+                    <button type="button" class="btn btn-primary btn-sm" data-bs-toggle="modal" data-bs-target="#nuevoMovimientoModal">
+                        <i class="bi bi-plus-circle"></i> Nuevo
+                    </button>
+                    {% endif %}
+                </div>
+            </div>
+            <div class="card-body">
+                <form method="get" class="row g-3">
+                    <div class="col-md-3">
+                        <label for="tipo" class="form-label">Tipo</label>
+                        <select name="tipo" id="tipo" class="form-select">
+                            <option value="">Todos</option>
+                            <option value="INGRESO" {% if request.GET.tipo == 'INGRESO' %}selected{% endif %}>Ingresos</option>
+                            <option value="EGRESO" {% if request.GET.tipo == 'EGRESO' %}selected{% endif %}>Egresos</option>
+                        </select>
+                    </div>
+                    <div class="col-md-8">
+                        <label for="buscar" class="form-label">Buscar</label>
+                        <input type="text" name="buscar" id="buscar" class="form-control"
+                               placeholder="Buscar en concepto..." value="{{ request.GET.buscar }}">
+                    </div>
+                    <div class="col-md-1 d-flex align-items-end">
+                        <button type="submit" class="btn btn-primary w-100">
+                            <i class="bi bi-search"></i>
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Listado de Movimientos -->
+<div class="row">
+    <div class="col-12">
+        <div class="card">
+            <div class="card-header">
+                <h5 class="mb-0"><i class="bi bi-list-ul"></i> Listado de Movimientos</h5>
+            </div>
+            <div class="card-body">
+                {% if movimientos %}
+                <div class="table-responsive">
+                    <table class="table table-hover table-striped">
+                        <thead class="table-dark">
+                            <tr>
+                                <th>Fecha</th>
+                                <th>Tipo</th>
+                                <th>Categoría</th>
+                                <th>Concepto</th>
+                                <th class="text-end">Monto</th>
+                                <th>Comprobante</th>
+                                <th>Registrado por</th>
+                                <th class="text-center">Acciones</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for mov in movimientos %}
+                            <tr class="{% if mov.anulado %}table-secondary text-muted{% endif %}">
+                                <td {% if mov.anulado %}style="text-decoration: line-through;"{% endif %}>
+                                    {{ mov.fecha|date:"d/m/Y" }}
+                                </td>
+                                <td>
+                                    {% if mov.anulado %}
+                                    <span class="badge bg-secondary">
+                                        <i class="bi bi-x-circle"></i> ANULADO
+                                    </span>
+                                    {% elif mov.tipo == 'INGRESO' %}
+                                    <span class="badge bg-success">
+                                        <i class="bi bi-arrow-up"></i> {{ mov.get_tipo_display }}
+                                    </span>
+                                    {% else %}
+                                    <span class="badge bg-danger">
+                                        <i class="bi bi-arrow-down"></i> {{ mov.get_tipo_display }}
+                                    </span>
+                                    {% endif %}
+                                </td>
+                                <td {% if mov.anulado %}style="text-decoration: line-through;"{% endif %}>
+                                    <small>
+                                        {% if mov.categoria_ingreso %}
+                                            {{ mov.categoria_ingreso }}
+                                        {% elif mov.categoria_egreso %}
+                                            {{ mov.categoria_egreso }}
+                                        {% else %}
+                                            -
+                                        {% endif %}
+                                    </small>
+                                </td>
+                                <td {% if mov.anulado %}style="text-decoration: line-through;"{% endif %}>
+                                    {{ mov.concepto|truncatewords:15 }}
+                                    {% if mov.anulado %}
+                                    <br><small class="text-danger">
+                                        <i class="bi bi-info-circle"></i> {{ mov.motivo_anulacion }}
+                                    </small>
+                                    {% endif %}
+                                </td>
+                                <td class="text-end" {% if mov.anulado %}style="text-decoration: line-through;"{% endif %}>
+                                    <strong class="{% if mov.tipo == 'INGRESO' %}text-success{% else %}text-danger{% endif %}">
+                                        {{ mov.monto|formato_pesos }}
+                                    </strong>
+                                </td>
+                                <td {% if mov.anulado %}style="text-decoration: line-through;"{% endif %}>
+                                    <small>{{ mov.comprobante_nro|default:"-" }}</small>
+                                </td>
+                                <td {% if mov.anulado %}style="text-decoration: line-through;"{% endif %}>
+                                    <small>
+                                        <i class="bi bi-person"></i>
+                                        {{ mov.creado_por.get_full_name|default:mov.creado_por.username }}
+                                    </small>
+                                </td>
+                                <td class="text-center">
+                                    <button class="btn btn-sm btn-outline-info me-1"
+                                            data-bs-toggle="modal"
+                                            data-bs-target="#infoModal{{ mov.id }}"
+                                            title="Ver información completa">
+                                        <i class="bi bi-info-circle"></i>
+                                    </button>
+                                    {% if not mov.anulado and puede_crear %}
+                                    <button class="btn btn-sm btn-outline-primary me-1"
+                                            data-bs-toggle="modal"
+                                            data-bs-target="#editarModal{{ mov.id }}"
+                                            title="Editar movimiento">
+                                        <i class="bi bi-pencil"></i>
+                                    </button>
+                                    <button class="btn btn-sm btn-outline-danger"
+                                            data-bs-toggle="modal"
+                                            data-bs-target="#anularModal{{ mov.id }}"
+                                            title="Anular movimiento">
+                                        <i class="bi bi-x-circle"></i>
+                                    </button>
+                                    {% endif %}
+                                </td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+
+                <!-- Paginación -->
+                {% if is_paginated %}
+                <nav aria-label="Paginación">
+                    <ul class="pagination justify-content-center">
+                        {% if page_obj.has_previous %}
+                        <li class="page-item">
+                            <a class="page-link" href="?page=1{% if request.GET.tipo %}&tipo={{ request.GET.tipo }}{% endif %}{% if request.GET.buscar %}&buscar={{ request.GET.buscar }}{% endif %}">
+                                <i class="bi bi-chevron-double-left"></i>
+                            </a>
+                        </li>
+                        <li class="page-item">
+                            <a class="page-link" href="?page={{ page_obj.previous_page_number }}{% if request.GET.tipo %}&tipo={{ request.GET.tipo }}{% endif %}{% if request.GET.buscar %}&buscar={{ request.GET.buscar }}{% endif %}">
+                                <i class="bi bi-chevron-left"></i>
+                            </a>
+                        </li>
+                        {% endif %}
+
+                        <li class="page-item active">
+                            <span class="page-link">
+                                Página {{ page_obj.number }} de {{ page_obj.paginator.num_pages }}
+                            </span>
+                        </li>
+
+                        {% if page_obj.has_next %}
+                        <li class="page-item">
+                            <a class="page-link" href="?page={{ page_obj.next_page_number }}{% if request.GET.tipo %}&tipo={{ request.GET.tipo }}{% endif %}{% if request.GET.buscar %}&buscar={{ request.GET.buscar }}{% endif %}">
+                                <i class="bi bi-chevron-right"></i>
+                            </a>
+                        </li>
+                        <li class="page-item">
+                            <a class="page-link" href="?page={{ page_obj.paginator.num_pages }}{% if request.GET.tipo %}&tipo={{ request.GET.tipo }}{% endif %}{% if request.GET.buscar %}&buscar={{ request.GET.buscar }}{% endif %}">
+                                <i class="bi bi-chevron-double-right"></i>
+                            </a>
+                        </li>
+                        {% endif %}
+                    </ul>
+                </nav>
+                {% endif %}
+                {% else %}
+                <div class="alert alert-info mb-0 text-center">
+                    <i class="bi bi-info-circle" style="font-size: 2rem;"></i>
+                    <p class="mt-2 mb-0">No hay movimientos registrados en esta caja.</p>
+                    {% if puede_crear %}
+                    <button type="button" class="btn btn-primary btn-sm mt-2" data-bs-toggle="modal" data-bs-target="#nuevoMovimientoModal">
+                        <i class="bi bi-plus-circle"></i> Crear primer movimiento
+                    </button>
+                    {% endif %}
+                </div>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Modales de información de movimientos -->
+{% for mov in movimientos %}
+<div class="modal fade" id="infoModal{{ mov.id }}" tabindex="-1" aria-labelledby="infoModalLabel{{ mov.id }}" aria-hidden="true">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header bg-info text-white">
+                <h5 class="modal-title" id="infoModalLabel{{ mov.id }}">
+                    <i class="bi bi-info-circle"></i> Información del Movimiento
+                </h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                {% if mov.anulado %}
+                <div class="alert alert-danger mb-3">
+                    <i class="bi bi-x-circle"></i>
+                    <strong>MOVIMIENTO ANULADO</strong>
+                    <p class="mb-0 mt-2">Este movimiento fue anulado y no influye en los cálculos de saldo.</p>
+                </div>
+                {% endif %}
+
+                <div class="row">
+                    <!-- Información Principal -->
+                    <div class="col-md-6 mb-3">
+                        <h6 class="text-uppercase text-muted mb-3">
+                            <i class="bi bi-file-text"></i> Información Principal
+                        </h6>
+                        <table class="table table-sm">
+                            <tr>
+                                <th width="40%">Tipo:</th>
+                                <td>
+                                    {% if mov.anulado %}
+                                    <span class="badge bg-secondary">ANULADO</span>
+                                    {% elif mov.tipo == 'INGRESO' %}
+                                    <span class="badge bg-success">
+                                        <i class="bi bi-arrow-up"></i> {{ mov.get_tipo_display }}
+                                    </span>
+                                    {% else %}
+                                    <span class="badge bg-danger">
+                                        <i class="bi bi-arrow-down"></i> {{ mov.get_tipo_display }}
+                                    </span>
+                                    {% endif %}
+                                </td>
+                            </tr>
+                            <tr>
+                                <th>Comprobante:</th>
+                                <td><strong>{{ mov.comprobante_nro|default:"-" }}</strong></td>
+                            </tr>
+                            <tr>
+                                <th>Fecha:</th>
+                                <td>{{ mov.fecha|date:"d/m/Y" }}</td>
+                            </tr>
+                            <tr>
+                                <th>Monto:</th>
+                                <td>
+                                    <strong class="fs-5 {% if mov.tipo == 'INGRESO' %}text-success{% else %}text-danger{% endif %}">
+                                        {{ mov.monto|formato_pesos }}
+                                    </strong>
+                                </td>
+                            </tr>
+                            <tr>
+                                <th>Categoría:</th>
+                                <td>
+                                    {% if mov.categoria_ingreso %}
+                                        <span class="badge bg-success-subtle text-success">
+                                            <i class="bi bi-tag"></i> {{ mov.categoria_ingreso }}
+                                        </span>
+                                    {% elif mov.categoria_egreso %}
+                                        <span class="badge bg-danger-subtle text-danger">
+                                            <i class="bi bi-tag"></i> {{ mov.categoria_egreso }}
+                                        </span>
+                                    {% else %}
+                                        <span class="text-muted">Sin categoría</span>
+                                    {% endif %}
+                                </td>
+                            </tr>
+                        </table>
+                    </div>
+
+                    <!-- Auditoría -->
+                    <div class="col-md-6 mb-3">
+                        <h6 class="text-uppercase text-muted mb-3">
+                            <i class="bi bi-clock-history"></i> Auditoría
+                        </h6>
+                        <table class="table table-sm">
+                            <tr>
+                                <th width="40%">Creado por:</th>
+                                <td>
+                                    <i class="bi bi-person"></i>
+                                    {{ mov.creado_por.get_full_name|default:mov.creado_por.username }}
+                                </td>
+                            </tr>
+                            <tr>
+                                <th>Fecha creación:</th>
+                                <td>{{ mov.fecha_creacion|date:"d/m/Y H:i" }}</td>
+                            </tr>
+                            {% if mov.aprobado_por %}
+                            <tr>
+                                <th>Aprobado por:</th>
+                                <td>
+                                    <i class="bi bi-check-circle text-success"></i>
+                                    {{ mov.aprobado_por.get_full_name|default:mov.aprobado_por.username }}
+                                </td>
+                            </tr>
+                            <tr>
+                                <th>Fecha aprobación:</th>
+                                <td>{{ mov.fecha_aprobacion|date:"d/m/Y H:i" }}</td>
+                            </tr>
+                            {% endif %}
+                            {% if mov.anulado %}
+                            <tr class="table-danger">
+                                <th>Anulado por:</th>
+                                <td>
+                                    <i class="bi bi-x-circle"></i>
+                                    {{ mov.anulado_por.get_full_name|default:mov.anulado_por.username }}
+                                </td>
+                            </tr>
+                            <tr class="table-danger">
+                                <th>Fecha anulación:</th>
+                                <td>{{ mov.fecha_anulacion|date:"d/m/Y H:i" }}</td>
+                            </tr>
+                            {% endif %}
+                        </table>
+                    </div>
+                </div>
+
+                <!-- Concepto -->
+                <div class="mb-3">
+                    <h6 class="text-uppercase text-muted mb-2">
+                        <i class="bi bi-chat-left-text"></i> Concepto
+                    </h6>
+                    <div class="p-3 bg-light rounded">
+                        {{ mov.concepto }}
+                    </div>
+                </div>
+
+                <!-- Motivo de anulación -->
+                {% if mov.anulado %}
+                <div class="mb-3">
+                    <h6 class="text-uppercase text-danger mb-2">
+                        <i class="bi bi-exclamation-triangle"></i> Motivo de Anulación
+                    </h6>
+                    <div class="p-3 bg-danger-subtle text-danger rounded">
+                        {{ mov.motivo_anulacion }}
+                    </div>
+                </div>
+                {% endif %}
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">
+                    <i class="bi bi-x"></i> Cerrar
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+{% endfor %}
+
+<!-- Modales para anular movimientos -->
+{% for mov in movimientos %}
+{% if not mov.anulado and puede_crear %}
+<div class="modal fade" id="anularModal{{ mov.id }}" tabindex="-1" aria-labelledby="anularModalLabel{{ mov.id }}" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header bg-danger text-white">
+                <h5 class="modal-title" id="anularModalLabel{{ mov.id }}">
+                    <i class="bi bi-exclamation-triangle"></i> Anular Movimiento
+                </h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <form method="post" action="{% url 'anular_movimiento_caja' caja.pk mov.pk %}">
+                {% csrf_token %}
+                <div class="modal-body">
+                    <div class="alert alert-warning">
+                        <i class="bi bi-info-circle"></i>
+                        <strong>Atención:</strong> Esta acción no se puede deshacer. El movimiento quedará marcado como anulado y no influirá en los cálculos de saldo.
+                    </div>
+
+                    <div class="mb-3">
+                        <h6>Datos del movimiento:</h6>
+                        <ul class="list-unstyled">
+                            <li><strong>Comprobante:</strong> {{ mov.comprobante_nro }}</li>
+                            <li><strong>Tipo:</strong> {{ mov.get_tipo_display }}</li>
+                            <li><strong>Fecha:</strong> {{ mov.fecha|date:"d/m/Y" }}</li>
+                            <li><strong>Concepto:</strong> {{ mov.concepto|truncatewords:20 }}</li>
+                            <li><strong>Monto:</strong> {{ mov.monto|formato_pesos }}</li>
+                        </ul>
+                    </div>
+
+                    <div class="mb-3">
+                        <label for="motivo_anulacion{{ mov.id }}" class="form-label">
+                            <strong>Motivo de la anulación:</strong> <span class="text-danger">*</span>
+                        </label>
+                        <textarea
+                            class="form-control"
+                            id="motivo_anulacion{{ mov.id }}"
+                            name="motivo_anulacion"
+                            rows="3"
+                            required
+                            placeholder="Ej: Error en el monto ingresado, movimiento duplicado, etc."></textarea>
+                        <small class="form-text text-muted">
+                            Este motivo quedará registrado y será visible en el historial.
+                        </small>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">
+                        <i class="bi bi-x"></i> Cancelar
+                    </button>
+                    <button type="submit" class="btn btn-danger">
+                        <i class="bi bi-check-circle"></i> Confirmar Anulación
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+{% endif %}
+{% endfor %}
+
+<!-- Modales para editar movimientos -->
+{% for mov in movimientos %}
+{% if not mov.anulado and puede_crear %}
+<div class="modal fade" id="editarModal{{ mov.id }}" tabindex="-1" aria-labelledby="editarModalLabel{{ mov.id }}" aria-hidden="true">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header bg-primary text-white">
+                <h5 class="modal-title" id="editarModalLabel{{ mov.id }}">
+                    <i class="bi bi-pencil"></i> Editar Movimiento
+                </h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <form method="post" action="{% url 'movimiento_caja_update' caja.pk mov.pk %}" id="editarMovimientoForm{{ mov.id }}">
+                {% csrf_token %}
+                <div class="modal-body">
+                    <!-- Tipo de Movimiento -->
+                    <div class="mb-3">
+                        <label class="form-label fw-bold">Tipo de Movimiento <span class="text-danger">*</span></label>
+                        <div>
+                            <div class="form-check form-check-inline">
+                                <input class="form-check-input tipo-radio-{{ mov.id }}" type="radio" name="tipo" id="tipo_ingreso_edit_{{ mov.id }}" value="INGRESO" {% if mov.tipo == 'INGRESO' %}checked{% endif %} required>
+                                <label class="form-check-label" for="tipo_ingreso_edit_{{ mov.id }}">
+                                    <i class="bi bi-arrow-up-circle text-success"></i> Ingreso
+                                </label>
+                            </div>
+                            <div class="form-check form-check-inline">
+                                <input class="form-check-input tipo-radio-{{ mov.id }}" type="radio" name="tipo" id="tipo_egreso_edit_{{ mov.id }}" value="EGRESO" {% if mov.tipo == 'EGRESO' %}checked{% endif %}>
+                                <label class="form-check-label" for="tipo_egreso_edit_{{ mov.id }}">
+                                    <i class="bi bi-arrow-down-circle text-danger"></i> Egreso
+                                </label>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="row">
+                        <!-- Fecha -->
+                        <div class="col-md-6 mb-3">
+                            <label for="fecha_edit_{{ mov.id }}" class="form-label fw-bold">Fecha <span class="text-danger">*</span></label>
+                            <input type="date" class="form-control" id="fecha_edit_{{ mov.id }}" name="fecha" value="{{ mov.fecha|date:'Y-m-d' }}" required>
+                        </div>
+
+                        <!-- Monto -->
+                        <div class="col-md-6 mb-3">
+                            <label for="monto_edit_{{ mov.id }}" class="form-label fw-bold">Monto ($) <span class="text-danger">*</span></label>
+                            <input type="text" class="form-control monto-display-{{ mov.id }}" placeholder="1.500.000,50" required>
+                            <input type="hidden" name="monto" class="monto-hidden-{{ mov.id }}" value="{{ mov.monto|unlocalize }}">
+                            <small class="text-muted">Se formatea automáticamente con separador de miles</small>
+                        </div>
+                    </div>
+
+                    <!-- Categoría Ingreso -->
+                    <div class="mb-3 categoria-ingreso-div-{{ mov.id }} {% if mov.tipo != 'INGRESO' %}d-none{% endif %}">
+                        <label for="categoria_ingreso_edit_{{ mov.id }}" class="form-label fw-bold">Categoría de Ingreso <span class="text-danger">*</span></label>
+                        <select class="form-select" id="categoria_ingreso_edit_{{ mov.id }}" name="categoria_ingreso">
+                            <option value="">Seleccione una categoría...</option>
+                            {% for cat in user.iglesia.categorias_ingreso.all %}
+                            {% if cat.activa %}
+                            <option value="{{ cat.id }}" {% if mov.categoria_ingreso.id == cat.id %}selected{% endif %}>{{ cat.nombre }}</option>
+                            {% endif %}
+                            {% endfor %}
+                        </select>
+                    </div>
+
+                    <!-- Categoría Egreso -->
+                    <div class="mb-3 categoria-egreso-div-{{ mov.id }} {% if mov.tipo != 'EGRESO' %}d-none{% endif %}">
+                        <label for="categoria_egreso_edit_{{ mov.id }}" class="form-label fw-bold">Categoría de Egreso <span class="text-danger">*</span></label>
+                        <select class="form-select" id="categoria_egreso_edit_{{ mov.id }}" name="categoria_egreso">
+                            <option value="">Seleccione una categoría...</option>
+                            {% for cat in user.iglesia.categorias_egreso.all %}
+                            {% if cat.activa %}
+                            <option value="{{ cat.id }}" {% if mov.categoria_egreso.id == cat.id %}selected{% endif %}>{{ cat.nombre }}</option>
+                            {% endif %}
+                            {% endfor %}
+                        </select>
+                    </div>
+
+                    <!-- Concepto -->
+                    <div class="mb-3">
+                        <label for="concepto_edit_{{ mov.id }}" class="form-label fw-bold">Concepto/Descripción <span class="text-danger">*</span></label>
+                        <textarea class="form-control" id="concepto_edit_{{ mov.id }}" name="concepto" rows="3" required>{{ mov.concepto }}</textarea>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">
+                        <i class="bi bi-x"></i> Cancelar
+                    </button>
+                    <button type="submit" class="btn btn-primary">
+                        <i class="bi bi-save"></i> Actualizar
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // Formateo de monto para modal de edición {{ mov.id }}
+    const montoDisplay{{ mov.id }} = document.querySelector('.monto-display-{{ mov.id }}');
+    const montoHidden{{ mov.id }} = document.querySelector('.monto-hidden-{{ mov.id }}');
+
+    // Inicializar con el valor formateado
+    if (montoHidden{{ mov.id }}.value) {
+        const valor = parseFloat(montoHidden{{ mov.id }}.value);
+        const parts = valor.toString().split('.');
+        const entero = parseInt(parts[0]);
+        const decimal = parts[1];
+        const formattedEntero = entero.toLocaleString('es-AR');
+        montoDisplay{{ mov.id }}.value = decimal ? formattedEntero + ',' + decimal : formattedEntero;
+    }
+
+    montoDisplay{{ mov.id }}.addEventListener('input', function(e) {
+        let value = this.value.replace(/[^\d,]/g, '');
+        const comas = value.split(',');
+        if (comas.length > 2) {
+            value = comas[0] + ',' + comas.slice(1).join('');
+        }
+        if (comas.length === 2 && comas[1].length > 2) {
+            value = comas[0] + ',' + comas[1].substring(0, 2);
+        }
+        this.value = value;
+        montoHidden{{ mov.id }}.value = value.replace(',', '.');
+
+        if (value && comas[0]) {
+            let entero = comas[0];
+            let decimal = comas[1];
+            const numero = parseInt(entero);
+            if (!isNaN(numero)) {
+                const formattedEntero = numero.toLocaleString('es-AR');
+                const formattedValue = decimal !== undefined ? formattedEntero + ',' + decimal : formattedEntero;
+                this.value = formattedValue;
+            }
+        } else if (!value) {
+            this.value = '';
+            montoHidden{{ mov.id }}.value = '';
+        }
+    });
+
+    // Mostrar/ocultar categorías según tipo para edición {{ mov.id }}
+    const tipoRadios{{ mov.id }} = document.querySelectorAll('.tipo-radio-{{ mov.id }}');
+    const categoriaIngresoDiv{{ mov.id }} = document.querySelector('.categoria-ingreso-div-{{ mov.id }}');
+    const categoriaEgresoDiv{{ mov.id }} = document.querySelector('.categoria-egreso-div-{{ mov.id }}');
+    const categoriaIngresoSelect{{ mov.id }} = document.getElementById('categoria_ingreso_edit_{{ mov.id }}');
+    const categoriaEgresoSelect{{ mov.id }} = document.getElementById('categoria_egreso_edit_{{ mov.id }}');
+
+    tipoRadios{{ mov.id }}.forEach(radio => {
+        radio.addEventListener('change', function() {
+            if (this.value === 'INGRESO') {
+                categoriaIngresoDiv{{ mov.id }}.classList.remove('d-none');
+                categoriaEgresoDiv{{ mov.id }}.classList.add('d-none');
+                categoriaIngresoSelect{{ mov.id }}.required = true;
+                categoriaEgresoSelect{{ mov.id }}.required = false;
+                categoriaEgresoSelect{{ mov.id }}.value = '';
+            } else if (this.value === 'EGRESO') {
+                categoriaIngresoDiv{{ mov.id }}.classList.add('d-none');
+                categoriaEgresoDiv{{ mov.id }}.classList.remove('d-none');
+                categoriaIngresoSelect{{ mov.id }}.required = false;
+                categoriaEgresoSelect{{ mov.id }}.required = true;
+                categoriaIngresoSelect{{ mov.id }}.value = '';
+            }
+        });
+    });
+});
+</script>
+{% endif %}
+{% endfor %}
+
+<!-- Modal Nuevo Movimiento -->
+<div class="modal fade" id="nuevoMovimientoModal" tabindex="-1" aria-labelledby="nuevoMovimientoModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header bg-primary text-white">
+                <h5 class="modal-title" id="nuevoMovimientoModalLabel">
+                    <i class="bi bi-plus-circle"></i> Nuevo Movimiento - {{ caja.nombre }}
+                </h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <form method="post" action="{% url 'movimiento_caja_create' caja.pk %}" id="nuevoMovimientoForm">
+                {% csrf_token %}
+                <div class="modal-body">
+                    <!-- Tipo de Movimiento -->
+                    <div class="mb-3">
+                        <label class="form-label fw-bold">Tipo de Movimiento <span class="text-danger">*</span></label>
+                        <div>
+                            <div class="form-check form-check-inline">
+                                <input class="form-check-input" type="radio" name="tipo" id="tipo_ingreso" value="INGRESO" required>
+                                <label class="form-check-label" for="tipo_ingreso">
+                                    <i class="bi bi-arrow-up-circle text-success"></i> Ingreso
+                                </label>
+                            </div>
+                            <div class="form-check form-check-inline">
+                                <input class="form-check-input" type="radio" name="tipo" id="tipo_egreso" value="EGRESO">
+                                <label class="form-check-label" for="tipo_egreso">
+                                    <i class="bi bi-arrow-down-circle text-danger"></i> Egreso
+                                </label>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="row">
+                        <!-- Fecha -->
+                        <div class="col-md-6 mb-3">
+                            <label for="fecha" class="form-label fw-bold">Fecha <span class="text-danger">*</span></label>
+                            <input type="date" class="form-control" id="fecha" name="fecha" required>
+                        </div>
+
+                        <!-- Monto -->
+                        <div class="col-md-6 mb-3">
+                            <label for="monto" class="form-label fw-bold">Monto ($) <span class="text-danger">*</span></label>
+                            <input type="text" class="form-control" id="monto_display" placeholder="1.500.000,50" required>
+                            <input type="hidden" id="monto" name="monto">
+                            <small class="text-muted">Se formatea automáticamente con separador de miles</small>
+                        </div>
+                    </div>
+
+                    <!-- Categoría Ingreso (oculta por defecto) -->
+                    <div class="mb-3 d-none" id="categoria_ingreso_div">
+                        <label for="categoria_ingreso" class="form-label fw-bold">Categoría de Ingreso <span class="text-danger">*</span></label>
+                        <select class="form-select" id="categoria_ingreso" name="categoria_ingreso">
+                            <option value="">Seleccione una categoría...</option>
+                            {% for cat in user.iglesia.categorias_ingreso.all %}
+                            {% if cat.activa %}
+                            <option value="{{ cat.id }}">{{ cat.nombre }}</option>
+                            {% endif %}
+                            {% endfor %}
+                        </select>
+                    </div>
+
+                    <!-- Categoría Egreso (oculta por defecto) -->
+                    <div class="mb-3 d-none" id="categoria_egreso_div">
+                        <label for="categoria_egreso" class="form-label fw-bold">Categoría de Egreso <span class="text-danger">*</span></label>
+                        <select class="form-select" id="categoria_egreso" name="categoria_egreso">
+                            <option value="">Seleccione una categoría...</option>
+                            {% for cat in user.iglesia.categorias_egreso.all %}
+                            {% if cat.activa %}
+                            <option value="{{ cat.id }}">{{ cat.nombre }}</option>
+                            {% endif %}
+                            {% endfor %}
+                        </select>
+                    </div>
+
+                    <!-- Concepto -->
+                    <div class="mb-3">
+                        <label for="concepto" class="form-label fw-bold">Concepto/Descripción <span class="text-danger">*</span></label>
+                        <textarea class="form-control" id="concepto" name="concepto" rows="3" required placeholder="Describa el motivo del movimiento..."></textarea>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">
+                        <i class="bi bi-x"></i> Cancelar
+                    </button>
+                    <button type="submit" name="action" value="save_and_new" class="btn btn-success" id="btnSaveAndNew">
+                        <i class="bi bi-plus-circle"></i> Guardar y agregar otro
+                    </button>
+                    <button type="submit" name="action" value="save" class="btn btn-primary" id="btnSave">
+                        <i class="bi bi-save"></i> Guardar
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+{% endblock %}
+
+{% block extra_js %}
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const modal = document.getElementById('nuevoMovimientoModal');
+    const form = document.getElementById('nuevoMovimientoForm');
+    const fechaInput = document.getElementById('fecha');
+    const montoDisplay = document.getElementById('monto_display');
+    const montoHidden = document.getElementById('monto');
+
+    // Establecer fecha del día al abrir el modal
+    modal.addEventListener('show.bs.modal', function() {
+        const today = new Date().toISOString().split('T')[0];
+        fechaInput.value = today;
+    });
+
+    // Manejar categorías según el tipo seleccionado
+    const tipoRadios = document.querySelectorAll('input[name="tipo"]');
+    const categoriaIngresoDiv = document.getElementById('categoria_ingreso_div');
+    const categoriaEgresoDiv = document.getElementById('categoria_egreso_div');
+    const categoriaIngresoSelect = document.getElementById('categoria_ingreso');
+    const categoriaEgresoSelect = document.getElementById('categoria_egreso');
+
+    tipoRadios.forEach(radio => {
+        radio.addEventListener('change', function() {
+            if (this.value === 'INGRESO') {
+                categoriaIngresoDiv.classList.remove('d-none');
+                categoriaEgresoDiv.classList.add('d-none');
+                categoriaIngresoSelect.required = true;
+                categoriaEgresoSelect.required = false;
+                categoriaEgresoSelect.value = '';
+            } else if (this.value === 'EGRESO') {
+                categoriaIngresoDiv.classList.add('d-none');
+                categoriaEgresoDiv.classList.remove('d-none');
+                categoriaIngresoSelect.required = false;
+                categoriaEgresoSelect.required = true;
+                categoriaIngresoSelect.value = '';
+            }
+        });
+    });
+
+    // Formatear monto en tiempo real con separador de miles y coma decimal
+    montoDisplay.addEventListener('input', function(e) {
+        let cursorPos = this.selectionStart;
+        const oldLength = this.value.length;
+
+        let value = this.value.replace(/[^\d,]/g, '');
+        let parts = value.split(',');
+
+        if (parts.length > 2) {
+            value = parts[0] + ',' + parts.slice(1).join('');
+            parts = value.split(',');
+        }
+
+        if (parts.length === 2 && parts[1].length > 2) {
+            parts[1] = parts[1].substring(0, 2);
+        }
+
+        let entero = parts[0];
+        let decimal = parts[1];
+
+        if (decimal !== undefined) {
+            montoHidden.value = entero + '.' + decimal;
+        } else {
+            montoHidden.value = entero;
+        }
+
+        if (entero) {
+            const numero = parseInt(entero);
+            if (!isNaN(numero)) {
+                const formattedEntero = numero.toLocaleString('es-AR');
+                const formattedValue = decimal !== undefined ? formattedEntero + ',' + decimal : formattedEntero;
+                this.value = formattedValue;
+
+                const newLength = this.value.length;
+                const diff = newLength - oldLength;
+                cursorPos = Math.max(0, cursorPos + diff);
+                this.setSelectionRange(cursorPos, cursorPos);
+            }
+        } else {
+            this.value = '';
+            montoHidden.value = '';
+        }
+    });
+
+    // Variable para rastrear qué botón se presionó
+    let submitAction = 'save';
+
+    document.getElementById('btnSave').addEventListener('click', function() {
+        submitAction = 'save';
+    });
+
+    document.getElementById('btnSaveAndNew').addEventListener('click', function() {
+        submitAction = 'save_and_new';
+    });
+
+    // Al enviar el formulario via AJAX
+    form.addEventListener('submit', function(e) {
+        e.preventDefault();
+
+        if (!montoHidden.value || isNaN(parseFloat(montoHidden.value))) {
+            alert('Por favor ingrese un monto válido');
+            return;
+        }
+
+        const btnSave = document.getElementById('btnSave');
+        const btnSaveAndNew = document.getElementById('btnSaveAndNew');
+        btnSave.disabled = true;
+        btnSaveAndNew.disabled = true;
+
+        const formData = new FormData(form);
+        formData.set('action', submitAction);
+
+        const url = form.getAttribute('action');
+
+        fetch(url, {
+            method: 'POST',
+            body: formData,
+            headers: {
+                'X-Requested-With': 'XMLHttpRequest'
+            }
+        })
+        .then(response => {
+            if (response.redirected) {
+                if (submitAction === 'save_and_new') {
+                    window.location.href = response.url + (response.url.includes('?') ? '&' : '?') + 'nuevo=1';
+                } else {
+                    window.location.href = response.url;
+                }
+            } else {
+                return response.text();
+            }
+        })
+        .then(html => {
+            if (html) {
+                const parser = new DOMParser();
+                const doc = parser.parseFromString(html, 'text/html');
+
+                const errors = doc.querySelectorAll('.errorlist, .alert-danger');
+                if (errors.length > 0) {
+                    errors.forEach(error => console.error(error.textContent));
+                    alert('Error al guardar: Por favor revise los campos del formulario');
+                }
+                btnSave.disabled = false;
+                btnSaveAndNew.disabled = false;
+            }
+        })
+        .catch(error => {
+            console.error('Fetch error:', error);
+            alert('Error al guardar el movimiento');
+            btnSave.disabled = false;
+            btnSaveAndNew.disabled = false;
+        });
+    });
+
+    // Limpiar formulario al cerrar modal
+    modal.addEventListener('hidden.bs.modal', function() {
+        form.reset();
+        montoDisplay.value = '';
+        montoHidden.value = '';
+        categoriaIngresoDiv.classList.add('d-none');
+        categoriaEgresoDiv.classList.add('d-none');
+        categoriaIngresoSelect.value = '';
+        categoriaEgresoSelect.value = '';
+    });
+
+    // Abrir modal automáticamente si hay parámetro 'nuevo' en la URL
+    const urlParams = new URLSearchParams(window.location.search);
+    if (urlParams.get('nuevo') === '1') {
+        setTimeout(() => {
+            window.scrollTo(0, 0);
+            const bsModal = new bootstrap.Modal(modal);
+            bsModal.show();
+
+            urlParams.delete('nuevo');
+            const newSearch = urlParams.toString();
+            const newUrl = window.location.pathname + (newSearch ? '?' + newSearch : '');
+            window.history.replaceState({}, '', newUrl);
+        }, 300);
+    }
+});
+</script>
+{% endblock %}

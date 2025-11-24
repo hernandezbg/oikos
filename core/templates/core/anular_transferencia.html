@@ -1,0 +1,83 @@
+{% extends 'base.html' %}
+{% load static %}
+{% load custom_filters %}
+
+{% block title %}Anular Transferencia - {{ APP_NAME }}{% endblock %}
+{% block page_title %}Anular Transferencia{% endblock %}
+
+{% block content %}
+<div class="row">
+    <div class="col-md-6 offset-md-3">
+        <div class="card border-danger">
+            <div class="card-header bg-danger text-white">
+                <h5 class="mb-0">
+                    <i class="bi bi-exclamation-triangle"></i> Confirmación de Anulación de Transferencia
+                </h5>
+            </div>
+            <div class="card-body">
+                <div class="alert alert-warning">
+                    <i class="bi bi-info-circle"></i> Esta acción <strong>NO se puede deshacer</strong>.
+                    Al anular la transferencia, se anularán automáticamente los dos movimientos asociados:
+                    <ul class="mb-0 mt-2">
+                        <li>El egreso en <strong>{{ transferencia.caja_origen.nombre }}</strong></li>
+                        <li>El ingreso en <strong>{{ transferencia.caja_destino.nombre }}</strong></li>
+                    </ul>
+                </div>
+
+                <h6 class="mb-3">Detalles de la Transferencia:</h6>
+
+                <table class="table table-bordered">
+                    <tr>
+                        <th width="40%">Fecha:</th>
+                        <td>{{ transferencia.fecha|date:"d/m/Y" }}</td>
+                    </tr>
+                    <tr>
+                        <th>Caja Origen:</th>
+                        <td><span class="badge bg-danger">{{ transferencia.caja_origen.nombre }}</span></td>
+                    </tr>
+                    <tr>
+                        <th>Caja Destino:</th>
+                        <td><span class="badge bg-success">{{ transferencia.caja_destino.nombre }}</span></td>
+                    </tr>
+                    <tr>
+                        <th>Monto Transferido:</th>
+                        <td>
+                            <strong>{{ transferencia.monto|formato_pesos }}</strong>
+                        </td>
+                    </tr>
+                    <tr>
+                        <th>Concepto:</th>
+                        <td>{{ transferencia.concepto }}</td>
+                    </tr>
+                    <tr>
+                        <th>Realizada por:</th>
+                        <td>{{ transferencia.realizada_por.get_full_name|default:transferencia.realizada_por.username }}</td>
+                    </tr>
+                    <tr>
+                        <th>Fecha de Realización:</th>
+                        <td>{{ transferencia.fecha_creacion|date:"d/m/Y H:i" }}</td>
+                    </tr>
+                </table>
+
+                <form method="post">
+                    {% csrf_token %}
+                    <div class="mb-3">
+                        <label for="motivo" class="form-label">Motivo de Anulación *</label>
+                        <textarea name="motivo" id="motivo" class="form-control" rows="3"
+                                  required placeholder="Explica el motivo de la anulación de la transferencia..."></textarea>
+                    </div>
+
+                    <div class="d-flex justify-content-between">
+                        <a href="{% url 'transferencia_list' %}" class="btn btn-secondary">
+                            <i class="bi bi-arrow-left"></i> Cancelar
+                        </a>
+                        <button type="submit" class="btn btn-danger">
+                            <i class="bi bi-x-circle"></i> Confirmar Anulación
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

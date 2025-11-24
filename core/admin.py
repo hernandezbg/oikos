@@ -2,7 +2,8 @@ from django.contrib import admin
 from django.contrib.auth.admin import UserAdmin
 from core.models import (
     Iglesia, Usuario, CategoriaIngreso, CategoriaEgreso,
-    Movimiento, SaldoMensual
+    Movimiento, SaldoMensual,
+    CajaChica, MovimientoCajaChica, UsuarioCajaChica, TransferenciaCajaChica
 )
 from core.utils import formato_pesos
 
@@ -142,6 +143,118 @@ class SaldoMensualAdmin(admin.ModelAdmin):
     def saldo_final_formateado(self, obj):
         return formato_pesos(obj.saldo_final)
     saldo_final_formateado.short_description = 'Saldo Final'
+
+
+# ============================================
+# ADMIN PARA CAJAS CHICAS
+# ============================================
+
+@admin.register(CajaChica)
+class CajaChicaAdmin(admin.ModelAdmin):
+    list_display = ('nombre', 'iglesia', 'saldo_inicial_formateado', 'activa', 'creada_por', 'fecha_creacion')
+    list_filter = ('iglesia', 'activa', 'fecha_creacion')
+    search_fields = ('nombre', 'iglesia__nombre', 'descripcion')
+    readonly_fields = ('fecha_creacion', 'creada_por')
+
+    fieldsets = (
+        ('Información Básica', {
+            'fields': ('nombre', 'iglesia', 'descripcion', 'saldo_inicial')
+        }),
+        ('Estado', {
+            'fields': ('activa',)
+        }),
+        ('Auditoría', {
+            'fields': ('creada_por', 'fecha_creacion'),
+            'classes': ('collapse',)
+        }),
+    )
+
+    def saldo_inicial_formateado(self, obj):
+        return formato_pesos(obj.saldo_inicial)
+    saldo_inicial_formateado.short_description = 'Saldo Inicial'
+
+
+class UsuarioCajaChicaInline(admin.TabularInline):
+    model = UsuarioCajaChica
+    extra = 0
+    fields = ('usuario', 'rol_caja', 'puede_aprobar', 'fecha_asignacion')
+    readonly_fields = ('fecha_asignacion',)
+
+
+@admin.register(MovimientoCajaChica)
+class MovimientoCajaChicaAdmin(admin.ModelAdmin):
+    list_display = (
+        'comprobante_nro', 'caja_chica', 'tipo', 'fecha',
+        'concepto_corto', 'monto_formateado', 'creado_por', 'anulado'
+    )
+    list_filter = ('caja_chica__iglesia', 'caja_chica', 'tipo', 'anulado', 'fecha')
+    search_fields = ('concepto', 'comprobante_nro', 'caja_chica__nombre')
+    readonly_fields = ('fecha_creacion', 'fecha_aprobacion', 'fecha_anulacion', 'comprobante_nro')
+    date_hierarchy = 'fecha'
+
+    fieldsets = (
+        ('Información del Movimiento', {
+            'fields': ('caja_chica', 'tipo', 'fecha', 'concepto', 'monto', 'comprobante_nro')
+        }),
+        ('Anulación', {
+            'fields': ('anulado', 'motivo_anulacion', 'anulado_por', 'fecha_anulacion'),
+            'classes': ('collapse',)
+        }),
+        ('Auditoría', {
+            'fields': ('creado_por', 'fecha_creacion', 'aprobado_por', 'fecha_aprobacion'),
+            'classes': ('collapse',)
+        }),
+    )
+
+    def concepto_corto(self, obj):
+        return obj.concepto[:50] + '...' if len(obj.concepto) > 50 else obj.concepto
+    concepto_corto.short_description = 'Concepto'
+
+    def monto_formateado(self, obj):
+        return formato_pesos(obj.monto)
+    monto_formateado.short_description = 'Monto'
+
+
+@admin.register(UsuarioCajaChica)
+class UsuarioCajaChicaAdmin(admin.ModelAdmin):
+    list_display = ('usuario', 'caja_chica', 'rol_caja', 'puede_aprobar', 'asignado_por', 'fecha_asignacion')
+    list_filter = ('caja_chica__iglesia', 'caja_chica', 'rol_caja', 'puede_aprobar')
+    search_fields = ('usuario__username', 'usuario__email', 'caja_chica__nombre')
+    readonly_fields = ('fecha_asignacion',)
+
+
+@admin.register(TransferenciaCajaChica)
+class TransferenciaCajaChicaAdmin(admin.ModelAdmin):
+    list_display = (
+        'fecha', 'caja_origen', 'caja_destino', 'monto_formateado',
+        'realizada_por', 'anulada', 'fecha_creacion'
+    )
+    list_filter = ('caja_origen__iglesia', 'anulada', 'fecha')
+    search_fields = ('concepto', 'caja_origen__nombre', 'caja_destino__nombre')
+    readonly_fields = ('fecha_creacion', 'fecha_anulacion', 'movimiento_egreso', 'movimiento_ingreso')
+    date_hierarchy = 'fecha'
+
+    fieldsets = (
+        ('Información de Transferencia', {
+            'fields': ('caja_origen', 'caja_destino', 'monto', 'concepto', 'fecha')
+        }),
+        ('Movimientos Generados', {
+            'fields': ('movimiento_egreso', 'movimiento_ingreso'),
+            'classes': ('collapse',)
+        }),
+        ('Anulación', {
+            'fields': ('anulada', 'motivo_anulacion', 'anulada_por', 'fecha_anulacion'),
+            'classes': ('collapse',)
+        }),
+        ('Auditoría', {
+            'fields': ('realizada_por', 'fecha_creacion'),
+            'classes': ('collapse',)
+        }),
+    )
+
+    def monto_formateado(self, obj):
+        return formato_pesos(obj.monto)
+    monto_formateado.short_description = 'Monto'
 
 
 # Personalizar el sitio admin

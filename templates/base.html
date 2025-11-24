@@ -144,6 +144,7 @@
                                 <i class="bi bi-speedometer2"></i> Dashboard
                             </a>
                         </li>
+                        {% if user.tiene_acceso_movimientos %}
                         <li class="nav-item">
                             <a class="nav-link {% if 'movimiento' in request.resolver_match.url_name %}active{% endif %}" href="{% url 'movimiento_list' %}">
                                 <i class="bi bi-cash-stack"></i> Movimientos
@@ -164,6 +165,7 @@
                                 <i class="bi bi-file-earmark-pdf"></i> Reportes
                             </a>
                         </li>
+                        {% endif %}
                         {% if user.puede_gestionar_usuarios %}
                         <li class="nav-item">
                             <a class="nav-link {% if 'gestionar_usuarios' in request.resolver_match.url_name %}active{% endif %}" href="{% url 'gestionar_usuarios' %}">
@@ -177,6 +179,32 @@
                                 <i class="bi bi-gear"></i> Administración
                             </a>
                         </li>
+                        {% endif %}
+                        {% if user.rol == 'ADMIN' or user.tiene_acceso_cajas_chicas %}
+                        <li class="nav-item mt-3">
+                            <hr class="sidebar-divider">
+                        </li>
+                        {% if user.rol == 'ADMIN' %}
+                        <li class="nav-item">
+                            <a class="nav-link {% if 'caja_chica' in request.resolver_match.url_name %}active{% endif %}" href="{% url 'caja_chica_list' %}">
+                                <i class="bi bi-box"></i> Gestionar Cajas
+                            </a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link {% if 'transferencia' in request.resolver_match.url_name %}active{% endif %}" href="{% url 'transferencia_list' %}">
+                                <i class="bi bi-arrow-left-right"></i> Transferencias
+                            </a>
+                        </li>
+                        {% endif %}
+                        {% if user.tiene_acceso_cajas_chicas %}
+                        {% for asignacion in user.cajas_asignadas.all %}
+                        <li class="nav-item">
+                            <a class="nav-link {% if 'dashboard_caja' in request.resolver_match.url_name and request.resolver_match.kwargs.pk|stringformat:'s' == asignacion.caja_chica.pk|stringformat:'s' %}active{% endif %}" href="{% url 'dashboard_caja' asignacion.caja_chica.pk %}">
+                                <i class="bi bi-box-seam"></i> {{ asignacion.caja_chica.nombre }}
+                            </a>
+                        </li>
+                        {% endfor %}
+                        {% endif %}
                         {% endif %}
                         <li class="nav-item mt-3">
                             <a class="nav-link {% if request.resolver_match.url_name == 'contadora_billetes' %}active{% endif %}" href="{% url 'contadora_billetes' %}">

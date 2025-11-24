@@ -1,0 +1,178 @@
+{% extends 'base.html' %}
+{% load static %}
+{% load custom_filters %}
+
+{% block title %}Transferencias - {{ APP_NAME }}{% endblock %}
+{% block page_title %}Transferencias entre Cajas{% endblock %}
+
+{% block extra_css %}
+<style>
+/* Diseño responsivo: tabla en desktop, cards en móvil */
+@media (max-width: 768px) {
+    .table-responsive {
+        border: none;
+    }
+
+    .transferencia-table thead {
+        display: none;
+    }
+
+    .transferencia-table tbody {
+        display: block;
+    }
+
+    .transferencia-table tr {
+        display: block;
+        margin-bottom: 1rem;
+        border: 1px solid #dee2e6;
+        border-radius: 0.5rem;
+        background: white;
+        box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+    }
+
+    .transferencia-table tr.table-secondary {
+        background: #e9ecef;
+    }
+
+    .transferencia-table td {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        padding: 0.75rem 1rem;
+        border: none;
+        border-bottom: 1px solid #f0f0f0;
+    }
+
+    .transferencia-table td:last-child {
+        border-bottom: none;
+    }
+
+    .transferencia-table td::before {
+        content: attr(data-label);
+        font-weight: bold;
+        margin-right: 1rem;
+        color: #6c757d;
+        flex-shrink: 0;
+    }
+
+    .transferencia-table td > * {
+        text-align: right;
+    }
+}
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="row mb-3">
+    <div class="col-12">
+        <div class="alert alert-info">
+            <i class="bi bi-info-circle"></i> Las transferencias permiten mover dinero entre cajas chicas.
+            Cada transferencia crea automáticamente un egreso en la caja origen y un ingreso en la caja destino.
+        </div>
+    </div>
+</div>
+
+<div class="row">
+    <div class="col-12">
+        <div class="card">
+            <div class="card-header d-flex justify-content-between align-items-center">
+                <h5 class="mb-0"><i class="bi bi-arrow-left-right"></i> Historial de Transferencias</h5>
+                <div>
+                    <a href="{% url 'caja_chica_list' %}" class="btn btn-secondary btn-sm">
+                        <i class="bi bi-arrow-left"></i> Volver a Cajas
+                    </a>
+                    <a href="{% url 'transferencia_create' %}" class="btn btn-primary btn-sm">
+                        <i class="bi bi-plus-circle"></i> Nueva Transferencia
+                    </a>
+                </div>
+            </div>
+            <div class="card-body">
+                {% if transferencias %}
+                <div class="table-responsive">
+                    <table class="table table-hover transferencia-table">
+                        <thead>
+                            <tr>
+                                <th>Fecha</th>
+                                <th>Origen → Destino</th>
+                                <th>Monto</th>
+                                <th>Concepto</th>
+                                <th>Realizada por</th>
+                                <th>Estado</th>
+                                <th>Acciones</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for transf in transferencias %}
+                            <tr {% if transf.anulada %}class="table-secondary"{% endif %}>
+                                <td data-label="Fecha">{{ transf.fecha|date:"d/m/Y" }}</td>
+                                <td data-label="Origen → Destino">
+                                    <span class="badge bg-danger">{{ transf.caja_origen.nombre }}</span>
+                                    <i class="bi bi-arrow-right mx-1"></i>
+                                    <span class="badge bg-success">{{ transf.caja_destino.nombre }}</span>
+                                </td>
+                                <td data-label="Monto">
+                                    <strong>{{ transf.monto|formato_pesos }}</strong>
+                                </td>
+                                <td data-label="Concepto">{{ transf.concepto|truncatewords:8 }}</td>
+                                <td data-label="Realizada por"><small>{{ transf.realizada_por.get_full_name|default:transf.realizada_por.username }}</small></td>
+                                <td data-label="Estado">
+                                    {% if transf.anulada %}
+                                    <span class="badge bg-secondary">Anulada</span>
+                                    {% else %}
+                                    <span class="badge bg-success">Activa</span>
+                                    {% endif %}
+                                </td>
+                                <td data-label="Acciones">
+                                    {% if not transf.anulada %}
+                                    <a href="{% url 'anular_transferencia' transf.pk %}" class="btn btn-sm btn-danger">
+                                        <i class="bi bi-x-circle"></i> Anular
+                                    </a>
+                                    {% else %}
+                                    <small class="text-muted">Anulada</small>
+                                    {% endif %}
+                                </td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+
+                <!-- Paginación -->
+                {% if is_paginated %}
+                <nav>
+                    <ul class="pagination justify-content-center">
+                        {% if page_obj.has_previous %}
+                        <li class="page-item">
+                            <a class="page-link" href="?page=1">Primera</a>
+                        </li>
+                        <li class="page-item">
+                            <a class="page-link" href="?page={{ page_obj.previous_page_number }}">Anterior</a>
+                        </li>
+                        {% endif %}
+
+                        <li class="page-item active">
+                            <span class="page-link">Página {{ page_obj.number }} de {{ page_obj.paginator.num_pages }}</span>
+                        </li>
+
+                        {% if page_obj.has_next %}
+                        <li class="page-item">
+                            <a class="page-link" href="?page={{ page_obj.next_page_number }}">Siguiente</a>
+                        </li>
+                        <li class="page-item">
+                            <a class="page-link" href="?page={{ page_obj.paginator.num_pages }}">Última</a>
+                        </li>
+                        {% endif %}
+                    </ul>
+                </nav>
+                {% endif %}
+                {% else %}
+                <div class="alert alert-info">
+                    <i class="bi bi-info-circle"></i> No hay transferencias registradas.
+                    <a href="{% url 'transferencia_create' %}" class="alert-link">Crear primera transferencia</a>
+                </div>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

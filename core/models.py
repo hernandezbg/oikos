@@ -79,21 +79,102 @@ class Usuario(AbstractUser):
         """ADMIN, TESORERO y PASTOR ven detalles completos"""
         return self.rol in ['ADMIN', 'TESORERO', 'PASTOR']
 
+    # ============================================
+    # MÉTODOS DE PERMISOS PARA CAJAS CHICAS
+    # ============================================
+
+    @property
+    def tiene_acceso_cajas_chicas(self):
+        """Verifica si el usuario tiene acceso a alguna caja chica"""
+        return self.cajas_asignadas.exists()
+
+    @property
+    def tiene_acceso_movimientos(self):
+        """
+        Solo usuarios con rol de iglesia (no solo de caja) pueden ver Movimientos.
+        """
+        # Si es usuario solo de caja, NO tiene acceso a movimientos
+        if self.es_usuario_solo_caja:
+            return False
+        # Si es ADMIN, TESORERO, PASTOR o COLABORADOR de la iglesia → Sí
+        return self.rol in ['ADMIN', 'TESORERO', 'PASTOR', 'COLABORADOR']
+
+    @property
+    def es_usuario_solo_caja(self):
+        """
+        Verifica si el usuario SOLO tiene acceso a cajas, no a la iglesia principal.
+        Un usuario es "solo caja" si:
+        - Tiene cajas asignadas Y
+        - Su rol es COLABORADOR (el rol por defecto cuando se une con código de caja)
+          y no tiene permisos reales de iglesia
+        """
+        # Verificar si tiene cajas y si su rol es el default sin permisos de iglesia
+        # Los roles ADMIN, TESORERO, y PASTOR tienen acceso a la iglesia
+        # COLABORADOR sin otros indicadores = solo acceso a caja
+        return (
+            self.tiene_acceso_cajas_chicas and
+            self.rol == 'COLABORADOR' and
+            not self.is_staff  # Staff siempre tiene acceso completo
+        )
+
+    def puede_gestionar_caja_chica(self, caja_chica):
+        """Verifica si puede gestionar (crear/editar/eliminar) una caja chica específica"""
+        # Solo ADMIN puede crear/eliminar cajas
+        if self.rol == 'ADMIN' and self.iglesia == caja_chica.iglesia:
+            return True
+        return False
+
+    def puede_crear_movimiento_caja(self, caja_chica):
+        """Verifica si puede crear movimientos en una caja específica"""
+        if self.rol == 'ADMIN' and self.iglesia == caja_chica.iglesia:
+            return True
+
+        # Verificar si es tesorero de esta caja específica
+        asignacion = self.cajas_asignadas.filter(
+            caja_chica=caja_chica,
+            rol_caja='TESORERO_CAJA'
+        ).first()
+
+        return asignacion is not None
+
+    def puede_ver_caja(self, caja_chica):
+        """Verifica si puede ver una caja específica"""
+        # ADMIN puede ver todas las cajas de su iglesia
+        if self.rol == 'ADMIN' and self.iglesia == caja_chica.iglesia:
+            return True
+
+        # Verificar si está asignado a esta caja
+        return self.cajas_asignadas.filter(caja_chica=caja_chica).exists()
+
 
 class CodigoInvitacion(models.Model):
     """
-    Código de invitación para unirse a una iglesia con un rol específico.
-    Formato: T4K8M9 (6 caracteres: Rol + 5 alfanuméricos)
+    Código de invitación para unirse a una iglesia con un rol específico
+    o para unirse a una caja chica específica.
+    Formato: T4K8M9 (Rol + 5 alfanuméricos) para iglesia
+    Formato: TC-ABC123 o CC-XYZ789 para cajas chicas
     """
     ROLES_INVITACION = (
         ('TESORERO', 'Tesorero'),
         ('PASTOR', 'Pastor'),
         ('COLABORADOR', 'Colaborador'),
+        ('TESORERO_CAJA', 'Tesorero de Caja Chica'),
+        ('COLABORADOR_CAJA', 'Colaborador de Caja Chica'),
     )
 
     iglesia = models.ForeignKey(Iglesia, on_delete=models.CASCADE, related_name='codigos_invitacion')
     codigo = models.CharField(max_length=10, unique=True, db_index=True)
     rol = models.CharField(max_length=20, choices=ROLES_INVITACION)
+
+    # NUEVO: Soporte para códigos de caja chica
+    caja_chica = models.ForeignKey(
+        'CajaChica',
+        on_delete=models.CASCADE,
+        null=True,
+        blank=True,
+        related_name='codigos_invitacion',
+        help_text='Si está asignado, el código es para unirse a esta caja chica específica'
+    )
 
     creado_por = models.ForeignKey(
         'Usuario',
@@ -172,8 +253,12 @@ class CodigoInvitacion(models.Model):
                 return codigo_base
 
     @staticmethod
-    def crear(iglesia, rol, creado_por, dias_expiracion=30):
-        """Crea un nuevo código de invitación"""
+    def crear(iglesia, rol, creado_por, dias_expiracion=30, caja_chica=None):
+        """
+        Crea un nuevo código de invitación.
+        Si caja_chica es None, es para la iglesia.
+        Si caja_chica está definido, es para esa caja específica.
+        """
         from django.utils import timezone
         from datetime import timedelta
 
@@ -182,14 +267,17 @@ class CodigoInvitacion(models.Model):
             'TESORERO': 'T',
             'PASTOR': 'P',
             'COLABORADOR': 'C',
+            'TESORERO_CAJA': 'TC',
+            'COLABORADOR_CAJA': 'CC',
         }
 
-        # Generar código único: T4K8M9
+        # Generar código único: T4K8M9 o TC-ABC123
         codigo_base = CodigoInvitacion.generar_codigo_unico()
         codigo_completo = f"{prefijos[rol]}{codigo_base}"
 
         return CodigoInvitacion.objects.create(
             iglesia=iglesia,
+            caja_chica=caja_chica,
             codigo=codigo_completo,
             rol=rol,
             creado_por=creado_por,
@@ -377,3 +465,336 @@ class SaldoMensual(models.Model):
     def calcular_saldo_final(self):
         self.saldo_final = self.saldo_inicial + self.total_ingresos - self.total_egresos
         return self.saldo_final
+
+
+# ============================================
+# MODELOS DE CAJAS CHICAS
+# ============================================
+
+class CajaChica(models.Model):
+    """
+    Representa una caja chica dentro de una iglesia.
+    Ejemplo: "Caja Jóvenes", "Caja Ministerio Mujeres"
+    """
+    iglesia = models.ForeignKey(Iglesia, on_delete=models.CASCADE, related_name='cajas_chicas')
+    nombre = models.CharField(max_length=100, help_text="Ej: Caja Jóvenes, Caja Ministerio Mujeres")
+    descripcion = models.TextField(blank=True, null=True)
+    saldo_inicial = models.DecimalField(
+        max_digits=12,
+        decimal_places=2,
+        default=0,
+        help_text="Saldo inicial con el que se crea la caja"
+    )
+
+    # Control
+    activa = models.BooleanField(default=True)
+    fecha_creacion = models.DateTimeField(auto_now_add=True)
+    creada_por = models.ForeignKey(Usuario, on_delete=models.CASCADE, related_name='cajas_creadas')
+
+    class Meta:
+        verbose_name = 'Caja Chica'
+        verbose_name_plural = 'Cajas Chicas'
+        ordering = ['iglesia', 'nombre']
+        unique_together = ['iglesia', 'nombre']
+
+    def __str__(self):
+        return f"{self.nombre} ({self.iglesia.nombre})"
+
+    def calcular_saldo_actual(self):
+        """Calcula el saldo actual de la caja"""
+        from django.db.models import Sum
+
+        ingresos = MovimientoCajaChica.objects.filter(
+            caja_chica=self,
+            tipo='INGRESO',
+            anulado=False
+        ).aggregate(total=Sum('monto'))['total'] or Decimal('0.00')
+
+        egresos = MovimientoCajaChica.objects.filter(
+            caja_chica=self,
+            tipo='EGRESO',
+            anulado=False
+        ).aggregate(total=Sum('monto'))['total'] or Decimal('0.00')
+
+        return self.saldo_inicial + ingresos - egresos
+
+
+class MovimientoCajaChica(models.Model):
+    """
+    Movimientos específicos de una caja chica.
+    Similar a Movimiento pero para cajas chicas.
+    """
+    TIPOS = (
+        ('INGRESO', 'Ingreso'),
+        ('EGRESO', 'Egreso'),
+    )
+
+    caja_chica = models.ForeignKey(CajaChica, on_delete=models.CASCADE, related_name='movimientos')
+    tipo = models.CharField(max_length=10, choices=TIPOS)
+    fecha = models.DateField()
+    concepto = models.TextField()
+    monto = models.DecimalField(
+        max_digits=12,
+        decimal_places=2,
+        validators=[MinValueValidator(Decimal('0.01'))]
+    )
+    comprobante_nro = models.CharField(max_length=50, blank=True, null=True)
+
+    # Categorías (igual que en Movimiento)
+    categoria_ingreso = models.ForeignKey(
+        'CategoriaIngreso',
+        on_delete=models.PROTECT,
+        null=True,
+        blank=True,
+        related_name='movimientos_caja_chica'
+    )
+    categoria_egreso = models.ForeignKey(
+        'CategoriaEgreso',
+        on_delete=models.PROTECT,
+        null=True,
+        blank=True,
+        related_name='movimientos_caja_chica'
+    )
+
+    # Usuarios
+    creado_por = models.ForeignKey(
+        Usuario,
+        on_delete=models.CASCADE,
+        related_name='movimientos_caja_chica_creados'
+    )
+    aprobado_por = models.ForeignKey(
+        Usuario,
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name='movimientos_caja_chica_aprobados'
+    )
+
+    # Timestamps
+    fecha_creacion = models.DateTimeField(auto_now_add=True)
+    fecha_aprobacion = models.DateTimeField(null=True, blank=True)
+
+    # Anulación
+    anulado = models.BooleanField(default=False)
+    fecha_anulacion = models.DateTimeField(null=True, blank=True)
+    motivo_anulacion = models.TextField(blank=True)
+    anulado_por = models.ForeignKey(
+        Usuario,
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name='movimientos_caja_chica_anulados'
+    )
+
+    class Meta:
+        verbose_name = 'Movimiento de Caja Chica'
+        verbose_name_plural = 'Movimientos de Caja Chica'
+        ordering = ['-fecha', '-fecha_creacion']
+
+    def __str__(self):
+        return f"{self.get_tipo_display()} - {self.caja_chica.nombre} - {self.concepto[:50]} - ${self.monto}"
+
+    def generar_numero_comprobante(self):
+        """
+        Genera número de comprobante por caja chica.
+        Formato: CC-I-0001, CC-E-0001
+        """
+        prefijo = 'CC-I' if self.tipo == 'INGRESO' else 'CC-E'
+
+        ultimo = MovimientoCajaChica.objects.filter(
+            caja_chica=self.caja_chica,
+            tipo=self.tipo,
+            comprobante_nro__startswith=prefijo
+        ).order_by('-comprobante_nro').first()
+
+        if ultimo and ultimo.comprobante_nro:
+            try:
+                ultimo_numero = int(ultimo.comprobante_nro.split('-')[2])
+                nuevo_numero = ultimo_numero + 1
+            except (IndexError, ValueError):
+                nuevo_numero = 1
+        else:
+            nuevo_numero = 1
+
+        return f"{prefijo}-{nuevo_numero:04d}"
+
+    def save(self, *args, **kwargs):
+        # Generar número de comprobante si no existe
+        if not self.comprobante_nro and self.caja_chica:
+            self.comprobante_nro = self.generar_numero_comprobante()
+        super().save(*args, **kwargs)
+
+
+class UsuarioCajaChica(models.Model):
+    """
+    Relación muchos-a-muchos entre usuarios y cajas chicas.
+    Define qué usuarios pueden acceder a qué cajas.
+    """
+    ROLES_CAJA = (
+        ('TESORERO_CAJA', 'Tesorero de Caja'),
+        ('COLABORADOR_CAJA', 'Colaborador de Caja'),
+    )
+
+    usuario = models.ForeignKey(Usuario, on_delete=models.CASCADE, related_name='cajas_asignadas')
+    caja_chica = models.ForeignKey(CajaChica, on_delete=models.CASCADE, related_name='usuarios_asignados')
+    rol_caja = models.CharField(max_length=20, choices=ROLES_CAJA)
+    puede_aprobar = models.BooleanField(default=False)
+
+    fecha_asignacion = models.DateTimeField(auto_now_add=True)
+    asignado_por = models.ForeignKey(
+        Usuario,
+        on_delete=models.CASCADE,
+        related_name='asignaciones_caja_realizadas'
+    )
+
+    class Meta:
+        verbose_name = 'Usuario de Caja Chica'
+        verbose_name_plural = 'Usuarios de Cajas Chicas'
+        unique_together = ['usuario', 'caja_chica']
+
+    def __str__(self):
+        return f"{self.usuario.username} - {self.caja_chica.nombre} ({self.get_rol_caja_display()})"
+
+
+class TransferenciaCajaChica(models.Model):
+    """
+    Representa una transferencia de dinero entre dos cajas chicas.
+    Crea automáticamente dos movimientos: egreso en origen, ingreso en destino.
+    """
+    # Cajas involucradas
+    caja_origen = models.ForeignKey(
+        CajaChica,
+        on_delete=models.CASCADE,
+        related_name='transferencias_salida'
+    )
+    caja_destino = models.ForeignKey(
+        CajaChica,
+        on_delete=models.CASCADE,
+        related_name='transferencias_entrada'
+    )
+
+    # Detalles de la transferencia
+    monto = models.DecimalField(
+        max_digits=12,
+        decimal_places=2,
+        validators=[MinValueValidator(Decimal('0.01'))]
+    )
+    concepto = models.TextField()
+    fecha = models.DateField()
+
+    # Control y auditoría
+    realizada_por = models.ForeignKey(
+        Usuario,
+        on_delete=models.CASCADE,
+        related_name='transferencias_realizadas'
+    )
+    fecha_creacion = models.DateTimeField(auto_now_add=True)
+
+    # Movimientos generados automáticamente
+    movimiento_egreso = models.OneToOneField(
+        MovimientoCajaChica,
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name='transferencia_egreso'
+    )
+    movimiento_ingreso = models.OneToOneField(
+        MovimientoCajaChica,
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name='transferencia_ingreso'
+    )
+
+    # Anulación
+    anulada = models.BooleanField(default=False)
+    fecha_anulacion = models.DateTimeField(null=True, blank=True)
+    motivo_anulacion = models.TextField(blank=True)
+    anulada_por = models.ForeignKey(
+        Usuario,
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name='transferencias_anuladas'
+    )
+
+    class Meta:
+        verbose_name = 'Transferencia entre Cajas'
+        verbose_name_plural = 'Transferencias entre Cajas'
+        ordering = ['-fecha', '-fecha_creacion']
+
+    def __str__(self):
+        return f"Transferencia {self.caja_origen.nombre} → {self.caja_destino.nombre}: ${self.monto}"
+
+    def clean(self):
+        from django.core.exceptions import ValidationError
+
+        # No transferir a la misma caja
+        if self.caja_origen == self.caja_destino:
+            raise ValidationError('No puedes transferir dinero a la misma caja')
+
+        # Validar que ambas cajas pertenezcan a la misma iglesia
+        if self.caja_origen.iglesia != self.caja_destino.iglesia:
+            raise ValidationError('Las cajas deben pertenecer a la misma iglesia')
+
+        # Validar saldo suficiente en caja origen
+        saldo_origen = self.caja_origen.calcular_saldo_actual()
+        if saldo_origen < self.monto:
+            raise ValidationError(
+                f'Saldo insuficiente en {self.caja_origen.nombre}. '
+                f'Saldo disponible: ${saldo_origen}, Monto a transferir: ${self.monto}'
+            )
+
+    def crear_movimientos(self):
+        """
+        Crea los dos movimientos asociados a esta transferencia.
+        Se ejecuta automáticamente en el signal post_save.
+        """
+        # Egreso en caja origen
+        self.movimiento_egreso = MovimientoCajaChica.objects.create(
+            caja_chica=self.caja_origen,
+            tipo='EGRESO',
+            fecha=self.fecha,
+            concepto=f'Transferencia a {self.caja_destino.nombre}: {self.concepto}',
+            monto=self.monto,
+            creado_por=self.realizada_por,
+            aprobado_por=self.realizada_por
+        )
+
+        # Ingreso en caja destino
+        self.movimiento_ingreso = MovimientoCajaChica.objects.create(
+            caja_chica=self.caja_destino,
+            tipo='INGRESO',
+            fecha=self.fecha,
+            concepto=f'Transferencia desde {self.caja_origen.nombre}: {self.concepto}',
+            monto=self.monto,
+            creado_por=self.realizada_por,
+            aprobado_por=self.realizada_por
+        )
+
+        self.save()
+
+    def anular_transferencia(self, usuario, motivo):
+        """Anula la transferencia y sus movimientos asociados"""
+        from django.utils import timezone
+
+        self.anulada = True
+        self.anulada_por = usuario
+        self.fecha_anulacion = timezone.now()
+        self.motivo_anulacion = motivo
+        self.save()
+
+        # Anular movimientos asociados
+        if self.movimiento_egreso:
+            self.movimiento_egreso.anulado = True
+            self.movimiento_egreso.anulado_por = usuario
+            self.movimiento_egreso.fecha_anulacion = timezone.now()
+            self.movimiento_egreso.motivo_anulacion = f'Anulación de transferencia: {motivo}'
+            self.movimiento_egreso.save()
+
+        if self.movimiento_ingreso:
+            self.movimiento_ingreso.anulado = True
+            self.movimiento_ingreso.anulado_por = usuario
+            self.movimiento_ingreso.fecha_anulacion = timezone.now()
+            self.movimiento_ingreso.motivo_anulacion = f'Anulación de transferencia: {motivo}'
+            self.movimiento_ingreso.save()

@@ -73,3 +73,54 @@ def validar_permisos_iglesia(sender, instance, **kwargs):
     # Si se está aprobando, establecer fecha de aprobación
     if instance.aprobado_por and not instance.fecha_aprobacion:
         instance.fecha_aprobacion = timezone.now()
+
+
+# ============================================
+# SIGNALS PARA CAJAS CHICAS
+# ============================================
+
+@receiver(pre_save, sender='core.MovimientoCajaChica')
+def validar_permisos_caja_chica(sender, instance, **kwargs):
+    """
+    Valida que el usuario tenga permisos para crear movimientos en esta caja
+    """
+    from core.models import MovimientoCajaChica, UsuarioCajaChica
+
+    usuario = instance.creado_por
+    caja = instance.caja_chica
+
+    # Si es ADMIN de la iglesia, OK
+    if usuario.rol == 'ADMIN' and usuario.iglesia == caja.iglesia:
+        # Si se está aprobando, establecer fecha de aprobación
+        if instance.aprobado_por and not instance.fecha_aprobacion:
+            instance.fecha_aprobacion = timezone.now()
+        return
+
+    # Verificar que esté asignado a la caja
+    asignacion = UsuarioCajaChica.objects.filter(
+        usuario=usuario,
+        caja_chica=caja
+    ).first()
+
+    if not asignacion:
+        raise PermissionDenied('No tienes permisos para crear movimientos en esta caja')
+
+    # Si es colaborador, no puede crear movimientos
+    if asignacion.rol_caja == 'COLABORADOR_CAJA':
+        raise PermissionDenied('Los colaboradores no pueden crear movimientos')
+
+    # Si se está aprobando, establecer fecha de aprobación
+    if instance.aprobado_por and not instance.fecha_aprobacion:
+        instance.fecha_aprobacion = timezone.now()
+
+
+@receiver(post_save, sender='core.TransferenciaCajaChica')
+def crear_movimientos_transferencia(sender, instance, created, **kwargs):
+    """
+    Cuando se crea una transferencia, genera automáticamente
+    los dos movimientos (egreso e ingreso).
+    """
+    from core.models import TransferenciaCajaChica
+
+    if created and not instance.movimiento_egreso and not instance.movimiento_ingreso:
+        instance.crear_movimientos()

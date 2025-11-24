@@ -2,8 +2,8 @@
 {% load static %}
 {% load custom_filters %}
 
-{% block title %}Dashboard - {{ APP_NAME }}{% endblock %}
-{% block page_title %}Dashboard - {{ APP_NAME }}{% endblock %}
+{% block title %}{{ caja.nombre }} - Dashboard - {{ APP_NAME }}{% endblock %}
+{% block page_title %}Dashboard: {{ caja.nombre }}{% endblock %}
 
 {% block extra_css %}
 <style>
@@ -21,7 +21,16 @@
 {% endblock %}
 
 {% block content %}
-{% if mostrar_movimientos %}
+<!-- Breadcrumb -->
+<nav aria-label="breadcrumb" class="mb-3">
+    <ol class="breadcrumb">
+        {% if es_admin %}
+        <li class="breadcrumb-item"><a href="{% url 'caja_chica_list' %}">Cajas Chicas</a></li>
+        {% endif %}
+        <li class="breadcrumb-item active">{{ caja.nombre}}</li>
+    </ol>
+</nav>
+
 <!-- Selector de mes -->
 <div class="row mb-3">
     <div class="col-12">
@@ -195,7 +204,7 @@
         <div class="card">
             <div class="card-header d-flex justify-content-between align-items-center">
                 <h5 class="mb-0"><i class="bi bi-clock-history"></i> Últimos Movimientos</h5>
-                <a href="{% url 'movimiento_list' %}" class="btn btn-sm btn-primary">Ver Todos</a>
+                <a href="{% url 'movimiento_caja_list' caja.pk %}" class="btn btn-sm btn-primary">Ver Todos</a>
             </div>
             <div class="card-body">
                 <div class="table-responsive">
@@ -221,7 +230,9 @@
                                 </td>
                                 <td>{{ mov.concepto|truncatewords:10 }}</td>
                                 <td class="text-end">
-                                    {{ mov|formato_monto_movimiento }}
+                                    <strong class="{% if mov.tipo == 'INGRESO' %}text-success{% else %}text-danger{% endif %}">
+                                        {{ mov.monto|formato_pesos }}
+                                    </strong>
                                 </td>
                             </tr>
                             {% empty %}
@@ -236,112 +247,12 @@
         </div>
     </div>
 </div>
-{% endif %}
-
-<!-- Sección de Cajas Chicas (Solo ADMIN o usuarios de caja) -->
-{% if puede_gestionar_cajas or es_usuario_caja %}
-<div class="row mt-4">
-    <div class="col-12">
-        <div class="card">
-            <div class="card-header d-flex justify-content-between align-items-center bg-info text-white">
-                <h5 class="mb-0"><i class="bi bi-box"></i> Cajas Chicas</h5>
-                {% if puede_gestionar_cajas %}
-                <a href="{% url 'caja_chica_list' %}" class="btn btn-sm btn-light">
-                    Ver Todas <i class="bi bi-arrow-right"></i>
-                </a>
-                {% endif %}
-            </div>
-            <div class="card-body">
-                {% if puede_gestionar_cajas %}
-                <!-- Vista de ADMIN: Mostrar sus cajas -->
-                {% if cajas_chicas %}
-                <div class="row">
-                    {% for caja in cajas_chicas %}
-                    <div class="col-md-4 mb-3">
-                        <div class="card border-primary">
-                            <div class="card-body">
-                                <h6 class="card-title">{{ caja.nombre }}</h6>
-                                <p class="card-text">
-                                    <strong>Saldo:</strong>
-                                    <span class="{% if caja.saldo_actual < 0 %}text-danger{% else %}text-success{% endif %}">
-                                        {{ caja.saldo_actual|formato_pesos }}
-                                    </span>
-                                </p>
-                                <div class="d-flex gap-2">
-                                    <a href="{% url 'dashboard_caja' caja.pk %}" class="btn btn-sm btn-primary flex-fill">
-                                        <i class="bi bi-speedometer2"></i> Ver
-                                    </a>
-                                    <a href="{% url 'movimiento_caja_list' caja.pk %}" class="btn btn-sm btn-outline-primary flex-fill">
-                                        <i class="bi bi-list-ul"></i> Movimientos
-                                    </a>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-                    {% endfor %}
-                </div>
-                <div class="text-center mt-3">
-                    <a href="{% url 'caja_chica_list' %}" class="btn btn-primary">
-                        <i class="bi bi-box"></i> Gestionar Cajas Chicas
-                    </a>
-                    <a href="{% url 'transferencia_list' %}" class="btn btn-info">
-                        <i class="bi bi-arrow-left-right"></i> Ver Transferencias
-                    </a>
-                </div>
-                {% else %}
-                <div class="alert alert-info mb-0">
-                    <i class="bi bi-info-circle"></i> No hay cajas chicas creadas.
-                    <a href="{% url 'caja_chica_create' %}" class="alert-link">Crear primera caja</a>
-                </div>
-                {% endif %}
-
-                {% elif es_usuario_caja %}
-                <!-- Vista de usuario de caja: Mostrar solo sus cajas asignadas -->
-                {% if cajas_usuario %}
-                <div class="row">
-                    {% for asignacion in cajas_usuario %}
-                    <div class="col-md-6 mb-3">
-                        <div class="card border-success">
-                            <div class="card-body">
-                                <h6 class="card-title">{{ asignacion.caja_chica.nombre }}</h6>
-                                <p class="card-text">
-                                    <span class="badge bg-{% if asignacion.rol_caja == 'TESORERO_CAJA' %}primary{% else %}secondary{% endif %}">
-                                        {{ asignacion.get_rol_caja_display }}
-                                    </span>
-                                </p>
-                                <a href="{% url 'dashboard_caja' asignacion.caja_chica.pk %}" class="btn btn-sm btn-success w-100">
-                                    <i class="bi bi-box-arrow-in-right"></i> Acceder a Caja
-                                </a>
-                            </div>
-                        </div>
-                    </div>
-                    {% endfor %}
-                </div>
-                <div class="text-center mt-3">
-                    <a href="{% url 'registro_con_codigo' %}" class="btn btn-primary">
-                        <i class="bi bi-plus-circle"></i> Unirme a otra Caja Chica
-                    </a>
-                </div>
-                {% else %}
-                <div class="alert alert-warning mb-0">
-                    <i class="bi bi-exclamation-triangle"></i> No estás asignado a ninguna caja.
-                    <a href="{% url 'registro_con_codigo' %}" class="alert-link">Usa un código de invitación para unirte a una caja</a>.
-                </div>
-                {% endif %}
-                {% endif %}
-            </div>
-        </div>
-    </div>
-</div>
-{% endif %}
 {% endblock %}
 
 {% block extra_js %}
-{% if mostrar_movimientos %}
 <script>
-// Obtener datos para gráficos con el mes seleccionado
-const mesSeleccionado = "{{ mes_seleccionado }}";
-const apiUrl = "{% url 'dashboard_data_api' %}?mes=" + mesSeleccionado;
+// Obtener datos para gráficos
+const apiUrl = "{% url 'dashboard_caja_data_api' caja.pk %}";
 fetch(apiUrl)
     .then(response => response.json())
     .then(data => {
@@ -577,5 +488,4 @@ fetch(apiUrl)
         });
     });
 </script>
-{% endif %}
 {% endblock %}

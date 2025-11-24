@@ -41,8 +41,9 @@ class ValidarCodigoInvitacionForm(forms.Form):
             'class': 'form-control form-control-lg text-uppercase text-center',
             'style': 'letter-spacing: 0.5rem; font-weight: bold; font-size: 1.5rem;',
             'autocomplete': 'off',
-            'pattern': '[TCPtcp][2-9A-HJ-NP-Za-hj-np-z]{5}',
-        })
+            'placeholder': 'T4K8M9 o TC4K8M9',
+        }),
+        help_text='Ingresa el código tal como te lo dieron (6 o 7 caracteres)'
     )
 
     def clean_codigo(self):
