@@ -77,6 +77,24 @@
                         {% endif %}
                     </div>
 
+                    <!-- Categoría Ingreso (se muestra solo si tipo=INGRESO) -->
+                    <div class="mb-3" id="div_categoria_ingreso" style="display: none;">
+                        <label for="{{ form.categoria_ingreso.id_for_label }}" class="form-label">{{ form.categoria_ingreso.label }} *</label>
+                        {{ form.categoria_ingreso }}
+                        {% if form.categoria_ingreso.errors %}
+                        <div class="text-danger">{{ form.categoria_ingreso.errors }}</div>
+                        {% endif %}
+                    </div>
+
+                    <!-- Categoría Egreso (se muestra solo si tipo=EGRESO) -->
+                    <div class="mb-3" id="div_categoria_egreso" style="display: none;">
+                        <label for="{{ form.categoria_egreso.id_for_label }}" class="form-label">{{ form.categoria_egreso.label }} *</label>
+                        {{ form.categoria_egreso }}
+                        {% if form.categoria_egreso.errors %}
+                        <div class="text-danger">{{ form.categoria_egreso.errors }}</div>
+                        {% endif %}
+                    </div>
+
                     <div class="mb-3">
                         <label for="{{ form.comprobante_nro.id_for_label }}" class="form-label">{{ form.comprobante_nro.label }}</label>
                         {{ form.comprobante_nro }}
@@ -107,4 +125,43 @@
         </div>
     </div>
 </div>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const tipoSelect = document.getElementById('{{ form.tipo.id_for_label }}');
+    const divCategoriaIngreso = document.getElementById('div_categoria_ingreso');
+    const divCategoriaEgreso = document.getElementById('div_categoria_egreso');
+    const categoriaIngresoSelect = document.getElementById('{{ form.categoria_ingreso.id_for_label }}');
+    const categoriaEgresoSelect = document.getElementById('{{ form.categoria_egreso.id_for_label }}');
+
+    function actualizarCategorias() {
+        const tipo = tipoSelect.value;
+
+        if (tipo === 'INGRESO') {
+            divCategoriaIngreso.style.display = 'block';
+            divCategoriaEgreso.style.display = 'none';
+            categoriaIngresoSelect.required = true;
+            categoriaEgresoSelect.required = false;
+            categoriaEgresoSelect.value = '';
+        } else if (tipo === 'EGRESO') {
+            divCategoriaIngreso.style.display = 'none';
+            divCategoriaEgreso.style.display = 'block';
+            categoriaIngresoSelect.required = false;
+            categoriaEgresoSelect.required = true;
+            categoriaIngresoSelect.value = '';
+        } else {
+            divCategoriaIngreso.style.display = 'none';
+            divCategoriaEgreso.style.display = 'none';
+            categoriaIngresoSelect.required = false;
+            categoriaEgresoSelect.required = false;
+        }
+    }
+
+    // Ejecutar al cargar la página
+    actualizarCategorias();
+
+    // Ejecutar cuando cambia el tipo
+    tipoSelect.addEventListener('change', actualizarCategorias);
+});
+</script>
 {% endblock %}
