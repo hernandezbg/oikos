@@ -207,6 +207,18 @@ class GenerarCodigoCajaForm(forms.Form):
         help_text='El código expirará después de estos días'
     )
 
+    usos_maximos = forms.IntegerField(
+        initial=1,
+        min_value=1,
+        max_value=10,
+        label='Usos Máximos',
+        widget=forms.NumberInput(attrs={
+            'class': 'form-control',
+            'value': 1
+        }),
+        help_text='Cantidad de personas que pueden usar este código'
+    )
+
     def __init__(self, iglesia=None, *args, **kwargs):
         super().__init__(*args, **kwargs)
 

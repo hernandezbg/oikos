@@ -370,6 +370,7 @@ def generar_codigo_caja_view(request):
             caja = form.cleaned_data['caja_chica']
             rol = form.cleaned_data['rol']
             dias_expiracion = form.cleaned_data['dias_expiracion']
+            usos_maximos = form.cleaned_data['usos_maximos']
 
             # Crear código de invitación
             codigo = CodigoInvitacion.crear(
@@ -377,13 +378,14 @@ def generar_codigo_caja_view(request):
                 rol=rol,
                 creado_por=request.user,
                 dias_expiracion=dias_expiracion,
+                usos_maximos=usos_maximos,
                 caja_chica=caja
             )
 
             messages.success(
                 request,
                 f'Código generado: {codigo.codigo} para {caja.nombre} '
-                f'(válido por {dias_expiracion} días)'
+                f'(válido por {dias_expiracion} días, hasta {usos_maximos} usos)'
             )
             return redirect('caja_chica_list')
     else:
