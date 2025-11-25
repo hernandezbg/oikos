@@ -1260,3 +1260,43 @@ def toggle_categoria_egreso(request, pk):
     )
 
     return redirect('categoria_egreso_list')
+
+
+@login_required
+def perfil_usuario_view(request):
+    """
+    Vista para mostrar el perfil del usuario con toda su información
+    """
+    usuario = request.user
+
+    # Obtener cajas asignadas si las tiene
+    cajas_asignadas = usuario.cajas_asignadas.select_related('caja_chica').all() if hasattr(usuario, 'cajas_asignadas') else []
+
+    # Obtener estadísticas de movimientos creados (si tiene acceso)
+    movimientos_creados = 0
+    total_ingresos_creados = Decimal('0.00')
+    total_egresos_creados = Decimal('0.00')
+
+    if usuario.tiene_acceso_movimientos:
+        movimientos = Movimiento.objects.filter(
+            creado_por=usuario,
+            anulado=False,
+            iglesia=usuario.iglesia
+        )
+        movimientos_creados = movimientos.count()
+        total_ingresos_creados = movimientos.filter(tipo='INGRESO').aggregate(
+            total=Sum('monto')
+        )['total'] or Decimal('0.00')
+        total_egresos_creados = movimientos.filter(tipo='EGRESO').aggregate(
+            total=Sum('monto')
+        )['total'] or Decimal('0.00')
+
+    contexto = {
+        'usuario': usuario,
+        'cajas_asignadas': cajas_asignadas,
+        'movimientos_creados': movimientos_creados,
+        'total_ingresos_creados': total_ingresos_creados,
+        'total_egresos_creados': total_egresos_creados,
+    }
+
+    return render(request, 'core/perfil_usuario.html', contexto)

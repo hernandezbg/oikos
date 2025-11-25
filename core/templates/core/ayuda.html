@@ -58,6 +58,11 @@
                     <i class="bi bi-arrow-left-right"></i> Movimientos
                 </button>
             </li>
+            <li class="nav-item" role="presentation">
+                <button class="nav-link" id="cajas-tab" data-bs-toggle="tab" data-bs-target="#cajas" type="button" role="tab">
+                    <i class="bi bi-box"></i> Cajas Chicas
+                </button>
+            </li>
         </ul>
 
         <div class="tab-content" id="ayudaTabsContent">
@@ -780,6 +785,177 @@
                             </div>
                             <p class="mt-3 text-muted small">
                                 <i class="bi bi-gear"></i> Las categorías se pueden gestionar desde <strong>Configuración → Categorías</strong>
+                            </p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- TAB: Cajas Chicas -->
+            <div class="tab-pane fade" id="cajas" role="tabpanel">
+                <div class="card shadow">
+                    <div class="card-header bg-warning text-dark">
+                        <h4 class="mb-0">
+                            <i class="bi bi-box"></i> Cajas Chicas
+                        </h4>
+                    </div>
+                    <div class="card-body">
+                        <p class="lead">Gestiona cajas chicas independientes para diferentes áreas o ministerios de tu iglesia.</p>
+
+                        <hr class="my-4">
+
+                        <!-- ¿Qué es una Caja Chica? -->
+                        <div class="mb-4">
+                            <h5 class="text-primary"><i class="bi bi-question-circle"></i> ¿Qué es una Caja Chica?</h5>
+                            <p class="mb-2">
+                                Una <strong>caja chica</strong> es un fondo separado para gastos menores de un área específica (ej: jóvenes, eventos, cocina).
+                            </p>
+                            <div class="bg-light p-3 rounded">
+                                <strong>Ventajas:</strong>
+                                <ul class="mb-0 mt-2">
+                                    <li>Cada área tiene su propio dinero y control</li>
+                                    <li>Usuarios específicos gestionan cada caja</li>
+                                    <li>Cuentas separadas de la caja principal de la iglesia</li>
+                                </ul>
+                            </div>
+                        </div>
+
+                        <hr>
+
+                        <!-- Crear Caja Chica (Solo ADMIN) -->
+                        <div class="mb-4">
+                            <h5 class="text-success"><i class="bi bi-plus-circle"></i> Crear una Caja Chica (Solo ADMIN)</h5>
+                            <ol>
+                                <li class="mb-2">Ve a <strong>Cajas Chicas → Nueva Caja</strong></li>
+                                <li class="mb-2">Completa el formulario:
+                                    <ul class="mt-2">
+                                        <li><strong>Nombre:</strong> Ej: "Caja Jóvenes", "Caja Cocina"</li>
+                                        <li><strong>Descripción:</strong> Para qué se usa la caja</li>
+                                        <li><strong>Saldo Inicial:</strong> Dinero con el que inicia</li>
+                                    </ul>
+                                </li>
+                                <li class="mb-2">Haz clic en <strong>Crear Caja</strong></li>
+                            </ol>
+                        </div>
+
+                        <hr>
+
+                        <!-- Invitar Usuarios a una Caja -->
+                        <div class="mb-4">
+                            <h5 class="text-info"><i class="bi bi-person-plus"></i> Invitar Usuarios a una Caja (Solo ADMIN)</h5>
+                            <ol>
+                                <li class="mb-2">Ve a <strong>Cajas Chicas</strong></li>
+                                <li class="mb-2">Haz clic en <strong>Generar Código</strong></li>
+                                <li class="mb-2">Selecciona la caja y el rol:
+                                    <ul class="mt-2">
+                                        <li><strong>Tesorero de Caja:</strong> Crea y edita movimientos de la caja</li>
+                                        <li><strong>Colaborador de Caja:</strong> Solo visualiza la caja</li>
+                                    </ul>
+                                </li>
+                                <li class="mb-2">Comparte el código con la persona</li>
+                                <li class="mb-2">La persona debe usar el código desde <strong>Registro con Código</strong></li>
+                            </ol>
+                            <div class="alert alert-info mt-3">
+                                <i class="bi bi-info-circle"></i> Un usuario puede estar en <strong>varias cajas</strong> con diferentes roles en cada una.
+                            </div>
+                        </div>
+
+                        <hr>
+
+                        <!-- Registrar Movimientos en Caja -->
+                        <div class="mb-4">
+                            <h5 class="text-success"><i class="bi bi-cash"></i> Registrar Movimientos en una Caja</h5>
+                            <ol>
+                                <li class="mb-2">Desde el Dashboard, haz clic en tu caja asignada</li>
+                                <li class="mb-2">O ve al menú lateral y selecciona la caja</li>
+                                <li class="mb-2">Haz clic en <strong>Ver Movimientos</strong></li>
+                                <li class="mb-2">Crea movimientos (ingresos/egresos) igual que en la caja principal</li>
+                            </ol>
+                            <div class="bg-light p-3 rounded mt-3">
+                                <strong>Importante:</strong> Los movimientos de cajas chicas son <strong>independientes</strong> de los movimientos generales de la iglesia.
+                            </div>
+                        </div>
+
+                        <hr>
+
+                        <!-- Transferencias entre Cajas -->
+                        <div class="mb-4">
+                            <h5 class="text-warning"><i class="bi bi-arrow-left-right"></i> Transferencias entre Cajas (Solo ADMIN)</h5>
+                            <p class="mb-2">Mueve dinero de una caja a otra.</p>
+                            <ol>
+                                <li class="mb-2">Ve a <strong>Transferencias → Nueva Transferencia</strong></li>
+                                <li class="mb-2">Selecciona:
+                                    <ul class="mt-2">
+                                        <li><strong>Caja Origen:</strong> De dónde sale el dinero</li>
+                                        <li><strong>Caja Destino:</strong> A dónde va el dinero</li>
+                                        <li><strong>Monto:</strong> Cantidad a transferir</li>
+                                        <li><strong>Concepto:</strong> Razón de la transferencia</li>
+                                    </ul>
+                                </li>
+                                <li class="mb-2">Haz clic en <strong>Realizar Transferencia</strong></li>
+                            </ol>
+                            <div class="alert alert-warning mt-3">
+                                <i class="bi bi-exclamation-triangle"></i> La caja origen debe tener saldo suficiente.
+                            </div>
+                        </div>
+
+                        <hr>
+
+                        <!-- Resumen Visual -->
+                        <div class="row mt-4">
+                            <div class="col-md-4">
+                                <div class="card border-danger h-100">
+                                    <div class="card-header bg-danger text-white text-center">
+                                        <strong>ADMIN</strong>
+                                    </div>
+                                    <div class="card-body">
+                                        <ul class="small mb-0">
+                                            <li>Crear cajas</li>
+                                            <li>Generar códigos</li>
+                                            <li>Ver todas las cajas</li>
+                                            <li>Hacer transferencias</li>
+                                        </ul>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="col-md-4">
+                                <div class="card border-primary h-100">
+                                    <div class="card-header bg-primary text-white text-center">
+                                        <strong>TESORERO DE CAJA</strong>
+                                    </div>
+                                    <div class="card-body">
+                                        <ul class="small mb-0">
+                                            <li>Ver su caja</li>
+                                            <li>Crear movimientos</li>
+                                            <li>Editar movimientos</li>
+                                            <li>Anular movimientos</li>
+                                        </ul>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="col-md-4">
+                                <div class="card border-secondary h-100">
+                                    <div class="card-header bg-secondary text-white text-center">
+                                        <strong>COLABORADOR DE CAJA</strong>
+                                    </div>
+                                    <div class="card-body">
+                                        <ul class="small mb-0">
+                                            <li>Ver su caja</li>
+                                            <li>Ver dashboard</li>
+                                            <li>Ver movimientos</li>
+                                            <li>Solo lectura</li>
+                                        </ul>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="alert alert-success mt-4">
+                            <h6><i class="bi bi-lightbulb"></i> Ejemplo de Uso</h6>
+                            <p class="mb-0">
+                                Tu iglesia crea "Caja Jóvenes" con $10,000. Invitas a Juan como Tesorero de Caja.
+                                Juan puede registrar gastos de eventos juveniles sin afectar la caja principal de la iglesia.
+                                El ADMIN puede transferir más dinero cuando sea necesario.
                             </p>
                         </div>
                     </div>

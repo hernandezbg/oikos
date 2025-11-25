@@ -22,6 +22,7 @@ from core.views import (
     politica_cookies_view,
     terminos_condiciones_view,
     aceptar_terminos_view,
+    perfil_usuario_view,
     # Categorías de Ingreso
     CategoriaIngresoListView,
     CategoriaIngresoCreateView,
@@ -77,6 +78,8 @@ urlpatterns = [
     path('reportes/movimientos-completo/', generar_reporte_movimientos_completo_view, name='reporte_movimientos_completo'),
     # Gestión de usuarios (solo ADMIN)
     path('usuarios/gestionar/', gestionar_usuarios_view, name='gestionar_usuarios'),
+    # Perfil de usuario
+    path('perfil/', perfil_usuario_view, name='perfil_usuario'),
     # Ayuda
     path('ayuda/', ayuda_view, name='ayuda'),
     # Contadora de Billetes

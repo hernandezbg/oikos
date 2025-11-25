@@ -116,9 +116,9 @@
                 <span class="navbar-text me-2 d-none d-lg-block text-white">
                     <i class="bi bi-church"></i> {{ user.iglesia.nombre }}
                 </span>
-                <span class="navbar-text me-2 d-none d-lg-block text-white">
+                <a href="{% url 'perfil_usuario' %}" class="navbar-text me-2 d-none d-lg-block text-white text-decoration-none" style="cursor: pointer;" title="Ver mi perfil">
                     <i class="bi bi-person-circle"></i> {{ user.get_full_name|default:user.username }}
-                </span>
+                </a>
 
                 <!-- Botón logout (siempre visible) -->
                 <form method="post" action="{% url 'logout' %}" class="d-inline">
@@ -209,6 +209,11 @@
                         <li class="nav-item mt-3">
                             <a class="nav-link {% if request.resolver_match.url_name == 'contadora_billetes' %}active{% endif %}" href="{% url 'contadora_billetes' %}">
                                 <i class="bi bi-calculator"></i> Contadora de Billetes
+                            </a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link {% if request.resolver_match.url_name == 'perfil_usuario' %}active{% endif %}" href="{% url 'perfil_usuario' %}">
+                                <i class="bi bi-person-circle"></i> Mi Perfil
                             </a>
                         </li>
                         <li class="nav-item">
