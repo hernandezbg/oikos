@@ -142,11 +142,23 @@ class MovimientoCajaChicaListView(LoginRequiredMixin, ListView):
         ).order_by('-fecha', '-fecha_creacion')
 
     def get_context_data(self, **kwargs):
+        from django.db.models import Sum
+        from decimal import Decimal
+
         context = super().get_context_data(**kwargs)
         context['caja'] = self.caja
         context['saldo_actual'] = self.caja.calcular_saldo_actual()
         context['puede_crear'] = self.request.user.puede_crear_movimiento_caja(self.caja)
         context['es_admin'] = self.request.user.rol == 'ADMIN'
+
+        # Calcular totales
+        movimientos = MovimientoCajaChica.objects.filter(caja_chica=self.caja, anulado=False)
+        context['total_ingresos'] = movimientos.filter(tipo='INGRESO').aggregate(
+            total=Sum('monto')
+        )['total'] or Decimal('0.00')
+        context['total_egresos'] = movimientos.filter(tipo='EGRESO').aggregate(
+            total=Sum('monto')
+        )['total'] or Decimal('0.00')
 
         # Filtrar categorías por iglesia para el modal
         context['categorias_ingreso'] = self.caja.iglesia.categorias_ingreso.filter(activa=True)
@@ -502,6 +514,7 @@ class DashboardCajaChicaView(LoginRequiredMixin, DetailView):
             'ultimos_movimientos': ultimos_movimientos,
             'alertas': alertas,
             'puede_crear': self.request.user.puede_crear_movimiento_caja(caja),
+            'puede_crear_movimientos': self.request.user.puede_crear_movimiento_caja(caja),
             'es_admin': self.request.user.rol == 'ADMIN',
         })
 
