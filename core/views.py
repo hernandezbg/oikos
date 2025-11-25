@@ -754,6 +754,33 @@ def exportar_excel_view(request):
 
 
 @login_required
+def exportar_dashboard_pdf_view(request):
+    """
+    Exportar dashboard a PDF con gráficas
+    """
+    # Si el usuario no tiene iglesia, redirigir a registro de iglesia
+    if request.user.is_authenticated:
+        if not request.user.is_staff and not request.user.is_superuser:
+            if not request.user.iglesia:
+                return redirect('seleccionar_tipo_registro')
+
+    from core.utils import generar_dashboard_pdf
+
+    iglesia = request.user.iglesia
+    mes_seleccionado = request.GET.get('mes', timezone.now().strftime('%Y-%m'))
+
+    # Generar PDF
+    pdf_buffer = generar_dashboard_pdf(iglesia, mes_seleccionado)
+
+    # Preparar respuesta
+    response = HttpResponse(pdf_buffer, content_type='application/pdf')
+    filename = f'dashboard_{iglesia.nombre}_{timezone.now().strftime("%Y%m%d")}.pdf'
+    response['Content-Disposition'] = f'attachment; filename="{filename}"'
+
+    return response
+
+
+@login_required
 def anular_movimiento_view(request, pk):
     """
     Anular un movimiento (soft delete con motivo)

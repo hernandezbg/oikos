@@ -22,18 +22,23 @@
 
 {% block content %}
 {% if mostrar_movimientos %}
-<!-- Selector de mes -->
+<!-- Selector de mes y acciones -->
 <div class="row mb-3">
     <div class="col-12">
-        <form method="get" class="d-flex align-items-center gap-2">
-            <label for="mes" class="form-label mb-0 me-2">
-                <i class="bi bi-calendar3"></i> Mes:
-            </label>
-            <input type="month" name="mes" id="mes" class="form-control" style="max-width: 200px;" value="{{ mes_seleccionado }}" onchange="this.form.submit()">
-            <button type="submit" class="btn btn-primary">
-                <i class="bi bi-search"></i> Ver
-            </button>
-        </form>
+        <div class="d-flex align-items-center justify-content-between flex-wrap gap-2">
+            <form method="get" class="d-flex align-items-center gap-2">
+                <label for="mes" class="form-label mb-0 me-2">
+                    <i class="bi bi-calendar3"></i> Mes:
+                </label>
+                <input type="month" name="mes" id="mes" class="form-control" style="max-width: 200px;" value="{{ mes_seleccionado }}" onchange="this.form.submit()">
+                <button type="submit" class="btn btn-primary">
+                    <i class="bi bi-search"></i> Ver
+                </button>
+            </form>
+            <a href="{% url 'exportar_dashboard_pdf' %}?mes={{ mes_seleccionado }}" class="btn btn-danger" target="_blank">
+                <i class="bi bi-file-earmark-pdf"></i> Exportar Dashboard PDF
+            </a>
+        </div>
     </div>
 </div>
 

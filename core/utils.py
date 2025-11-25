@@ -645,6 +645,370 @@ def generar_reporte_movimientos_completo_pdf(iglesia, fecha_desde=None, fecha_ha
     
     # Construir PDF
     doc.build(elements)
-    
+
+    buffer.seek(0)
+    return buffer
+
+
+def generar_dashboard_pdf(iglesia, mes_seleccionado=None):
+    """
+    Genera un PDF del dashboard con gráficas, KPIs y saldos de cajas chicas
+    """
+    import matplotlib
+    matplotlib.use('Agg')  # Backend sin interfaz gráfica
+    import matplotlib.pyplot as plt
+    from matplotlib.backends.backend_pdf import PdfPages
+    from reportlab.platypus import Image, PageBreak
+    import tempfile
+    import os
+
+    buffer = BytesIO()
+    doc = SimpleDocTemplate(buffer, pagesize=letter, topMargin=0.5*inch, bottomMargin=0.75*inch)
+    elements = []
+
+    styles = getSampleStyleSheet()
+
+    # Estilos personalizados
+    title_style = ParagraphStyle(
+        'CustomTitle',
+        parent=styles['Heading1'],
+        fontSize=24,
+        textColor=colors.HexColor('#6366f1'),
+        spaceAfter=10,
+        alignment=TA_CENTER,
+        fontName='Helvetica-Bold'
+    )
+
+    subtitle_style = ParagraphStyle(
+        'CustomSubtitle',
+        parent=styles['Normal'],
+        fontSize=14,
+        textColor=colors.HexColor('#4f46e5'),
+        spaceAfter=15,
+        alignment=TA_CENTER,
+        fontName='Helvetica-Bold'
+    )
+
+    section_style = ParagraphStyle(
+        'SectionTitle',
+        parent=styles['Heading2'],
+        fontSize=14,
+        textColor=colors.HexColor('#1f2937'),
+        spaceAfter=10,
+        spaceBefore=15,
+        fontName='Helvetica-Bold'
+    )
+
+    # Encabezado
+    title = Paragraph("OIKOS - Sistema de Gestión Financiera", title_style)
+    elements.append(title)
+
+    subtitle = Paragraph(f"Dashboard Financiero - {iglesia.nombre}", subtitle_style)
+    elements.append(subtitle)
+
+    # Fecha actual
+    fecha_actual = datetime.now()
+    if not mes_seleccionado:
+        mes_seleccionado = fecha_actual.strftime('%Y-%m')
+
+    año, mes = mes_seleccionado.split('-')
+    fecha_sel = datetime(int(año), int(mes), 1)
+    mes_nombre = formato_mes(fecha_sel, corto=False)
+
+    info_style = ParagraphStyle(
+        'InfoStyle',
+        parent=styles['Normal'],
+        fontSize=10,
+        textColor=colors.HexColor('#6b7280'),
+        alignment=TA_CENTER,
+        spaceAfter=20
+    )
+
+    fecha_info = Paragraph(
+        f"Reporte generado el {fecha_actual.strftime('%d/%m/%Y %H:%M')} | Período analizado: {mes_nombre}",
+        info_style
+    )
+    elements.append(fecha_info)
+
+    # Obtener datos del dashboard
+    from core.models import Movimiento, CajaChica
+    from django.db.models import Sum
+
+    # Calcular saldo actual total
+    total_ingresos_historico = Movimiento.objects.filter(
+        iglesia=iglesia,
+        tipo='INGRESO',
+        anulado=False
+    ).aggregate(total=Sum('monto'))['total'] or Decimal('0.00')
+
+    total_egresos_historico = Movimiento.objects.filter(
+        iglesia=iglesia,
+        tipo='EGRESO',
+        anulado=False
+    ).aggregate(total=Sum('monto'))['total'] or Decimal('0.00')
+
+    saldo_final = total_ingresos_historico - total_egresos_historico
+
+    # Totales del mes seleccionado
+    movimientos_mes = Movimiento.objects.filter(
+        iglesia=iglesia,
+        fecha__year=int(año),
+        fecha__month=int(mes),
+        anulado=False
+    )
+
+    total_ingresos_mes = movimientos_mes.filter(tipo='INGRESO').aggregate(
+        total=Sum('monto')
+    )['total'] or Decimal('0.00')
+
+    total_egresos_mes = movimientos_mes.filter(tipo='EGRESO').aggregate(
+        total=Sum('monto')
+    )['total'] or Decimal('0.00')
+
+    balance_mes = total_ingresos_mes - total_egresos_mes
+
+    # Tabla de KPIs principales
+    elements.append(Paragraph("Resumen Financiero", section_style))
+
+    kpi_data = [
+        ['CONCEPTO', 'MONTO'],
+        ['Saldo Actual Total', formato_pesos(saldo_final)],
+        [f'Ingresos {mes_nombre}', formato_pesos(total_ingresos_mes)],
+        [f'Egresos {mes_nombre}', formato_pesos(total_egresos_mes)],
+        [f'Balance {mes_nombre}', formato_pesos(balance_mes)],
+    ]
+
+    kpi_table = Table(kpi_data, colWidths=[4*inch, 2*inch])
+    kpi_table.setStyle(TableStyle([
+        ('BACKGROUND', (0, 0), (-1, 0), colors.HexColor('#6366f1')),
+        ('TEXTCOLOR', (0, 0), (-1, 0), colors.whitesmoke),
+        ('ALIGN', (0, 0), (-1, 0), 'CENTER'),
+        ('FONTNAME', (0, 0), (-1, 0), 'Helvetica-Bold'),
+        ('FONTSIZE', (0, 0), (-1, 0), 11),
+        ('BOTTOMPADDING', (0, 0), (-1, 0), 12),
+        ('TOPPADDING', (0, 0), (-1, 0), 12),
+        ('BACKGROUND', (0, 1), (-1, 1), colors.HexColor('#dbeafe')),
+        ('FONTNAME', (0, 1), (-1, 1), 'Helvetica-Bold'),
+        ('FONTSIZE', (0, 1), (-1, 1), 12),
+        ('FONTNAME', (0, 2), (-1, -1), 'Helvetica'),
+        ('FONTSIZE', (0, 2), (-1, -1), 10),
+        ('ALIGN', (1, 1), (1, -1), 'RIGHT'),
+        ('GRID', (0, 0), (-1, -1), 1, colors.HexColor('#cbd5e1')),
+        ('TOPPADDING', (0, 1), (-1, -1), 8),
+        ('BOTTOMPADDING', (0, 1), (-1, -1), 8),
+    ]))
+
+    elements.append(kpi_table)
+    elements.append(Spacer(1, 20))
+
+    # Cajas Chicas
+    cajas_chicas = CajaChica.objects.filter(iglesia=iglesia, activa=True).order_by('nombre')
+
+    if cajas_chicas.exists():
+        elements.append(Paragraph("Saldos de Cajas Chicas", section_style))
+
+        caja_data = [['CAJA CHICA', 'SALDO ACTUAL']]
+        total_cajas = Decimal('0.00')
+
+        for caja in cajas_chicas:
+            saldo_caja = caja.calcular_saldo_actual()
+            total_cajas += saldo_caja
+            caja_data.append([caja.nombre, formato_pesos(saldo_caja)])
+
+        caja_data.append(['TOTAL CAJAS CHICAS', formato_pesos(total_cajas)])
+
+        caja_table = Table(caja_data, colWidths=[4*inch, 2*inch])
+        caja_table.setStyle(TableStyle([
+            ('BACKGROUND', (0, 0), (-1, 0), colors.HexColor('#10b981')),
+            ('TEXTCOLOR', (0, 0), (-1, 0), colors.whitesmoke),
+            ('ALIGN', (0, 0), (-1, 0), 'CENTER'),
+            ('FONTNAME', (0, 0), (-1, 0), 'Helvetica-Bold'),
+            ('FONTSIZE', (0, 0), (-1, 0), 11),
+            ('BOTTOMPADDING', (0, 0), (-1, 0), 12),
+            ('TOPPADDING', (0, 0), (-1, 0), 12),
+            ('FONTNAME', (0, 1), (-1, -2), 'Helvetica'),
+            ('FONTSIZE', (0, 1), (-1, -2), 10),
+            ('ALIGN', (1, 1), (1, -1), 'RIGHT'),
+            ('GRID', (0, 0), (-1, -1), 1, colors.HexColor('#cbd5e1')),
+            ('TOPPADDING', (0, 1), (-1, -1), 8),
+            ('BOTTOMPADDING', (0, 1), (-1, -1), 8),
+            ('BACKGROUND', (0, -1), (-1, -1), colors.HexColor('#d1fae5')),
+            ('FONTNAME', (0, -1), (-1, -1), 'Helvetica-Bold'),
+            ('FONTSIZE', (0, -1), (-1, -1), 11),
+        ]))
+
+        elements.append(caja_table)
+        elements.append(Spacer(1, 20))
+
+    # Obtener datos para gráficas
+    dashboard_data = get_dashboard_data(iglesia, mes_distribucion=mes_seleccionado)
+
+    # Configurar matplotlib para español y mejor visualización
+    plt.rcParams['font.size'] = 10
+    plt.rcParams['axes.labelsize'] = 10
+    plt.rcParams['axes.titlesize'] = 12
+    plt.rcParams['xtick.labelsize'] = 9
+    plt.rcParams['ytick.labelsize'] = 9
+    plt.rcParams['legend.fontsize'] = 9
+
+    # Crear archivo temporal para las gráficas
+    temp_files = []
+
+    try:
+        # Gráfica 1: Evolución de Ingresos y Egresos
+        elements.append(PageBreak())
+        elements.append(Paragraph("Evolución de Ingresos y Egresos", section_style))
+
+        fig1, ax1 = plt.subplots(figsize=(8, 4))
+        x_pos = range(len(dashboard_data['meses_labels']))
+        width = 0.35
+
+        ax1.bar([p - width/2 for p in x_pos], dashboard_data['ingresos_data'],
+                width, label='Ingresos', color='#10b981', alpha=0.8)
+        ax1.bar([p + width/2 for p in x_pos], dashboard_data['egresos_data'],
+                width, label='Egresos', color='#ef4444', alpha=0.8)
+
+        ax1.set_xlabel('Mes')
+        ax1.set_ylabel('Monto ($)')
+        ax1.set_title('Ingresos vs Egresos por Mes')
+        ax1.set_xticks(x_pos)
+        ax1.set_xticklabels(dashboard_data['meses_labels'], rotation=45, ha='right')
+        ax1.legend()
+        ax1.grid(axis='y', alpha=0.3)
+
+        # Formatear eje Y con separador de miles
+        ax1.yaxis.set_major_formatter(plt.FuncFormatter(lambda x, p: f'${x:,.0f}'))
+
+        plt.tight_layout()
+
+        temp1 = tempfile.NamedTemporaryFile(delete=False, suffix='.png')
+        temp_files.append(temp1.name)
+        fig1.savefig(temp1.name, dpi=150, bbox_inches='tight')
+        plt.close(fig1)
+
+        img1 = Image(temp1.name, width=6.5*inch, height=3.25*inch)
+        elements.append(img1)
+        elements.append(Spacer(1, 15))
+
+        # Gráfica 2: Balance Mensual
+        elements.append(Paragraph("Balance Mensual", section_style))
+
+        fig2, ax2 = plt.subplots(figsize=(8, 4))
+        colors_balance = ['#10b981' if b >= 0 else '#ef4444' for b in dashboard_data['balance_data']]
+
+        ax2.bar(dashboard_data['meses_labels'], dashboard_data['balance_data'],
+                color=colors_balance, alpha=0.8)
+        ax2.axhline(y=0, color='black', linestyle='-', linewidth=0.8)
+        ax2.set_xlabel('Mes')
+        ax2.set_ylabel('Balance ($)')
+        ax2.set_title('Balance Mensual (Ingresos - Egresos)')
+        ax2.set_xticklabels(dashboard_data['meses_labels'], rotation=45, ha='right')
+        ax2.grid(axis='y', alpha=0.3)
+        ax2.yaxis.set_major_formatter(plt.FuncFormatter(lambda x, p: f'${x:,.0f}'))
+
+        plt.tight_layout()
+
+        temp2 = tempfile.NamedTemporaryFile(delete=False, suffix='.png')
+        temp_files.append(temp2.name)
+        fig2.savefig(temp2.name, dpi=150, bbox_inches='tight')
+        plt.close(fig2)
+
+        img2 = Image(temp2.name, width=6.5*inch, height=3.25*inch)
+        elements.append(img2)
+        elements.append(Spacer(1, 15))
+
+        # Gráfica 3: Distribución de Egresos por Categoría
+        if dashboard_data['categorias_labels'] and dashboard_data['categorias_data']:
+            elements.append(PageBreak())
+            elements.append(Paragraph(f"Distribución de Egresos por Categoría - {mes_nombre}", section_style))
+
+            fig3, ax3 = plt.subplots(figsize=(8, 5))
+
+            # Tomar solo las top 10 categorías
+            top_n = 10
+            if len(dashboard_data['categorias_labels']) > top_n:
+                labels = dashboard_data['categorias_labels'][:top_n]
+                data = dashboard_data['categorias_data'][:top_n]
+                otros = sum(dashboard_data['categorias_data'][top_n:])
+                if otros > 0:
+                    labels.append('Otros')
+                    data.append(otros)
+            else:
+                labels = dashboard_data['categorias_labels']
+                data = dashboard_data['categorias_data']
+
+            colors_pie = plt.cm.Set3(range(len(labels)))
+
+            wedges, texts, autotexts = ax3.pie(data, labels=labels, autopct='%1.1f%%',
+                                                 colors=colors_pie, startangle=90)
+            ax3.set_title('Distribución de Egresos por Categoría')
+
+            # Mejorar legibilidad
+            for autotext in autotexts:
+                autotext.set_color('white')
+                autotext.set_fontsize(8)
+                autotext.set_weight('bold')
+
+            plt.tight_layout()
+
+            temp3 = tempfile.NamedTemporaryFile(delete=False, suffix='.png')
+            temp_files.append(temp3.name)
+            fig3.savefig(temp3.name, dpi=150, bbox_inches='tight')
+            plt.close(fig3)
+
+            img3 = Image(temp3.name, width=6*inch, height=6*inch)
+            elements.append(img3)
+            elements.append(Spacer(1, 15))
+
+        # Gráfica 4: Distribución de Ingresos por Categoría
+        if dashboard_data['categorias_ingresos_labels'] and dashboard_data['categorias_ingresos_data']:
+            elements.append(Paragraph(f"Distribución de Ingresos por Categoría - {mes_nombre}", section_style))
+
+            fig4, ax4 = plt.subplots(figsize=(8, 5))
+
+            # Tomar solo las top 10 categorías
+            if len(dashboard_data['categorias_ingresos_labels']) > top_n:
+                labels_ing = dashboard_data['categorias_ingresos_labels'][:top_n]
+                data_ing = dashboard_data['categorias_ingresos_data'][:top_n]
+                otros_ing = sum(dashboard_data['categorias_ingresos_data'][top_n:])
+                if otros_ing > 0:
+                    labels_ing.append('Otros')
+                    data_ing.append(otros_ing)
+            else:
+                labels_ing = dashboard_data['categorias_ingresos_labels']
+                data_ing = dashboard_data['categorias_ingresos_data']
+
+            colors_pie_ing = plt.cm.Set2(range(len(labels_ing)))
+
+            wedges, texts, autotexts = ax4.pie(data_ing, labels=labels_ing, autopct='%1.1f%%',
+                                                 colors=colors_pie_ing, startangle=90)
+            ax4.set_title('Distribución de Ingresos por Categoría')
+
+            for autotext in autotexts:
+                autotext.set_color('white')
+                autotext.set_fontsize(8)
+                autotext.set_weight('bold')
+
+            plt.tight_layout()
+
+            temp4 = tempfile.NamedTemporaryFile(delete=False, suffix='.png')
+            temp_files.append(temp4.name)
+            fig4.savefig(temp4.name, dpi=150, bbox_inches='tight')
+            plt.close(fig4)
+
+            img4 = Image(temp4.name, width=6*inch, height=6*inch)
+            elements.append(img4)
+
+        # Construir PDF
+        doc.build(elements)
+
+    finally:
+        # Limpiar archivos temporales
+        for temp_file in temp_files:
+            try:
+                os.unlink(temp_file)
+            except:
+                pass
+
     buffer.seek(0)
     return buffer

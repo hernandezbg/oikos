@@ -11,6 +11,7 @@ from core.views import (
     generar_reporte_movimientos_completo_view,
     dashboard_data_api,
     exportar_excel_view,
+    exportar_dashboard_pdf_view,
     registro_view,
     registro_iglesia_google_view,
     seleccionar_tipo_registro_view,
@@ -92,6 +93,7 @@ urlpatterns = [
     # API y exportación
     path('api/dashboard-data/', dashboard_data_api, name='dashboard_data_api'),
     path('exportar/excel/', exportar_excel_view, name='exportar_excel'),
+    path('exportar/dashboard-pdf/', exportar_dashboard_pdf_view, name='exportar_dashboard_pdf'),
     # Categorías de Ingreso
     path('categorias/ingresos/', CategoriaIngresoListView.as_view(), name='categoria_ingreso_list'),
     path('categorias/ingresos/nueva/', CategoriaIngresoCreateView.as_view(), name='categoria_ingreso_create'),
