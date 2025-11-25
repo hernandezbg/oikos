@@ -1,6 +1,7 @@
 {% extends 'base.html' %}
 {% load static %}
 {% load custom_filters %}
+{% load l10n %}
 
 {% block title %}{% if object %}Editar{% else %}Nuevo{% endif %} Movimiento - {{ caja.nombre }} - {{ APP_NAME }}{% endblock %}
 {% block page_title %}{% if object %}Editar{% else %}Nuevo{% endif %} Movimiento{% endblock %}
@@ -42,44 +43,53 @@
                 <form method="post">
                     {% csrf_token %}
 
+                    <!-- Tipo de Movimiento -->
                     <div class="mb-3">
-                        <label for="{{ form.tipo.id_for_label }}" class="form-label">{{ form.tipo.label }} *</label>
-                        {{ form.tipo }}
+                        <label class="form-label fw-bold">{{ form.tipo.label }} <span class="text-danger">*</span></label>
+                        <div>
+                            <div class="form-check form-check-inline">
+                                <input class="form-check-input" type="radio" name="tipo" id="tipo_ingreso" value="INGRESO" {% if form.tipo.value == 'INGRESO' %}checked{% endif %} required>
+                                <label class="form-check-label" for="tipo_ingreso">
+                                    <i class="bi bi-arrow-up-circle text-success"></i> Ingreso
+                                </label>
+                            </div>
+                            <div class="form-check form-check-inline">
+                                <input class="form-check-input" type="radio" name="tipo" id="tipo_egreso" value="EGRESO" {% if form.tipo.value == 'EGRESO' %}checked{% endif %}>
+                                <label class="form-check-label" for="tipo_egreso">
+                                    <i class="bi bi-arrow-down-circle text-danger"></i> Egreso
+                                </label>
+                            </div>
+                        </div>
                         {% if form.tipo.errors %}
                         <div class="text-danger">{{ form.tipo.errors }}</div>
                         {% endif %}
                     </div>
 
-                    <div class="mb-3">
-                        <label for="{{ form.fecha.id_for_label }}" class="form-label">{{ form.fecha.label }} *</label>
-                        {{ form.fecha }}
-                        {% if form.fecha.errors %}
-                        <div class="text-danger">{{ form.fecha.errors }}</div>
-                        {% endif %}
-                    </div>
-
-                    <div class="mb-3">
-                        <label for="{{ form.monto.id_for_label }}" class="form-label">{{ form.monto.label }} *</label>
-                        <div class="input-group">
-                            <span class="input-group-text">$</span>
-                            {{ form.monto }}
+                    <div class="row">
+                        <!-- Fecha -->
+                        <div class="col-md-6 mb-3">
+                            <label for="{{ form.fecha.id_for_label }}" class="form-label fw-bold">{{ form.fecha.label }} <span class="text-danger">*</span></label>
+                            {{ form.fecha }}
+                            {% if form.fecha.errors %}
+                            <div class="text-danger">{{ form.fecha.errors }}</div>
+                            {% endif %}
                         </div>
-                        {% if form.monto.errors %}
-                        <div class="text-danger">{{ form.monto.errors }}</div>
-                        {% endif %}
-                    </div>
 
-                    <div class="mb-3">
-                        <label for="{{ form.concepto.id_for_label }}" class="form-label">{{ form.concepto.label }} *</label>
-                        {{ form.concepto }}
-                        {% if form.concepto.errors %}
-                        <div class="text-danger">{{ form.concepto.errors }}</div>
-                        {% endif %}
+                        <!-- Monto -->
+                        <div class="col-md-6 mb-3">
+                            <label for="monto_display" class="form-label fw-bold">{{ form.monto.label }} <span class="text-danger">*</span></label>
+                            <input type="text" class="form-control" id="monto_display" placeholder="1.500.000,50" required>
+                            <input type="hidden" name="monto" id="monto_hidden" value="{{ form.monto.value|default:'' }}">
+                            <small class="text-muted">Se formatea automáticamente con separador de miles</small>
+                            {% if form.monto.errors %}
+                            <div class="text-danger">{{ form.monto.errors }}</div>
+                            {% endif %}
+                        </div>
                     </div>
 
                     <!-- Categoría Ingreso (se muestra solo si tipo=INGRESO) -->
-                    <div class="mb-3" id="div_categoria_ingreso" style="display: none;">
-                        <label for="{{ form.categoria_ingreso.id_for_label }}" class="form-label">{{ form.categoria_ingreso.label }} *</label>
+                    <div class="mb-3 d-none" id="div_categoria_ingreso">
+                        <label for="{{ form.categoria_ingreso.id_for_label }}" class="form-label fw-bold">{{ form.categoria_ingreso.label }} <span class="text-danger">*</span></label>
                         {{ form.categoria_ingreso }}
                         {% if form.categoria_ingreso.errors %}
                         <div class="text-danger">{{ form.categoria_ingreso.errors }}</div>
@@ -87,11 +97,20 @@
                     </div>
 
                     <!-- Categoría Egreso (se muestra solo si tipo=EGRESO) -->
-                    <div class="mb-3" id="div_categoria_egreso" style="display: none;">
-                        <label for="{{ form.categoria_egreso.id_for_label }}" class="form-label">{{ form.categoria_egreso.label }} *</label>
+                    <div class="mb-3 d-none" id="div_categoria_egreso">
+                        <label for="{{ form.categoria_egreso.id_for_label }}" class="form-label fw-bold">{{ form.categoria_egreso.label }} <span class="text-danger">*</span></label>
                         {{ form.categoria_egreso }}
                         {% if form.categoria_egreso.errors %}
                         <div class="text-danger">{{ form.categoria_egreso.errors }}</div>
+                        {% endif %}
+                    </div>
+
+                    <!-- Concepto -->
+                    <div class="mb-3">
+                        <label for="{{ form.concepto.id_for_label }}" class="form-label fw-bold">{{ form.concepto.label }} <span class="text-danger">*</span></label>
+                        {{ form.concepto }}
+                        {% if form.concepto.errors %}
+                        <div class="text-danger">{{ form.concepto.errors }}</div>
                         {% endif %}
                     </div>
 
@@ -128,30 +147,76 @@
 
 <script>
 document.addEventListener('DOMContentLoaded', function() {
-    const tipoSelect = document.getElementById('{{ form.tipo.id_for_label }}');
+    const tipoRadios = document.querySelectorAll('input[name="tipo"]');
     const divCategoriaIngreso = document.getElementById('div_categoria_ingreso');
     const divCategoriaEgreso = document.getElementById('div_categoria_egreso');
     const categoriaIngresoSelect = document.getElementById('{{ form.categoria_ingreso.id_for_label }}');
     const categoriaEgresoSelect = document.getElementById('{{ form.categoria_egreso.id_for_label }}');
+    const montoDisplay = document.getElementById('monto_display');
+    const montoHidden = document.getElementById('monto_hidden');
 
+    // Inicializar valor formateado si existe
+    if (montoHidden.value) {
+        const valor = parseFloat(montoHidden.value);
+        if (!isNaN(valor)) {
+            const parts = valor.toString().split('.');
+            const entero = parseInt(parts[0]);
+            const decimal = parts[1];
+            const formattedEntero = entero.toLocaleString('es-AR');
+            montoDisplay.value = decimal ? formattedEntero + ',' + decimal : formattedEntero;
+        }
+    }
+
+    // Formatear monto en tiempo real
+    montoDisplay.addEventListener('input', function(e) {
+        let value = this.value.replace(/[^\d,]/g, '');
+        const comas = value.split(',');
+
+        if (comas.length > 2) {
+            value = comas[0] + ',' + comas.slice(1).join('');
+        }
+
+        if (comas.length === 2 && comas[1].length > 2) {
+            value = comas[0] + ',' + comas[1].substring(0, 2);
+        }
+
+        this.value = value;
+        montoHidden.value = value.replace(',', '.');
+
+        if (value && comas[0]) {
+            let entero = comas[0];
+            let decimal = comas[1];
+            const numero = parseInt(entero);
+            if (!isNaN(numero)) {
+                const formattedEntero = numero.toLocaleString('es-AR');
+                const formattedValue = decimal !== undefined ? formattedEntero + ',' + decimal : formattedEntero;
+                this.value = formattedValue;
+            }
+        } else if (!value) {
+            this.value = '';
+            montoHidden.value = '';
+        }
+    });
+
+    // Función para actualizar categorías según tipo
     function actualizarCategorias() {
-        const tipo = tipoSelect.value;
+        const tipoSeleccionado = document.querySelector('input[name="tipo"]:checked');
 
-        if (tipo === 'INGRESO') {
-            divCategoriaIngreso.style.display = 'block';
-            divCategoriaEgreso.style.display = 'none';
+        if (tipoSeleccionado && tipoSeleccionado.value === 'INGRESO') {
+            divCategoriaIngreso.classList.remove('d-none');
+            divCategoriaEgreso.classList.add('d-none');
             categoriaIngresoSelect.required = true;
             categoriaEgresoSelect.required = false;
             categoriaEgresoSelect.value = '';
-        } else if (tipo === 'EGRESO') {
-            divCategoriaIngreso.style.display = 'none';
-            divCategoriaEgreso.style.display = 'block';
+        } else if (tipoSeleccionado && tipoSeleccionado.value === 'EGRESO') {
+            divCategoriaIngreso.classList.add('d-none');
+            divCategoriaEgreso.classList.remove('d-none');
             categoriaIngresoSelect.required = false;
             categoriaEgresoSelect.required = true;
             categoriaIngresoSelect.value = '';
         } else {
-            divCategoriaIngreso.style.display = 'none';
-            divCategoriaEgreso.style.display = 'none';
+            divCategoriaIngreso.classList.add('d-none');
+            divCategoriaEgreso.classList.add('d-none');
             categoriaIngresoSelect.required = false;
             categoriaEgresoSelect.required = false;
         }
@@ -161,7 +226,9 @@ document.addEventListener('DOMContentLoaded', function() {
     actualizarCategorias();
 
     // Ejecutar cuando cambia el tipo
-    tipoSelect.addEventListener('change', actualizarCategorias);
+    tipoRadios.forEach(radio => {
+        radio.addEventListener('change', actualizarCategorias);
+    });
 });
 </script>
 {% endblock %}
