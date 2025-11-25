@@ -219,7 +219,7 @@ class GenerarCodigoCajaForm(forms.Form):
         help_text='Cantidad de personas que pueden usar este código'
     )
 
-    def __init__(self, iglesia=None, *args, **kwargs):
+    def __init__(self, *args, iglesia=None, **kwargs):
         super().__init__(*args, **kwargs)
 
         # Filtrar solo cajas activas de la iglesia
