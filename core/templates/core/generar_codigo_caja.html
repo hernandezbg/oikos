@@ -56,6 +56,15 @@
                         <small class="form-text text-muted">{{ form.dias_expiracion.help_text }}</small>
                     </div>
 
+                    <div class="mb-3">
+                        <label for="{{ form.usos_maximos.id_for_label }}" class="form-label">{{ form.usos_maximos.label }} *</label>
+                        {{ form.usos_maximos }}
+                        {% if form.usos_maximos.errors %}
+                        <div class="text-danger">{{ form.usos_maximos.errors }}</div>
+                        {% endif %}
+                        <small class="form-text text-muted">{{ form.usos_maximos.help_text }}</small>
+                    </div>
+
                     {% if form.non_field_errors %}
                     <div class="alert alert-danger">
                         {{ form.non_field_errors }}
@@ -84,8 +93,9 @@
                     <li>Selecciona la caja a la que quieres invitar usuarios</li>
                     <li>Elige el rol que tendrán (Tesorero o Colaborador)</li>
                     <li>Define cuántos días será válido el código</li>
-                    <li>Comparte el código generado con la persona que quieres invitar</li>
-                    <li>Esa persona usará el código en la página de registro para unirse a la caja</li>
+                    <li>Indica cuántas personas pueden usar el código</li>
+                    <li>Comparte el código generado con las personas que quieres invitar</li>
+                    <li>Esas personas usarán el código en la página de registro para unirse a la caja</li>
                 </ol>
             </div>
         </div>
