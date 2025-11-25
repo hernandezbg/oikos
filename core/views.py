@@ -941,12 +941,12 @@ def gestionar_usuarios_view(request):
         activo=True
     ).filter(
         fecha_expiracion__gt=timezone.now()
-    ).order_by('-fecha_creacion')
+    ).select_related('caja_chica').order_by('-fecha_creacion')
 
     codigos_usados = CodigoInvitacion.objects.filter(
         iglesia=iglesia,
         usado_por__isnull=False
-    ).order_by('-fecha_uso')
+    ).select_related('caja_chica', 'usado_por').order_by('-fecha_uso')
 
     codigos_expirados = CodigoInvitacion.objects.filter(
         iglesia=iglesia

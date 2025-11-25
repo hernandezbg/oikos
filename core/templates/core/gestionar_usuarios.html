@@ -219,6 +219,11 @@
                             <span class="badge {% if codigo.rol == 'TESORERO' %}bg-primary{% elif codigo.rol == 'PASTOR' %}bg-info{% else %}bg-secondary{% endif %}">
                                 {{ codigo.get_rol_display }}
                             </span>
+                            {% if codigo.caja_chica %}
+                            <span class="badge bg-success ms-1">
+                                <i class="bi bi-box"></i> {{ codigo.caja_chica.nombre }}
+                            </span>
+                            {% endif %}
                             <span class="text-muted ms-2">
                                 <i class="bi bi-clock"></i> Expira: {{ codigo.fecha_expiracion|date:"d/m/Y" }}
                             </span>
@@ -263,6 +268,7 @@
                             <tr>
                                 <th>Código</th>
                                 <th>Rol</th>
+                                <th>Caja Chica</th>
                                 <th>Usado por</th>
                                 <th>Fecha Uso</th>
                             </tr>
@@ -279,6 +285,15 @@
                                     </span>
                                 </td>
                                 <td>
+                                    {% if codigo.caja_chica %}
+                                    <span class="badge bg-success">
+                                        <i class="bi bi-box"></i> {{ codigo.caja_chica.nombre }}
+                                    </span>
+                                    {% else %}
+                                    <span class="text-muted">-</span>
+                                    {% endif %}
+                                </td>
+                                <td>
                                     <i class="bi bi-person-check text-success"></i>
                                     {{ codigo.usado_por.get_full_name|default:codigo.usado_por.username }}
                                 </td>
@@ -286,7 +301,7 @@
                             </tr>
                             {% empty %}
                             <tr>
-                                <td colspan="4" class="text-center text-muted py-3">
+                                <td colspan="5" class="text-center text-muted py-3">
                                     <i class="bi bi-inbox"></i> No hay códigos usados aún
                                 </td>
                             </tr>
