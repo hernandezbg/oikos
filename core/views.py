@@ -354,7 +354,7 @@ class DashboardView(LoginRequiredMixin, TemplateView):
             cajas_chicas = CajaChica.objects.filter(
                 iglesia=iglesia,
                 activa=True
-            )[:5]  # Mostrar solo las primeras 5
+            ).order_by('nombre')
 
             # Agregar saldo actual de cada caja
             for caja in cajas_chicas:
