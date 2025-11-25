@@ -17,6 +17,48 @@
         height: 400px !important;
     }
 }
+
+/* Botón flotante para nuevo movimiento */
+.fab-button {
+    position: fixed;
+    bottom: 30px;
+    right: 30px;
+    width: 60px;
+    height: 60px;
+    border-radius: 50%;
+    background: linear-gradient(135deg, #10b981 0%, #059669 100%);
+    color: white;
+    border: none;
+    box-shadow: 0 4px 12px rgba(16, 185, 129, 0.4);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 24px;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    z-index: 1000;
+    text-decoration: none;
+}
+
+.fab-button:hover {
+    transform: scale(1.1);
+    box-shadow: 0 6px 20px rgba(16, 185, 129, 0.6);
+    color: white;
+}
+
+.fab-button:active {
+    transform: scale(0.95);
+}
+
+@media (max-width: 768px) {
+    .fab-button {
+        bottom: 20px;
+        right: 20px;
+        width: 56px;
+        height: 56px;
+        font-size: 22px;
+    }
+}
 </style>
 {% endblock %}
 
@@ -255,6 +297,13 @@
     </div>
 </div>
 {% endblock %}
+
+<!-- Botón flotante para nuevo movimiento -->
+{% if puede_crear_movimientos %}
+<a href="{% url 'movimiento_caja_create' caja.pk %}" class="fab-button" title="Nuevo Movimiento">
+    <i class="bi bi-plus"></i>
+</a>
+{% endif %}
 
 {% block extra_js %}
 <script>
