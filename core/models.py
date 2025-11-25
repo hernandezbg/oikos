@@ -253,7 +253,7 @@ class CodigoInvitacion(models.Model):
                 return codigo_base
 
     @staticmethod
-    def crear(iglesia, rol, creado_por, dias_expiracion=30, caja_chica=None):
+    def crear(iglesia, rol, creado_por, dias_expiracion=30, usos_maximos=1, caja_chica=None):
         """
         Crea un nuevo código de invitación.
         Si caja_chica es None, es para la iglesia.
@@ -283,7 +283,7 @@ class CodigoInvitacion(models.Model):
             creado_por=creado_por,
             fecha_expiracion=timezone.now() + timedelta(days=dias_expiracion),
             activo=True,
-            usos_maximos=1
+            usos_maximos=usos_maximos
         )
 
 

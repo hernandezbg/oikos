@@ -825,10 +825,9 @@ def gestionar_usuarios_view(request):
                 iglesia=iglesia,
                 rol=rol,
                 creado_por=request.user,
-                dias_expiracion=dias_expiracion
+                dias_expiracion=dias_expiracion,
+                usos_maximos=usos_maximos
             )
-            codigo.usos_maximos = usos_maximos
-            codigo.save()
 
             messages.success(
                 request,
