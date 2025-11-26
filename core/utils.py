@@ -733,18 +733,26 @@ def generar_dashboard_pdf(iglesia, mes_seleccionado=None):
     # Obtener datos del dashboard
     from core.models import Movimiento, CajaChica
     from django.db.models import Sum
+    from calendar import monthrange
 
-    # Calcular saldo actual total
+    # Calcular fecha límite: último día del mes seleccionado
+    año_int, mes_int = int(año), int(mes)
+    ultimo_dia = monthrange(año_int, mes_int)[1]
+    fecha_limite = datetime(año_int, mes_int, ultimo_dia, 23, 59, 59)
+
+    # Calcular saldo total hasta el último día del mes seleccionado
     total_ingresos_historico = Movimiento.objects.filter(
         iglesia=iglesia,
         tipo='INGRESO',
-        anulado=False
+        anulado=False,
+        fecha__lte=fecha_limite
     ).aggregate(total=Sum('monto'))['total'] or Decimal('0.00')
 
     total_egresos_historico = Movimiento.objects.filter(
         iglesia=iglesia,
         tipo='EGRESO',
-        anulado=False
+        anulado=False,
+        fecha__lte=fecha_limite
     ).aggregate(total=Sum('monto'))['total'] or Decimal('0.00')
 
     saldo_final = total_ingresos_historico - total_egresos_historico
@@ -772,7 +780,7 @@ def generar_dashboard_pdf(iglesia, mes_seleccionado=None):
 
     kpi_data = [
         ['CONCEPTO', 'MONTO'],
-        ['Saldo Actual Total', formato_pesos(saldo_final)],
+        [f'Saldo Total al {ultimo_dia}/{mes}/{año}', formato_pesos(saldo_final)],
         [f'Ingresos {mes_nombre}', formato_pesos(total_ingresos_mes)],
         [f'Egresos {mes_nombre}', formato_pesos(total_egresos_mes)],
         [f'Balance {mes_nombre}', formato_pesos(balance_mes)],
@@ -805,13 +813,43 @@ def generar_dashboard_pdf(iglesia, mes_seleccionado=None):
     cajas_chicas = CajaChica.objects.filter(iglesia=iglesia, activa=True).order_by('nombre')
 
     if cajas_chicas.exists():
-        elements.append(Paragraph("Saldos de Cajas Chicas", section_style))
+        elements.append(Paragraph(f"Saldos de Cajas Chicas al {ultimo_dia}/{mes}/{año}", section_style))
 
-        caja_data = [['CAJA CHICA', 'SALDO ACTUAL']]
+        from core.models import MovimientoCajaChica
+        caja_data = [['CAJA CHICA', 'SALDO']]
         total_cajas = Decimal('0.00')
 
         for caja in cajas_chicas:
-            saldo_caja = caja.calcular_saldo_actual()
+            # Calcular saldo de la caja hasta la fecha límite
+            ingresos_caja = MovimientoCajaChica.objects.filter(
+                caja_chica=caja,
+                tipo='INGRESO',
+                anulado=False,
+                fecha__lte=fecha_limite
+            ).aggregate(total=Sum('monto'))['total'] or Decimal('0.00')
+
+            egresos_caja = MovimientoCajaChica.objects.filter(
+                caja_chica=caja,
+                tipo='EGRESO',
+                anulado=False,
+                fecha__lte=fecha_limite
+            ).aggregate(total=Sum('monto'))['total'] or Decimal('0.00')
+
+            # Incluir transferencias hasta la fecha límite
+            from core.models import TransferenciaCajaChica
+            transferencias_recibidas = TransferenciaCajaChica.objects.filter(
+                caja_destino=caja,
+                anulada=False,
+                fecha__lte=fecha_limite
+            ).aggregate(total=Sum('monto'))['total'] or Decimal('0.00')
+
+            transferencias_enviadas = TransferenciaCajaChica.objects.filter(
+                caja_origen=caja,
+                anulada=False,
+                fecha__lte=fecha_limite
+            ).aggregate(total=Sum('monto'))['total'] or Decimal('0.00')
+
+            saldo_caja = caja.saldo_inicial + ingresos_caja - egresos_caja + transferencias_recibidas - transferencias_enviadas
             total_cajas += saldo_caja
             caja_data.append([caja.nombre, formato_pesos(saldo_caja)])
 
@@ -855,23 +893,21 @@ def generar_dashboard_pdf(iglesia, mes_seleccionado=None):
     temp_files = []
 
     try:
-        # Gráfica 1: Evolución de Ingresos y Egresos
+        # Gráfica 1: Evolución de Saldos
         elements.append(PageBreak())
-        elements.append(Paragraph("Evolución de Ingresos y Egresos", section_style))
+        elements.append(Paragraph("Evolución de Saldos", section_style))
 
         fig1, ax1 = plt.subplots(figsize=(8, 4))
-        x_pos = range(len(dashboard_data['meses_labels']))
-        width = 0.35
 
-        ax1.bar([p - width/2 for p in x_pos], dashboard_data['ingresos_data'],
-                width, label='Ingresos', color='#10b981', alpha=0.8)
-        ax1.bar([p + width/2 for p in x_pos], dashboard_data['egresos_data'],
-                width, label='Egresos', color='#ef4444', alpha=0.8)
+        ax1.plot(dashboard_data['meses_labels'], dashboard_data['saldos_data'],
+                marker='o', linewidth=2, color='#6366f1', markersize=6, label='Saldo')
+        ax1.fill_between(range(len(dashboard_data['meses_labels'])), dashboard_data['saldos_data'],
+                         alpha=0.2, color='#6366f1')
 
         ax1.set_xlabel('Mes')
-        ax1.set_ylabel('Monto ($)')
-        ax1.set_title('Ingresos vs Egresos por Mes')
-        ax1.set_xticks(x_pos)
+        ax1.set_ylabel('Saldo ($)')
+        ax1.set_title('Evolución del Saldo Total')
+        ax1.set_xticks(range(len(dashboard_data['meses_labels'])))
         ax1.set_xticklabels(dashboard_data['meses_labels'], rotation=45, ha='right')
         ax1.legend()
         ax1.grid(axis='y', alpha=0.3)
@@ -890,20 +926,25 @@ def generar_dashboard_pdf(iglesia, mes_seleccionado=None):
         elements.append(img1)
         elements.append(Spacer(1, 15))
 
-        # Gráfica 2: Balance Mensual
-        elements.append(Paragraph("Balance Mensual", section_style))
+        # Gráfica 2: Evolución de Ingresos y Egresos (líneas)
+        elements.append(Paragraph("Evolución de Ingresos y Egresos", section_style))
 
         fig2, ax2 = plt.subplots(figsize=(8, 4))
-        colors_balance = ['#10b981' if b >= 0 else '#ef4444' for b in dashboard_data['balance_data']]
 
-        ax2.bar(dashboard_data['meses_labels'], dashboard_data['balance_data'],
-                color=colors_balance, alpha=0.8)
-        ax2.axhline(y=0, color='black', linestyle='-', linewidth=0.8)
+        ax2.plot(dashboard_data['meses_labels'], dashboard_data['ingresos_data'],
+                marker='o', linewidth=2, color='#10b981', markersize=6, label='Ingresos')
+        ax2.plot(dashboard_data['meses_labels'], dashboard_data['egresos_data'],
+                marker='o', linewidth=2, color='#ef4444', markersize=6, label='Egresos')
+
         ax2.set_xlabel('Mes')
-        ax2.set_ylabel('Balance ($)')
-        ax2.set_title('Balance Mensual (Ingresos - Egresos)')
+        ax2.set_ylabel('Monto ($)')
+        ax2.set_title('Ingresos vs Egresos por Mes')
+        ax2.set_xticks(range(len(dashboard_data['meses_labels'])))
         ax2.set_xticklabels(dashboard_data['meses_labels'], rotation=45, ha='right')
+        ax2.legend()
         ax2.grid(axis='y', alpha=0.3)
+
+        # Formatear eje Y con separador de miles
         ax2.yaxis.set_major_formatter(plt.FuncFormatter(lambda x, p: f'${x:,.0f}'))
 
         plt.tight_layout()
@@ -917,12 +958,39 @@ def generar_dashboard_pdf(iglesia, mes_seleccionado=None):
         elements.append(img2)
         elements.append(Spacer(1, 15))
 
-        # Gráfica 3: Distribución de Egresos por Categoría
+        # Gráfica 3: Balance Mensual
+        elements.append(Paragraph("Balance Mensual", section_style))
+
+        fig3, ax3 = plt.subplots(figsize=(8, 4))
+        colors_balance = ['#10b981' if b >= 0 else '#ef4444' for b in dashboard_data['balance_data']]
+
+        ax3.bar(dashboard_data['meses_labels'], dashboard_data['balance_data'],
+                color=colors_balance, alpha=0.8)
+        ax3.axhline(y=0, color='black', linestyle='-', linewidth=0.8)
+        ax3.set_xlabel('Mes')
+        ax3.set_ylabel('Balance ($)')
+        ax3.set_title('Balance Mensual (Ingresos - Egresos)')
+        ax3.set_xticklabels(dashboard_data['meses_labels'], rotation=45, ha='right')
+        ax3.grid(axis='y', alpha=0.3)
+        ax3.yaxis.set_major_formatter(plt.FuncFormatter(lambda x, p: f'${x:,.0f}'))
+
+        plt.tight_layout()
+
+        temp3 = tempfile.NamedTemporaryFile(delete=False, suffix='.png')
+        temp_files.append(temp3.name)
+        fig3.savefig(temp3.name, dpi=150, bbox_inches='tight')
+        plt.close(fig3)
+
+        img3 = Image(temp3.name, width=6.5*inch, height=3.25*inch)
+        elements.append(img3)
+        elements.append(Spacer(1, 15))
+
+        # Gráfica 4: Distribución de Egresos por Categoría (Dona)
         if dashboard_data['categorias_labels'] and dashboard_data['categorias_data']:
             elements.append(PageBreak())
             elements.append(Paragraph(f"Distribución de Egresos por Categoría - {mes_nombre}", section_style))
 
-            fig3, ax3 = plt.subplots(figsize=(8, 5))
+            fig4, ax4 = plt.subplots(figsize=(8, 6))
 
             # Tomar solo las top 10 categorías
             top_n = 10
@@ -937,57 +1005,31 @@ def generar_dashboard_pdf(iglesia, mes_seleccionado=None):
                 labels = dashboard_data['categorias_labels']
                 data = dashboard_data['categorias_data']
 
-            colors_pie = plt.cm.Set3(range(len(labels)))
+            # Colores para el gráfico de dona
+            colors_dona = ['#ff6384', '#36a2eb', '#ffce56', '#4bc0c0', '#9966ff', '#ff9f40',
+                          '#ff6384', '#c9cbcf', '#4bc0c0', '#ff6384', '#36a2eb']
 
-            wedges, texts, autotexts = ax3.pie(data, labels=labels, autopct='%1.1f%%',
-                                                 colors=colors_pie, startangle=90)
-            ax3.set_title('Distribución de Egresos por Categoría')
+            # Calcular porcentajes
+            total = sum(data)
+            percentages = [(value / total * 100) if total > 0 else 0 for value in data]
 
-            # Mejorar legibilidad
+            # Crear gráfico de dona
+            wedges, texts, autotexts = ax4.pie(data, labels=None, autopct='%1.1f%%',
+                                                colors=colors_dona[:len(data)], startangle=90,
+                                                pctdistance=0.85, wedgeprops=dict(width=0.5))
+
+            ax4.set_title('Distribución de Egresos por Categoría')
+
+            # Mejorar el formato de los porcentajes
             for autotext in autotexts:
                 autotext.set_color('white')
-                autotext.set_fontsize(8)
+                autotext.set_fontsize(9)
                 autotext.set_weight('bold')
 
-            plt.tight_layout()
-
-            temp3 = tempfile.NamedTemporaryFile(delete=False, suffix='.png')
-            temp_files.append(temp3.name)
-            fig3.savefig(temp3.name, dpi=150, bbox_inches='tight')
-            plt.close(fig3)
-
-            img3 = Image(temp3.name, width=6*inch, height=6*inch)
-            elements.append(img3)
-            elements.append(Spacer(1, 15))
-
-        # Gráfica 4: Distribución de Ingresos por Categoría
-        if dashboard_data['categorias_ingresos_labels'] and dashboard_data['categorias_ingresos_data']:
-            elements.append(Paragraph(f"Distribución de Ingresos por Categoría - {mes_nombre}", section_style))
-
-            fig4, ax4 = plt.subplots(figsize=(8, 5))
-
-            # Tomar solo las top 10 categorías
-            if len(dashboard_data['categorias_ingresos_labels']) > top_n:
-                labels_ing = dashboard_data['categorias_ingresos_labels'][:top_n]
-                data_ing = dashboard_data['categorias_ingresos_data'][:top_n]
-                otros_ing = sum(dashboard_data['categorias_ingresos_data'][top_n:])
-                if otros_ing > 0:
-                    labels_ing.append('Otros')
-                    data_ing.append(otros_ing)
-            else:
-                labels_ing = dashboard_data['categorias_ingresos_labels']
-                data_ing = dashboard_data['categorias_ingresos_data']
-
-            colors_pie_ing = plt.cm.Set2(range(len(labels_ing)))
-
-            wedges, texts, autotexts = ax4.pie(data_ing, labels=labels_ing, autopct='%1.1f%%',
-                                                 colors=colors_pie_ing, startangle=90)
-            ax4.set_title('Distribución de Ingresos por Categoría')
-
-            for autotext in autotexts:
-                autotext.set_color('white')
-                autotext.set_fontsize(8)
-                autotext.set_weight('bold')
+            # Crear leyenda con nombres y porcentajes
+            legend_labels = [f'{label}: {pct:.1f}%' for label, pct in zip(labels, percentages)]
+            ax4.legend(legend_labels, loc='center left', bbox_to_anchor=(1, 0, 0.5, 1),
+                      fontsize=9)
 
             plt.tight_layout()
 
@@ -996,8 +1038,9 @@ def generar_dashboard_pdf(iglesia, mes_seleccionado=None):
             fig4.savefig(temp4.name, dpi=150, bbox_inches='tight')
             plt.close(fig4)
 
-            img4 = Image(temp4.name, width=6*inch, height=6*inch)
+            img4 = Image(temp4.name, width=6.5*inch, height=4.5*inch)
             elements.append(img4)
+            elements.append(Spacer(1, 15))
 
         # Construir PDF
         doc.build(elements)
