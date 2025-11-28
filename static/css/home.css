@@ -71,6 +71,13 @@ html {
     height: 100%;
     background: radial-gradient(circle, rgba(99, 102, 241, 0.1) 0%, transparent 70%);
     animation: pulse 8s ease-in-out infinite;
+    z-index: 0;
+    pointer-events: none;
+}
+
+.hero-section .container {
+    position: relative;
+    z-index: 1;
 }
 
 @keyframes pulse {
@@ -301,6 +308,13 @@ html {
     height: 200%;
     background: radial-gradient(circle, rgba(255, 255, 255, 0.1) 0%, transparent 70%);
     animation: pulse 10s ease-in-out infinite;
+    z-index: 0;
+    pointer-events: none;
+}
+
+.cta-section .container {
+    position: relative;
+    z-index: 1;
 }
 
 /* Buttons */
