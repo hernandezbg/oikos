@@ -455,7 +455,8 @@ def get_dashboard_data(iglesia, meses=None, mes_distribucion=None):
     fecha_inicio = datetime(fecha_actual.year, 1, 1)  # 1 de enero del año actual
 
     # Calcular cantidad de meses desde enero hasta ahora
-    meses_transcurridos = fecha_actual.month
+    # EXCLUIR el mes actual porque aún no está completo
+    meses_transcurridos = fecha_actual.month - 1 if fecha_actual.month > 1 else 0
 
     # Generar lista de meses
     meses_labels = []
@@ -714,6 +715,8 @@ def generar_dashboard_pdf(iglesia, mes_seleccionado=None):
     """
     Genera un PDF del dashboard con gráficas, KPIs y saldos de cajas chicas
     """
+    from datetime import datetime
+    from calendar import monthrange
     import matplotlib
     matplotlib.use('Agg')  # Backend sin interfaz gráfica
     import matplotlib.pyplot as plt
@@ -725,6 +728,19 @@ def generar_dashboard_pdf(iglesia, mes_seleccionado=None):
     buffer = BytesIO()
     doc = SimpleDocTemplate(buffer, pagesize=letter, topMargin=0.5*inch, bottomMargin=0.75*inch)
     elements = []
+
+    # Función para agregar número de página en el footer
+    def add_page_number(canvas, doc):
+        """
+        Agrega el número de página en el footer
+        """
+        page_num = canvas.getPageNumber()
+        text = f"Página: {page_num}"
+        canvas.saveState()
+        canvas.setFont('Helvetica', 9)
+        canvas.setFillColor(colors.HexColor('#6b7280'))
+        canvas.drawCentredString(letter[0] / 2.0, 0.5 * inch, text)
+        canvas.restoreState()
 
     styles = getSampleStyleSheet()
 
@@ -775,6 +791,10 @@ def generar_dashboard_pdf(iglesia, mes_seleccionado=None):
     fecha_sel = datetime(int(año), int(mes), 1)
     mes_nombre = formato_mes(fecha_sel, corto=False)
 
+    # Identificar el mes actual para excluirlo de los cálculos
+    mes_actual = fecha_actual.month
+    año_actual = fecha_actual.year
+
     info_style = ParagraphStyle(
         'InfoStyle',
         parent=styles['Normal'],
@@ -793,7 +813,6 @@ def generar_dashboard_pdf(iglesia, mes_seleccionado=None):
     # Obtener datos del dashboard
     from core.models import Movimiento, CajaChica
     from django.db.models import Sum
-    from calendar import monthrange
 
     # Calcular fecha límite: último día del mes seleccionado
     año_int, mes_int = int(año), int(mes)
@@ -869,18 +888,23 @@ def generar_dashboard_pdf(iglesia, mes_seleccionado=None):
     elements.append(kpi_table)
     elements.append(Spacer(1, 20))
 
-    # Cajas Chicas
-    cajas_chicas = CajaChica.objects.filter(iglesia=iglesia, activa=True).order_by('nombre')
+    # Obtener cajas chicas para usar después
+    cajas_chicas = CajaChica.objects.filter(iglesia=iglesia, activa=True).order_by('moneda', 'nombre')
 
+    # Calcular datos de cajas para mostrar al final
+    cajas_por_moneda = None
+    saldos_por_moneda = None
     if cajas_chicas.exists():
-        elements.append(Paragraph(f"Saldos de Cajas Chicas al {ultimo_dia}/{mes}/{año}", section_style))
+        from core.models import MovimientoCajaChica, TransferenciaCajaChica
+        from collections import defaultdict
 
-        from core.models import MovimientoCajaChica
-        caja_data = [['CAJA CHICA', 'SALDO']]
-        total_cajas = Decimal('0.00')
+        # Agrupar cajas por moneda (calcular ahora, mostrar después)
+        cajas_por_moneda = defaultdict(list)
+        saldos_por_moneda = {}
 
         for caja in cajas_chicas:
             # Calcular saldo de la caja hasta la fecha límite
+            # Las transferencias ya están incluidas como movimientos de ingreso/egreso
             ingresos_caja = MovimientoCajaChica.objects.filter(
                 caja_chica=caja,
                 tipo='INGRESO',
@@ -895,65 +919,76 @@ def generar_dashboard_pdf(iglesia, mes_seleccionado=None):
                 fecha__lte=fecha_limite
             ).aggregate(total=Sum('monto'))['total'] or Decimal('0.00')
 
-            # Incluir transferencias hasta la fecha límite
-            from core.models import TransferenciaCajaChica
-            transferencias_recibidas = TransferenciaCajaChica.objects.filter(
-                caja_destino=caja,
-                anulada=False,
-                fecha__lte=fecha_limite
-            ).aggregate(total=Sum('monto'))['total'] or Decimal('0.00')
+            saldo_caja = caja.saldo_inicial + ingresos_caja - egresos_caja
 
-            transferencias_enviadas = TransferenciaCajaChica.objects.filter(
-                caja_origen=caja,
-                anulada=False,
-                fecha__lte=fecha_limite
-            ).aggregate(total=Sum('monto'))['total'] or Decimal('0.00')
+            # Calcular promedio mensual del año completo (igual que en el dashboard web)
+            # Obtener todos los movimientos del año del mes seleccionado
+            # EXCLUIR el mes actual porque aún no está completo
+            ingresos_por_mes = []
+            egresos_por_mes = []
 
-            saldo_caja = caja.saldo_inicial + ingresos_caja - egresos_caja + transferencias_recibidas - transferencias_enviadas
-            total_cajas += saldo_caja
-            caja_data.append([caja.nombre, formato_pesos(saldo_caja)])
+            for mes_num in range(1, 13):
+                # Excluir el mes actual si es del año actual
+                if año_int == año_actual and mes_num == mes_actual:
+                    continue
 
-        caja_data.append(['TOTAL CAJAS CHICAS', formato_pesos(total_cajas)])
+                ing_mes = MovimientoCajaChica.objects.filter(
+                    caja_chica=caja,
+                    tipo='INGRESO',
+                    anulado=False,
+                    fecha__year=año_int,
+                    fecha__month=mes_num
+                ).aggregate(total=Sum('monto'))['total'] or Decimal('0.00')
 
-        caja_table = Table(caja_data, colWidths=[4*inch, 2*inch])
-        caja_table.setStyle(TableStyle([
-            ('BACKGROUND', (0, 0), (-1, 0), colors.HexColor('#10b981')),
-            ('TEXTCOLOR', (0, 0), (-1, 0), colors.whitesmoke),
-            ('ALIGN', (0, 0), (-1, 0), 'CENTER'),
-            ('FONTNAME', (0, 0), (-1, 0), 'Helvetica-Bold'),
-            ('FONTSIZE', (0, 0), (-1, 0), 11),
-            ('BOTTOMPADDING', (0, 0), (-1, 0), 12),
-            ('TOPPADDING', (0, 0), (-1, 0), 12),
-            ('FONTNAME', (0, 1), (-1, -2), 'Helvetica'),
-            ('FONTSIZE', (0, 1), (-1, -2), 10),
-            ('ALIGN', (1, 1), (1, -1), 'RIGHT'),
-            ('GRID', (0, 0), (-1, -1), 1, colors.HexColor('#cbd5e1')),
-            ('TOPPADDING', (0, 1), (-1, -1), 8),
-            ('BOTTOMPADDING', (0, 1), (-1, -1), 8),
-            ('BACKGROUND', (0, -1), (-1, -1), colors.HexColor('#d1fae5')),
-            ('FONTNAME', (0, -1), (-1, -1), 'Helvetica-Bold'),
-            ('FONTSIZE', (0, -1), (-1, -1), 11),
-        ]))
+                egr_mes = MovimientoCajaChica.objects.filter(
+                    caja_chica=caja,
+                    tipo='EGRESO',
+                    anulado=False,
+                    fecha__year=año_int,
+                    fecha__month=mes_num
+                ).aggregate(total=Sum('monto'))['total'] or Decimal('0.00')
 
-        elements.append(caja_table)
-        elements.append(Spacer(1, 20))
+                if ing_mes > 0 or egr_mes > 0:
+                    ingresos_por_mes.append(ing_mes)
+                    egresos_por_mes.append(egr_mes)
 
-    # Obtener datos para gráficas
+            # Calcular promedio solo de los meses con movimientos
+            if ingresos_por_mes:
+                promedio_ingresos = sum(ingresos_por_mes) / len(ingresos_por_mes)
+            else:
+                promedio_ingresos = Decimal('0.00')
+
+            if egresos_por_mes:
+                promedio_egresos = sum(egresos_por_mes) / len(egresos_por_mes)
+            else:
+                promedio_egresos = Decimal('0.00')
+
+            cajas_por_moneda[caja.moneda].append((caja.nombre, saldo_caja, promedio_ingresos, promedio_egresos))
+            if caja.moneda not in saldos_por_moneda:
+                saldos_por_moneda[caja.moneda] = Decimal('0.00')
+            saldos_por_moneda[caja.moneda] += saldo_caja
+
+    # Obtener datos para gráficas generales
     dashboard_data = get_dashboard_data(iglesia, mes_distribucion=mes_seleccionado)
 
     # Configurar matplotlib para español y mejor visualización
+    import matplotlib
+    matplotlib.use('Agg')
+    import matplotlib.pyplot as plt
+    import tempfile
+
     plt.rcParams['font.size'] = 10
     plt.rcParams['axes.labelsize'] = 10
     plt.rcParams['axes.titlesize'] = 12
     plt.rcParams['xtick.labelsize'] = 9
     plt.rcParams['ytick.labelsize'] = 9
-    plt.rcParams['legend.fontsize'] = 9
+    plt.rcParams['legend.fontsize'] = 8
 
     # Crear archivo temporal para las gráficas
     temp_files = []
 
     try:
-        # Gráfica 1: Evolución de Saldos
+        # Gráfica 1: Evolución de Saldos (General)
         elements.append(PageBreak())
         elements.append(Paragraph("Evolución de Saldos", section_style))
 
@@ -1019,18 +1054,21 @@ def generar_dashboard_pdf(iglesia, mes_seleccionado=None):
         elements.append(Spacer(1, 15))
 
         # Gráfica 3: Balance Mensual
+        elements.append(PageBreak())
         elements.append(Paragraph("Balance Mensual", section_style))
 
-        fig3, ax3 = plt.subplots(figsize=(8, 4))
+        # Reducir tamaño para que quepa con Distribución
+        fig3, ax3 = plt.subplots(figsize=(7.5, 3))
         colors_balance = ['#10b981' if b >= 0 else '#ef4444' for b in dashboard_data['balance_data']]
 
         ax3.bar(dashboard_data['meses_labels'], dashboard_data['balance_data'],
                 color=colors_balance, alpha=0.8)
         ax3.axhline(y=0, color='black', linestyle='-', linewidth=0.8)
-        ax3.set_xlabel('Mes')
-        ax3.set_ylabel('Balance ($)')
-        ax3.set_title('Balance Mensual (Ingresos - Egresos)')
-        ax3.set_xticklabels(dashboard_data['meses_labels'], rotation=45, ha='right')
+        ax3.set_xlabel('Mes', fontsize=9)
+        ax3.set_ylabel('Balance ($)', fontsize=9)
+        ax3.set_title('Balance Mensual (Ingresos - Egresos)', fontsize=10)
+        ax3.set_xticklabels(dashboard_data['meses_labels'], rotation=45, ha='right', fontsize=8)
+        ax3.tick_params(axis='y', labelsize=8)
         ax3.grid(axis='y', alpha=0.3)
         ax3.yaxis.set_major_formatter(plt.FuncFormatter(lambda x, p: f'${x:,.0f}'))
 
@@ -1041,16 +1079,17 @@ def generar_dashboard_pdf(iglesia, mes_seleccionado=None):
         fig3.savefig(temp3.name, dpi=150, bbox_inches='tight')
         plt.close(fig3)
 
-        img3 = Image(temp3.name, width=6.5*inch, height=3.25*inch)
+        img3 = Image(temp3.name, width=6.5*inch, height=2.8*inch)
         elements.append(img3)
-        elements.append(Spacer(1, 15))
+        elements.append(Spacer(1, 12))
 
         # Gráfica 4: Distribución de Egresos por Categoría (Dona)
         if dashboard_data['categorias_labels'] and dashboard_data['categorias_data']:
-            elements.append(PageBreak())
+            # Sin PageBreak para que quede en la misma página que Balance Mensual
             elements.append(Paragraph(f"Distribución de Egresos por Categoría - {mes_nombre}", section_style))
 
-            fig4, ax4 = plt.subplots(figsize=(8, 6))
+            # Aumentar tamaño aprovechando el margen disponible
+            fig4, ax4 = plt.subplots(figsize=(7.5, 4.2))
 
             # Tomar solo las top 10 categorías
             top_n = 10
@@ -1098,12 +1137,161 @@ def generar_dashboard_pdf(iglesia, mes_seleccionado=None):
             fig4.savefig(temp4.name, dpi=150, bbox_inches='tight')
             plt.close(fig4)
 
-            img4 = Image(temp4.name, width=6.5*inch, height=4.5*inch)
+            # Aumentar tamaño aprovechando el margen disponible
+            img4 = Image(temp4.name, width=6.5*inch, height=3.8*inch)
             elements.append(img4)
-            elements.append(Spacer(1, 15))
+            elements.append(Spacer(1, 12))
 
-        # Construir PDF
-        doc.build(elements)
+        # ==================================================================
+        # SECCIÓN DE CAJAS CHICAS AL FINAL
+        # ==================================================================
+        if cajas_chicas.exists() and cajas_por_moneda:
+            elements.append(PageBreak())
+            elements.append(Paragraph(f"Saldos de Cajas Chicas al {ultimo_dia}/{mes}/{año}", section_style))
+
+            # Crear tablas separadas por moneda
+            for moneda in sorted(cajas_por_moneda.keys()):
+                # Título de la moneda
+                moneda_nombres = {'ARS': 'Peso Argentino ($)', 'USD': 'Dólar Estadounidense (US$)', 'EUR': 'Euro (€)'}
+                elements.append(Spacer(1, 10))
+                elements.append(Paragraph(f"<b>Cajas en {moneda_nombres.get(moneda, moneda)}</b>", section_style))
+
+                caja_data = [['CAJA', 'SALDO', 'PROM. ING.', 'PROM. EGR.']]
+                for nombre_caja, saldo, prom_ing, prom_egr in cajas_por_moneda[moneda]:
+                    caja_data.append([
+                        nombre_caja,
+                        formato_moneda(saldo, moneda),
+                        formato_moneda(prom_ing, moneda),
+                        formato_moneda(prom_egr, moneda)
+                    ])
+
+                # Fila de totales (solo saldo tiene total, promedios van vacíos)
+                caja_data.append([f'TOTAL {moneda}', formato_moneda(saldos_por_moneda[moneda], moneda), '-', '-'])
+
+                caja_table = Table(caja_data, colWidths=[2.5*inch, 1.5*inch, 1.25*inch, 1.25*inch])
+                caja_table.setStyle(TableStyle([
+                    ('BACKGROUND', (0, 0), (-1, 0), colors.HexColor('#10b981')),
+                    ('TEXTCOLOR', (0, 0), (-1, 0), colors.whitesmoke),
+                    ('ALIGN', (0, 0), (-1, 0), 'CENTER'),
+                    ('FONTNAME', (0, 0), (-1, 0), 'Helvetica-Bold'),
+                    ('FONTSIZE', (0, 0), (-1, 0), 10),
+                    ('BOTTOMPADDING', (0, 0), (-1, 0), 12),
+                    ('TOPPADDING', (0, 0), (-1, 0), 12),
+                    ('FONTNAME', (0, 1), (-1, -2), 'Helvetica'),
+                    ('FONTSIZE', (0, 1), (-1, -2), 9),
+                    ('ALIGN', (1, 1), (-1, -1), 'RIGHT'),
+                    ('GRID', (0, 0), (-1, -1), 1, colors.HexColor('#cbd5e1')),
+                    ('TOPPADDING', (0, 1), (-1, -1), 8),
+                    ('BOTTOMPADDING', (0, 1), (-1, -1), 8),
+                    ('BACKGROUND', (0, -1), (-1, -1), colors.HexColor('#d1fae5')),
+                    ('FONTNAME', (0, -1), (-1, -1), 'Helvetica-Bold'),
+                    ('FONTSIZE', (0, -1), (-1, -1), 10),
+                ]))
+
+                elements.append(caja_table)
+                elements.append(Spacer(1, 15))
+
+            # Gráficas de evolución de saldos de cajas chicas por moneda
+            from core.models import MovimientoCajaChica
+            cajas_por_moneda_graficas = defaultdict(list)
+            for caja in cajas_chicas:
+                cajas_por_moneda_graficas[caja.moneda].append(caja)
+
+            # Crear una gráfica por moneda
+            primera_grafica = True
+            for moneda in sorted(cajas_por_moneda_graficas.keys()):
+                cajas_moneda = cajas_por_moneda_graficas[moneda]
+
+                # Preparar datos para la gráfica
+                meses_labels = []
+                saldos_por_caja = {caja.nombre: [] for caja in cajas_moneda}
+
+                # Calcular saldos mes a mes del año (excluyendo mes actual si es año actual)
+                for mes_num in range(1, 13):
+                    # Excluir el mes actual si es del año actual
+                    if año_int == año_actual and mes_num == mes_actual:
+                        continue
+
+                    fecha_mes = datetime(año_int, mes_num, 1)
+                    meses_labels.append(fecha_mes.strftime('%b'))
+
+                    for caja in cajas_moneda:
+                        # Calcular saldo acumulado hasta fin de cada mes
+                        ultimo_dia_mes = monthrange(año_int, mes_num)[1]
+                        fecha_limite_mes = datetime(año_int, mes_num, ultimo_dia_mes, 23, 59, 59)
+
+                        ingresos_acum = MovimientoCajaChica.objects.filter(
+                            caja_chica=caja,
+                            tipo='INGRESO',
+                            anulado=False,
+                            fecha__lte=fecha_limite_mes
+                        ).aggregate(total=Sum('monto'))['total'] or Decimal('0.00')
+
+                        egresos_acum = MovimientoCajaChica.objects.filter(
+                            caja_chica=caja,
+                            tipo='EGRESO',
+                            anulado=False,
+                            fecha__lte=fecha_limite_mes
+                        ).aggregate(total=Sum('monto'))['total'] or Decimal('0.00')
+
+                        saldo_mes = float(caja.saldo_inicial + ingresos_acum - egresos_acum)
+                        saldos_por_caja[caja.nombre].append(saldo_mes)
+
+                # Crear la gráfica - solo PageBreak en la primera
+                if primera_grafica:
+                    elements.append(PageBreak())
+                    primera_grafica = False
+
+                moneda_nombres_graf = {'ARS': 'Peso Argentino ($)', 'USD': 'Dólar Estadounidense (US$)', 'EUR': 'Euro (€)'}
+                titulo_grafica = f"Evolución de Saldos - Cajas en {moneda_nombres_graf.get(moneda, moneda)}"
+                elements.append(Paragraph(titulo_grafica, section_style))
+
+                # Reducir tamaño de figura para que quepan 2 en una página
+                fig, ax = plt.subplots(figsize=(7.5, 3))
+
+                # Colores para cada caja
+                colores = ['#6366f1', '#10b981', '#ef4444', '#f59e0b', '#8b5cf6', '#ec4899', '#14b8a6']
+
+                for idx, (nombre_caja, saldos) in enumerate(saldos_por_caja.items()):
+                    color = colores[idx % len(colores)]
+                    ax.plot(meses_labels, saldos, marker='o', linewidth=2,
+                           markersize=4, label=nombre_caja, color=color)
+
+                ax.set_xlabel('Mes', fontsize=9)
+                simbolo_moneda = {'ARS': '$', 'USD': 'US$', 'EUR': '€'}[moneda]
+                ax.set_ylabel(f'Saldo ({simbolo_moneda})', fontsize=9)
+                ax.set_title(f'Evolución de Saldos {año_int} - {moneda}', fontsize=10)
+                ax.set_xticks(range(len(meses_labels)))
+                ax.set_xticklabels(meses_labels, rotation=45, ha='right', fontsize=8)
+                ax.tick_params(axis='y', labelsize=8)
+
+                # Posicionar leyenda debajo de la gráfica
+                ax.legend(loc='upper center', bbox_to_anchor=(0.5, -0.20),
+                         ncol=min(4, len(saldos_por_caja)), fontsize=7, frameon=True)
+                ax.grid(axis='y', alpha=0.3, linestyle='--')
+
+                # Formatear eje Y según la moneda
+                if moneda == 'USD':
+                    ax.yaxis.set_major_formatter(plt.FuncFormatter(lambda x, p: f'US${x:,.0f}'))
+                elif moneda == 'EUR':
+                    ax.yaxis.set_major_formatter(plt.FuncFormatter(lambda x, p: f'€{x:,.0f}'))
+                else:
+                    ax.yaxis.set_major_formatter(plt.FuncFormatter(lambda x, p: f'${x:,.0f}'))
+
+                plt.tight_layout()
+
+                temp_graf = tempfile.NamedTemporaryFile(delete=False, suffix='.png')
+                temp_files.append(temp_graf.name)
+                fig.savefig(temp_graf.name, dpi=150, bbox_inches='tight')
+                plt.close(fig)
+
+                # Reducir altura para que quepan 2 gráficas en una página
+                img_graf = Image(temp_graf.name, width=6.5*inch, height=2.8*inch)
+                elements.append(img_graf)
+                elements.append(Spacer(1, 12))
+
+        # Construir PDF con números de página
+        doc.build(elements, onFirstPage=add_page_number, onLaterPages=add_page_number)
 
     finally:
         # Limpiar archivos temporales
