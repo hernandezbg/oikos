@@ -24,7 +24,7 @@
         <div class="card {% if saldo_actual < 0 %}bg-danger{% elif saldo_actual < 100000 %}bg-warning{% else %}bg-primary{% endif %} text-white">
             <div class="card-body">
                 <h6 class="card-title">Saldo Actual</h6>
-                <h3 class="mb-0">{{ saldo_actual|formato_pesos }}</h3>
+                <h3 class="mb-0">{{ saldo_actual|formato_moneda:caja.moneda }}</h3>
             </div>
         </div>
     </div>
@@ -32,7 +32,7 @@
         <div class="card bg-success text-white">
             <div class="card-body">
                 <h6 class="card-title">Total Ingresos</h6>
-                <h3 class="mb-0">{{ total_ingresos|formato_pesos }}</h3>
+                <h3 class="mb-0">{{ total_ingresos|formato_moneda:caja.moneda }}</h3>
             </div>
         </div>
     </div>
@@ -40,7 +40,7 @@
         <div class="card bg-danger text-white">
             <div class="card-body">
                 <h6 class="card-title">Total Egresos</h6>
-                <h3 class="mb-0">{{ total_egresos|formato_pesos }}</h3>
+                <h3 class="mb-0">{{ total_egresos|formato_moneda:caja.moneda }}</h3>
             </div>
         </div>
     </div>
@@ -155,7 +155,7 @@
                                 </td>
                                 <td class="text-end" {% if mov.anulado %}style="text-decoration: line-through;"{% endif %}>
                                     <strong class="{% if mov.tipo == 'INGRESO' %}text-success{% else %}text-danger{% endif %}">
-                                        {{ mov.monto|formato_pesos }}
+                                        {{ mov.monto|formato_moneda:caja.moneda }}
                                     </strong>
                                 </td>
                                 <td {% if mov.anulado %}style="text-decoration: line-through;"{% endif %}>
@@ -215,7 +215,7 @@
                                         <i class="bi bi-arrow-down"></i> {{ mov.get_tipo_display }}
                                     </span>
                                     {% endif %}
-                                    <h6 class="mb-1"><strong>{{ mov.monto|formato_pesos }}</strong></h6>
+                                    <h6 class="mb-1"><strong>{{ mov.monto|formato_moneda:caja.moneda }}</strong></h6>
                                     <small class="text-muted">
                                         <i class="bi bi-calendar"></i> {{ mov.fecha|date:"d/m/Y" }}
                                     </small>
@@ -394,7 +394,7 @@
                                 <th>Monto:</th>
                                 <td>
                                     <strong class="fs-5 {% if mov.tipo == 'INGRESO' %}text-success{% else %}text-danger{% endif %}">
-                                        {{ mov.monto|formato_pesos }}
+                                        {{ mov.monto|formato_moneda:caja.moneda }}
                                     </strong>
                                 </td>
                             </tr>
@@ -523,7 +523,7 @@
                             <li><strong>Tipo:</strong> {{ mov.get_tipo_display }}</li>
                             <li><strong>Fecha:</strong> {{ mov.fecha|date:"d/m/Y" }}</li>
                             <li><strong>Concepto:</strong> {{ mov.concepto|truncatewords:20 }}</li>
-                            <li><strong>Monto:</strong> {{ mov.monto|formato_pesos }}</li>
+                            <li><strong>Monto:</strong> {{ mov.monto|formato_moneda:caja.moneda }}</li>
                         </ul>
                     </div>
 

@@ -55,6 +55,66 @@ def formato_pesos(monto):
     return f"{signo}${parte_entera_formateada},{parte_decimal.ljust(2, '0')}"
 
 
+def formato_moneda(monto, moneda='ARS'):
+    """
+    Convierte un número a formato según la moneda especificada
+
+    Parámetros:
+        monto: Valor numérico a formatear
+        moneda: Código de moneda ('ARS', 'USD', 'EUR')
+
+    Formatos:
+        - ARS: $1.234.567,89 (separador de miles: punto, decimal: coma)
+        - USD: US$1,234,567.89 (separador de miles: coma, decimal: punto)
+        - EUR: €1.234.567,89 (separador de miles: punto, decimal: coma)
+
+    Ejemplos:
+        formato_moneda(1234567.89, 'ARS') -> "$1.234.567,89"
+        formato_moneda(1234567.89, 'USD') -> "US$1,234,567.89"
+        formato_moneda(1234567.89, 'EUR') -> "€1.234.567,89"
+    """
+    if monto is None:
+        simbolos = {'ARS': '$', 'USD': 'US$', 'EUR': '€'}
+        simbolo = simbolos.get(moneda, '$')
+        return f"{simbolo}0,00" if moneda != 'USD' else f"{simbolo}0.00"
+
+    monto = Decimal(str(monto))
+    signo = '-' if monto < 0 else ''
+    monto_abs = abs(monto)
+
+    # Separar parte entera y decimal
+    partes = str(monto_abs).split('.')
+    parte_entera = partes[0]
+    parte_decimal = partes[1][:2] if len(partes) > 1 else '00'
+
+    if moneda == 'USD':
+        # Formato USD: US$1,234,567.89
+        parte_entera_formateada = ''
+        for i, digito in enumerate(reversed(parte_entera)):
+            if i > 0 and i % 3 == 0:
+                parte_entera_formateada = ',' + parte_entera_formateada
+            parte_entera_formateada = digito + parte_entera_formateada
+        return f"{signo}US${parte_entera_formateada}.{parte_decimal.ljust(2, '0')}"
+
+    elif moneda == 'EUR':
+        # Formato EUR: €1.234.567,89
+        parte_entera_formateada = ''
+        for i, digito in enumerate(reversed(parte_entera)):
+            if i > 0 and i % 3 == 0:
+                parte_entera_formateada = '.' + parte_entera_formateada
+            parte_entera_formateada = digito + parte_entera_formateada
+        return f"{signo}€{parte_entera_formateada},{parte_decimal.ljust(2, '0')}"
+
+    else:  # ARS por defecto
+        # Formato ARS: $1.234.567,89
+        parte_entera_formateada = ''
+        for i, digito in enumerate(reversed(parte_entera)):
+            if i > 0 and i % 3 == 0:
+                parte_entera_formateada = '.' + parte_entera_formateada
+            parte_entera_formateada = digito + parte_entera_formateada
+        return f"{signo}${parte_entera_formateada},{parte_decimal.ljust(2, '0')}"
+
+
 def calcular_saldo_mes(iglesia, año_mes):
     """
     Calcula el saldo de un mes específico para una iglesia

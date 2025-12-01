@@ -3,7 +3,10 @@
 {% load custom_filters %}
 
 {% block title %}{{ caja.nombre }} - Dashboard - {{ APP_NAME }}{% endblock %}
-{% block page_title %}Dashboard: {{ caja.nombre }}{% endblock %}
+{% block page_title %}
+    Dashboard: {{ caja.nombre }}
+    <span class="badge bg-info ms-2">{{ caja.get_simbolo_moneda }} {{ caja.moneda }}</span>
+{% endblock %}
 
 {% block extra_css %}
 <style>
@@ -280,7 +283,7 @@
                                 <td>{{ mov.concepto|truncatewords:10 }}</td>
                                 <td class="text-end">
                                     <strong class="{% if mov.tipo == 'INGRESO' %}text-success{% else %}text-danger{% endif %}">
-                                        {{ mov.monto|formato_pesos }}
+                                        {{ mov.monto|formato_moneda:caja.moneda }}
                                     </strong>
                                 </td>
                             </tr>

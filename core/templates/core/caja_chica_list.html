@@ -41,6 +41,7 @@
                             <tr>
                                 <th>Nombre</th>
                                 <th>Descripción</th>
+                                <th>Moneda</th>
                                 <th>Saldo Inicial</th>
                                 <th>Saldo Actual</th>
                                 <th>Usuarios</th>
@@ -55,10 +56,15 @@
                                     <strong>{{ caja.nombre }}</strong>
                                 </td>
                                 <td>{{ caja.descripcion|truncatewords:10|default:"Sin descripción" }}</td>
-                                <td>{{ caja.saldo_inicial|formato_pesos }}</td>
+                                <td>
+                                    <span class="badge bg-info">
+                                        {{ caja.get_simbolo_moneda }} {{ caja.moneda }}
+                                    </span>
+                                </td>
+                                <td>{{ caja.saldo_inicial|formato_moneda:caja.moneda }}</td>
                                 <td>
                                     <strong class="{% if caja.saldo_actual < 0 %}text-danger{% else %}text-success{% endif %}">
-                                        {{ caja.saldo_actual|formato_pesos }}
+                                        {{ caja.saldo_actual|formato_moneda:caja.moneda }}
                                     </strong>
                                 </td>
                                 <td>
@@ -104,27 +110,35 @@
                                 <h5 class="card-title mb-0">
                                     <i class="bi bi-box"></i> {{ caja.nombre }}
                                 </h5>
-                                {% if caja.activa %}
-                                <span class="badge bg-success">Activa</span>
-                                {% else %}
-                                <span class="badge bg-secondary">Inactiva</span>
-                                {% endif %}
+                                <div>
+                                    {% if caja.activa %}
+                                    <span class="badge bg-success">Activa</span>
+                                    {% else %}
+                                    <span class="badge bg-secondary">Inactiva</span>
+                                    {% endif %}
+                                </div>
                             </div>
 
-                            <p class="text-muted small mb-3">{{ caja.descripcion|default:"Sin descripción" }}</p>
+                            <p class="text-muted small mb-2">{{ caja.descripcion|default:"Sin descripción" }}</p>
+
+                            <div class="mb-3">
+                                <span class="badge bg-info">
+                                    {{ caja.get_simbolo_moneda }} {{ caja.moneda }}
+                                </span>
+                            </div>
 
                             <div class="row g-2 mb-3">
                                 <div class="col-6">
                                     <div class="border rounded p-2">
                                         <small class="text-muted d-block">Saldo Inicial</small>
-                                        <strong>{{ caja.saldo_inicial|formato_pesos }}</strong>
+                                        <strong>{{ caja.saldo_inicial|formato_moneda:caja.moneda }}</strong>
                                     </div>
                                 </div>
                                 <div class="col-6">
                                     <div class="border rounded p-2">
                                         <small class="text-muted d-block">Saldo Actual</small>
                                         <strong class="{% if caja.saldo_actual < 0 %}text-danger{% else %}text-success{% endif %}">
-                                            {{ caja.saldo_actual|formato_pesos }}
+                                            {{ caja.saldo_actual|formato_moneda:caja.moneda }}
                                         </strong>
                                     </div>
                                 </div>

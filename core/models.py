@@ -476,6 +476,12 @@ class CajaChica(models.Model):
     Representa una caja chica dentro de una iglesia.
     Ejemplo: "Caja Jóvenes", "Caja Ministerio Mujeres"
     """
+    MONEDAS = (
+        ('ARS', 'Peso Argentino ($)'),
+        ('USD', 'Dólar Estadounidense (US$)'),
+        ('EUR', 'Euro (€)'),
+    )
+
     iglesia = models.ForeignKey(Iglesia, on_delete=models.CASCADE, related_name='cajas_chicas')
     nombre = models.CharField(max_length=100, help_text="Ej: Caja Jóvenes, Caja Ministerio Mujeres")
     descripcion = models.TextField(blank=True, null=True)
@@ -484,6 +490,12 @@ class CajaChica(models.Model):
         decimal_places=2,
         default=0,
         help_text="Saldo inicial con el que se crea la caja"
+    )
+    moneda = models.CharField(
+        max_length=3,
+        choices=MONEDAS,
+        default='ARS',
+        help_text="Moneda de la caja chica. No se puede cambiar una vez creada con movimientos."
     )
 
     # Control
@@ -499,6 +511,19 @@ class CajaChica(models.Model):
 
     def __str__(self):
         return f"{self.nombre} ({self.iglesia.nombre})"
+
+    def get_simbolo_moneda(self):
+        """Retorna el símbolo de la moneda"""
+        simbolos = {
+            'ARS': '$',
+            'USD': 'US$',
+            'EUR': '€',
+        }
+        return simbolos.get(self.moneda, '$')
+
+    def get_nombre_moneda(self):
+        """Retorna el nombre completo de la moneda"""
+        return dict(self.MONEDAS).get(self.moneda, 'Peso Argentino ($)')
 
     def calcular_saldo_actual(self):
         """Calcula el saldo actual de la caja"""

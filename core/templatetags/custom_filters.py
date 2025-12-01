@@ -1,7 +1,7 @@
 from django import template
 from django.utils.safestring import mark_safe
 from django.http import QueryDict
-from core.utils import formato_pesos as formato_pesos_util
+from core.utils import formato_pesos as formato_pesos_util, formato_moneda as formato_moneda_util
 
 register = template.Library()
 
@@ -12,6 +12,15 @@ def formato_pesos(value):
     Filtro de template para formatear montos en pesos argentinos
     """
     return formato_pesos_util(value)
+
+
+@register.filter(name='formato_moneda')
+def formato_moneda(value, moneda='ARS'):
+    """
+    Filtro de template para formatear montos según la moneda especificada
+    Uso: {{ monto|formato_moneda:"USD" }}
+    """
+    return formato_moneda_util(value, moneda)
 
 
 @register.filter(name='formato_monto_movimiento')

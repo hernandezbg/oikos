@@ -109,9 +109,10 @@
                                     <span class="badge bg-danger">{{ transf.caja_origen.nombre }}</span>
                                     <i class="bi bi-arrow-right mx-1"></i>
                                     <span class="badge bg-success">{{ transf.caja_destino.nombre }}</span>
+                                    <br><small class="text-muted">{{ transf.caja_origen.get_simbolo_moneda }} {{ transf.caja_origen.moneda }}</small>
                                 </td>
                                 <td data-label="Monto">
-                                    <strong>{{ transf.monto|formato_pesos }}</strong>
+                                    <strong>{{ transf.monto|formato_moneda:transf.caja_origen.moneda }}</strong>
                                 </td>
                                 <td data-label="Concepto">{{ transf.concepto|truncatewords:8 }}</td>
                                 <td data-label="Realizada por"><small>{{ transf.realizada_por.get_full_name|default:transf.realizada_por.username }}</small></td>

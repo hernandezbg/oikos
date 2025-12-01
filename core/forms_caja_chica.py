@@ -10,7 +10,7 @@ class CajaChicaForm(forms.ModelForm):
 
     class Meta:
         model = CajaChica
-        fields = ['nombre', 'descripcion', 'saldo_inicial']
+        fields = ['nombre', 'descripcion', 'saldo_inicial', 'moneda']
         widgets = {
             'nombre': forms.TextInput(attrs={
                 'class': 'form-control',
@@ -27,11 +27,18 @@ class CajaChicaForm(forms.ModelForm):
                 'step': '0.01',
                 'min': '0'
             }),
+            'moneda': forms.Select(attrs={
+                'class': 'form-control'
+            }),
         }
         labels = {
             'nombre': 'Nombre de la Caja',
             'descripcion': 'Descripción',
-            'saldo_inicial': 'Saldo Inicial ($)',
+            'saldo_inicial': 'Saldo Inicial',
+            'moneda': 'Moneda',
+        }
+        help_texts = {
+            'moneda': '⚠️ La moneda no se puede cambiar una vez que la caja tenga movimientos.',
         }
 
     def __init__(self, *args, **kwargs):
@@ -39,6 +46,11 @@ class CajaChicaForm(forms.ModelForm):
         self.helper = FormHelper()
         self.helper.form_method = 'post'
         self.helper.add_input(Submit('submit', 'Guardar Caja', css_class='btn btn-primary'))
+
+        # Si estamos editando una caja con movimientos, deshabilitar el campo moneda
+        if self.instance.pk and self.instance.movimientos.exists():
+            self.fields['moneda'].disabled = True
+            self.fields['moneda'].help_text = '⚠️ No se puede cambiar la moneda porque la caja ya tiene movimientos registrados.'
 
 
 class MovimientoCajaChicaForm(forms.ModelForm):
@@ -163,13 +175,25 @@ class TransferenciaCajaChicaForm(forms.ModelForm):
         if caja_origen and caja_destino and caja_origen == caja_destino:
             raise forms.ValidationError('No puedes transferir dinero a la misma caja')
 
+        # Validar que ambas cajas tengan la misma moneda
+        if caja_origen and caja_destino:
+            if caja_origen.moneda != caja_destino.moneda:
+                raise forms.ValidationError(
+                    f'No se pueden transferir fondos entre cajas de diferentes monedas. '
+                    f'{caja_origen.nombre} es en {caja_origen.get_nombre_moneda()} '
+                    f'y {caja_destino.nombre} es en {caja_destino.get_nombre_moneda()}.'
+                )
+
         # Validar saldo suficiente
         if caja_origen and monto:
             saldo_origen = caja_origen.calcular_saldo_actual()
             if saldo_origen < monto:
+                from core.utils import formato_moneda
+                saldo_formateado = formato_moneda(saldo_origen, caja_origen.moneda)
+                monto_formateado = formato_moneda(monto, caja_origen.moneda)
                 raise forms.ValidationError(
                     f'Saldo insuficiente en {caja_origen.nombre}. '
-                    f'Saldo disponible: ${saldo_origen}, Monto a transferir: ${monto}'
+                    f'Saldo disponible: {saldo_formateado}, Monto a transferir: {monto_formateado}'
                 )
 
         return cleaned_data
