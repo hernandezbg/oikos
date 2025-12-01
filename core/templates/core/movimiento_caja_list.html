@@ -98,7 +98,8 @@
             </div>
             <div class="card-body">
                 {% if movimientos %}
-                <div class="table-responsive">
+                <!-- Vista Desktop (tabla) -->
+                <div class="table-responsive d-none d-lg-block">
                     <table class="table table-hover table-striped">
                         <thead class="table-dark">
                             <tr>
@@ -192,6 +193,96 @@
                             {% endfor %}
                         </tbody>
                     </table>
+                </div>
+
+                <!-- Vista Móvil (cards) -->
+                <div class="d-lg-none">
+                    {% for mov in movimientos %}
+                    <div class="card mb-3 {% if mov.anulado %}bg-light{% endif %}">
+                        <div class="card-body">
+                            <div class="d-flex justify-content-between align-items-start mb-3">
+                                <div>
+                                    {% if mov.anulado %}
+                                    <span class="badge bg-secondary mb-2">
+                                        <i class="bi bi-x-circle"></i> ANULADO
+                                    </span>
+                                    {% elif mov.tipo == 'INGRESO' %}
+                                    <span class="badge bg-success mb-2">
+                                        <i class="bi bi-arrow-up"></i> {{ mov.get_tipo_display }}
+                                    </span>
+                                    {% else %}
+                                    <span class="badge bg-danger mb-2">
+                                        <i class="bi bi-arrow-down"></i> {{ mov.get_tipo_display }}
+                                    </span>
+                                    {% endif %}
+                                    <h6 class="mb-1"><strong>{{ mov.monto|formato_pesos }}</strong></h6>
+                                    <small class="text-muted">
+                                        <i class="bi bi-calendar"></i> {{ mov.fecha|date:"d/m/Y" }}
+                                    </small>
+                                </div>
+                            </div>
+
+                            <p class="mb-2 {% if mov.anulado %}text-muted text-decoration-line-through{% endif %}">
+                                {{ mov.concepto|truncatewords:20 }}
+                            </p>
+
+                            {% if mov.anulado %}
+                            <div class="alert alert-danger py-1 px-2 mb-2 small">
+                                <i class="bi bi-info-circle"></i> {{ mov.motivo_anulacion }}
+                            </div>
+                            {% endif %}
+
+                            <div class="row g-2 mb-3">
+                                <div class="col-6">
+                                    <div class="border rounded p-2">
+                                        <small class="text-muted d-block">Categoría</small>
+                                        <small>
+                                            {% if mov.categoria_ingreso %}
+                                                {{ mov.categoria_ingreso }}
+                                            {% elif mov.categoria_egreso %}
+                                                {{ mov.categoria_egreso }}
+                                            {% else %}
+                                                -
+                                            {% endif %}
+                                        </small>
+                                    </div>
+                                </div>
+                                <div class="col-6">
+                                    <div class="border rounded p-2">
+                                        <small class="text-muted d-block">Comprobante</small>
+                                        <small>{{ mov.comprobante_nro|default:"-" }}</small>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div class="mb-3">
+                                <small class="text-muted">
+                                    <i class="bi bi-person"></i> {{ mov.creado_por.get_full_name|default:mov.creado_por.username }}
+                                </small>
+                            </div>
+
+                            <div class="d-flex gap-2 flex-wrap">
+                                <button class="btn btn-sm btn-info flex-fill"
+                                        data-bs-toggle="modal"
+                                        data-bs-target="#infoModal{{ mov.id }}">
+                                    <i class="bi bi-info-circle"></i> Ver detalle
+                                </button>
+                                {% if not mov.anulado and puede_crear %}
+                                <button class="btn btn-sm btn-primary flex-fill"
+                                        data-bs-toggle="modal"
+                                        data-bs-target="#editarModal{{ mov.id }}">
+                                    <i class="bi bi-pencil"></i> Editar
+                                </button>
+                                <button class="btn btn-sm btn-danger flex-fill"
+                                        data-bs-toggle="modal"
+                                        data-bs-target="#anularModal{{ mov.id }}">
+                                    <i class="bi bi-x-circle"></i> Anular
+                                </button>
+                                {% endif %}
+                            </div>
+                        </div>
+                    </div>
+                    {% endfor %}
                 </div>
 
                 <!-- Paginación -->
