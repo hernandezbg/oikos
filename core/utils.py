@@ -442,21 +442,23 @@ def generar_reporte_pdf(iglesia, año_mes):
 def get_dashboard_data(iglesia, meses=None, mes_distribucion=None):
     """
     Obtiene los datos para los gráficos del dashboard
-    Retorna todos los meses del año en curso (desde enero hasta el mes actual)
-    mes_distribucion: mes para el gráfico de distribución (formato YYYY-MM), por defecto mes actual
+    Retorna los últimos 12 meses completos (excluyendo el mes actual)
+    mes_distribucion: mes para el gráfico de distribución (formato YYYY-MM), por defecto mes anterior
     """
     from core.models import SaldoMensual, Movimiento
     from django.db.models import Sum
     from datetime import datetime, timedelta
     from dateutil.relativedelta import relativedelta
 
-    # Calcular desde enero del año en curso hasta el mes actual
     fecha_actual = datetime.now()
-    fecha_inicio = datetime(fecha_actual.year, 1, 1)  # 1 de enero del año actual
 
-    # Calcular cantidad de meses desde enero hasta ahora
-    # EXCLUIR el mes actual porque aún no está completo
-    meses_transcurridos = fecha_actual.month - 1 if fecha_actual.month > 1 else 0
+    # Calcular los últimos 12 meses completos (excluyendo el mes actual)
+    # Empezamos desde hace 12 meses hasta el mes anterior
+    fecha_inicio = fecha_actual - relativedelta(months=12)
+    fecha_inicio = datetime(fecha_inicio.year, fecha_inicio.month, 1)  # Primer día del mes
+
+    # Cantidad de meses a mostrar (12 meses, excluyendo el actual)
+    meses_a_mostrar = 12
 
     # Generar lista de meses
     meses_labels = []
@@ -465,8 +467,13 @@ def get_dashboard_data(iglesia, meses=None, mes_distribucion=None):
     egresos_data = []
     balance_data = []
 
-    for i in range(meses_transcurridos):
+    for i in range(meses_a_mostrar):
         fecha = fecha_inicio + relativedelta(months=i)
+
+        # Excluir el mes actual
+        if fecha.year == fecha_actual.year and fecha.month == fecha_actual.month:
+            continue
+
         año_mes = fecha.strftime('%Y-%m')
         mes_label = formato_mes(fecha, corto=True)  # Formato corto en español
 
@@ -1193,6 +1200,7 @@ def generar_dashboard_pdf(iglesia, mes_seleccionado=None):
 
             # Gráficas de evolución de saldos de cajas chicas por moneda
             from core.models import MovimientoCajaChica
+            from dateutil.relativedelta import relativedelta
             cajas_por_moneda_graficas = defaultdict(list)
             for caja in cajas_chicas:
                 cajas_por_moneda_graficas[caja.moneda].append(caja)
@@ -1206,19 +1214,23 @@ def generar_dashboard_pdf(iglesia, mes_seleccionado=None):
                 meses_labels = []
                 saldos_por_caja = {caja.nombre: [] for caja in cajas_moneda}
 
-                # Calcular saldos mes a mes del año (excluyendo mes actual si es año actual)
-                for mes_num in range(1, 13):
-                    # Excluir el mes actual si es del año actual
-                    if año_int == año_actual and mes_num == mes_actual:
+                # Calcular los últimos 12 meses completos (excluyendo el mes actual)
+                fecha_inicio_graf = fecha_actual - relativedelta(months=12)
+                fecha_inicio_graf = datetime(fecha_inicio_graf.year, fecha_inicio_graf.month, 1)
+
+                for i in range(12):
+                    fecha_mes = fecha_inicio_graf + relativedelta(months=i)
+
+                    # Excluir el mes actual
+                    if fecha_mes.year == año_actual and fecha_mes.month == mes_actual:
                         continue
 
-                    fecha_mes = datetime(año_int, mes_num, 1)
-                    meses_labels.append(fecha_mes.strftime('%b'))
+                    meses_labels.append(fecha_mes.strftime('%b %y'))
 
                     for caja in cajas_moneda:
                         # Calcular saldo acumulado hasta fin de cada mes
-                        ultimo_dia_mes = monthrange(año_int, mes_num)[1]
-                        fecha_limite_mes = datetime(año_int, mes_num, ultimo_dia_mes, 23, 59, 59)
+                        ultimo_dia_mes = monthrange(fecha_mes.year, fecha_mes.month)[1]
+                        fecha_limite_mes = datetime(fecha_mes.year, fecha_mes.month, ultimo_dia_mes, 23, 59, 59)
 
                         ingresos_acum = MovimientoCajaChica.objects.filter(
                             caja_chica=caja,
@@ -1260,7 +1272,7 @@ def generar_dashboard_pdf(iglesia, mes_seleccionado=None):
                 ax.set_xlabel('Mes', fontsize=9)
                 simbolo_moneda = {'ARS': '$', 'USD': 'US$', 'EUR': '€'}[moneda]
                 ax.set_ylabel(f'Saldo ({simbolo_moneda})', fontsize=9)
-                ax.set_title(f'Evolución de Saldos {año_int} - {moneda}', fontsize=10)
+                ax.set_title(f'Evolución de Saldos (Últimos 12 meses) - {moneda}', fontsize=10)
                 ax.set_xticks(range(len(meses_labels)))
                 ax.set_xticklabels(meses_labels, rotation=45, ha='right', fontsize=8)
                 ax.tick_params(axis='y', labelsize=8)
